@@ -119,3 +119,7 @@ button,textarea{font:inherit}button{color:inherit}button:focus-visible,textarea:
   radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--mode) 34%,#070a10),#080b10 68%);
   border:1px solid color-mix(in srgb,var(--mode) 55%,#273142)}
 .citizen-avatar[data-form="privacy"] span{background:#0d121b;color:#dce6f5;border-color:#252e3e}
+
+.sync-badge{border:1px solid #2d3748;background:#0d121a;border-radius:999px;padding:8px 10px;color:#7f8999;font-size:.62rem;font-weight:900;letter-spacing:.08em;white-space:nowrap}
+.sync-badge.pending{border-color:#5d4e8e;color:#c1b8ff;background:#19162a}
+@media(max-width:760px){.sync-badge{display:none}}
