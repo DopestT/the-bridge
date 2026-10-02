@@ -573,8 +573,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  if coalesce((new.raw_app_meta_data->>'provider')='anonymous',false)
-     or coalesce((new.raw_user_meta_data->>'is_anonymous')::boolean,false) then
+  if coalesce(new.is_anonymous,false) then
     return new;
   end if;
 
@@ -744,23 +743,30 @@ revoke all on table
 from anon;
 
 -- Explicit authenticated privileges; RLS remains the final gate.
-grant select,insert,update on public.citizens to authenticated;
+grant select on public.citizens to authenticated;
+grant update (handle,display_name,avatar_form,avatar_mode) on public.citizens to authenticated;
 grant select on public.places to authenticated;
-grant select,insert,update,delete on public.world_entities to authenticated;
-grant select,insert,update,delete on public.entity_memberships to authenticated;
+grant select,insert,delete on public.world_entities to authenticated;
+grant update (title,summary,visibility,status,metadata) on public.world_entities to authenticated;
+grant select,insert,delete on public.entity_memberships to authenticated;
+grant update (role,status,joined_at) on public.entity_memberships to authenticated;
 grant select,insert,delete on public.entity_links to authenticated;
 grant select,insert,delete on public.citizen_blocks to authenticated;
 grant select on public.yes_no_votes to authenticated;
 grant select on public.artifacts to authenticated;
 grant select on public.citizen_artifacts to authenticated;
 grant select on public.reputation_events to authenticated;
-grant select,insert,update,delete on public.netizens_access_grants to authenticated;
+grant select,insert,delete on public.netizens_access_grants to authenticated;
+grant update (status,expires_at,revoked_at) on public.netizens_access_grants to authenticated;
 grant select on public.netizens_perception_bindings to authenticated;
 grant select on public.time_machine_scenarios to authenticated;
 grant select on public.conversation_threads to authenticated;
-grant select,update on public.thread_members to authenticated;
-grant select,insert,update on public.messages to authenticated;
-grant select,update on public.notifications to authenticated;
+grant select on public.thread_members to authenticated;
+grant update (muted_until,last_read_at) on public.thread_members to authenticated;
+grant select,insert on public.messages to authenticated;
+grant update (body,edited_at,deleted_at) on public.messages to authenticated;
+grant select on public.notifications to authenticated;
+grant update (read_at) on public.notifications to authenticated;
 grant select,insert on public.reports to authenticated;
 
 -- Citizen policies.
@@ -815,7 +821,7 @@ using (
   and private.can_manage_entity(id,(select auth.uid()))
 )
 with check (
-  creator_id=creator_id
+  private.can_manage_entity(id,(select auth.uid()))
 );
 
 create policy world_entities_delete
@@ -1023,7 +1029,6 @@ using (
 )
 with check (
   citizen_id=(select auth.uid())
-  and role=role
 );
 
 create policy messages_select_member
