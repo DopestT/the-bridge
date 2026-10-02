@@ -1,27 +1,41 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "NETIZENS World Client State",
+  "title": "NETIZENS World Client State V3",
   "type": "object",
   "required": ["version", "citizen", "world"],
   "properties": {
-    "version": { "type": "integer", "minimum": 2 },
+    "version": { "const": 3 },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" },
     "citizen": {
       "type": "object",
       "required": ["id", "name", "initial", "xp", "level", "artifacts", "mode", "form"],
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string" },
-        "initial": { "type": "string" },
+        "name": { "type": "string", "maxLength": 40 },
+        "initial": { "type": "string", "maxLength": 2 },
         "xp": { "type": "integer", "minimum": 0 },
         "level": { "type": "integer", "minimum": 1 },
-        "artifacts": { "type": "array", "items": { "type": "string" } },
+        "artifacts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "mode": { "type": "string" },
-        "form": { "type": "string", "enum": ["likeness", "stylized", "fictional", "privacy"] }
+        "form": { "type": "string", "enum": ["likeness", "stylized", "fictional", "privacy"] },
+        "markSeed": { "type": "string" }
       }
     },
     "world": {
       "type": "object",
-      "required": ["visitedPlaces", "joinedCrews", "followedProjects", "interestedEvents", "plans", "yesNoVotes", "savedRoutes", "timeline"],
+      "required": [
+        "visitedPlaces",
+        "plans",
+        "yesNoVotes",
+        "savedRoutes",
+        "perceptionBindings",
+        "entities",
+        "entityOrder",
+        "entityMemberships",
+        "entityLinks",
+        "timeline"
+      ],
       "properties": {
         "visitedPlaces": { "type": "object" },
         "joinedCrews": { "type": "array", "items": { "type": "string" } },
@@ -30,6 +44,37 @@
         "plans": { "type": "array", "items": { "type": "object" } },
         "yesNoVotes": { "type": "object" },
         "savedRoutes": { "type": "array", "items": { "type": "object" } },
+        "perceptionBindings": { "type": "array", "items": { "type": "object" } },
+        "entities": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["id", "placeId", "entityType", "title", "visibility", "status", "createdAt", "updatedAt"],
+            "properties": {
+              "id": { "type": "string" },
+              "placeId": { "type": "string" },
+              "entityType": { "type": "string" },
+              "parentEntityId": { "type": ["string", "null"] },
+              "creatorId": { "type": ["string", "null"] },
+              "title": { "type": "string" },
+              "summary": { "type": "string" },
+              "visibility": { "enum": ["public", "members", "invite", "private"] },
+              "status": { "type": "string" },
+              "metadata": { "type": "object" },
+              "createdAt": { "type": "string" },
+              "updatedAt": { "type": "string" }
+            }
+          }
+        },
+        "entityOrder": { "type": "array", "items": { "type": "string" } },
+        "entityMemberships": { "type": "object" },
+        "entityLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "fromEntityId", "toEntityId", "linkType", "createdAt"]
+          }
+        },
         "timeline": { "type": "array", "items": { "type": "object" } }
       }
     }

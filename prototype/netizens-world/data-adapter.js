@@ -87,7 +87,17 @@
     createPlan:(title,meta)=>mutate("plan.create",{title:title,meta:meta||{}},()=>local.createPlan(title,meta)),
     vote:(questionId,choice)=>mutate("yesno.vote",{questionId:questionId,choice:choice},()=>local.vote(questionId,choice)),
     saveRoute:(objective,route)=>mutate("perception.route.save",{objective:objective,route:Array.from(route||[])},()=>local.saveRoute(objective,route)),
-    savePerceptionBinding:(binding)=>mutate("perception.binding.save",{binding:binding},()=>local.savePerceptionBinding(binding))
+    savePerceptionBinding:(binding)=>mutate("perception.binding.save",{binding:binding},()=>local.savePerceptionBinding(binding)),
+    createEntity:(input)=>mutate("entity.create",{input:input},()=>local.createEntity(input)),
+    getEntity:(id)=>local.getEntity(id),
+    listEntities:(placeId,parentEntityId)=>local.listEntities(placeId,parentEntityId),
+    updateEntity:(id,patch)=>mutate("entity.update",{id:id,patch:patch},()=>local.updateEntity(id,patch)),
+    setEntityMembership:(entityId,status,role)=>mutate("entity.membership",{entityId:entityId,status:status,role:role},()=>local.setEntityMembership(entityId,status,role)),
+    getEntityMembership:(entityId)=>local.getEntityMembership(entityId),
+    linkEntities:(fromEntityId,toEntityId,linkType)=>mutate("entity.link",{fromEntityId:fromEntityId,toEntityId:toEntityId,linkType:linkType},()=>local.linkEntities(fromEntityId,toEntityId,linkType)),
+    linksForEntity:(entityId)=>local.linksForEntity(entityId),
+    promotePlanToEvent:(entityId)=>mutate("plan.promote",{entityId:entityId},()=>local.promotePlanToEvent(entityId)),
+    transformEntity:(entityId,targetPlace,options)=>mutate("entity.transform",{entityId:entityId,targetPlace:targetPlace,options:options||{}},()=>local.transformEntity(entityId,targetPlace,options))
   };
 
   window.NetizensData=data;

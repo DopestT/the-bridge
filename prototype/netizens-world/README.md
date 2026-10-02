@@ -1,42 +1,86 @@
-# NETIZENS World V2
+# NETIZENS World V3
 
-NETIZENS is split into two layers:
+NETIZENS remains deliberately split into two layers:
 
-> A social app on the surface. A world underneath.
+> **A social app on the surface. A world underneath.**
 
-The normal app handles everyday utility. Enter World opens the immersive network.
+The Surface App handles everyday utility. **Enter World** opens the explorable network.
 
-## V2
+## V3: the World now has real layers
 
-V2 adds persistent browser-local World state, Citizen XP and artifacts, four avatar forms, place modes, a deterministic Citizen Mark, persistent place visits, Crews, Projects, Event interest, Plans, Yes or No votes, and saved Perception routes.
+V3 replaces one-off place-specific mock interactions with a generic World Entity graph.
 
-The World contains Commons, Crews, Local, Projects, Ask, Exchange, Circles, Events, Plans, and Yes or No. These places remain separate by purpose and connect only when an approved objective needs more than one place.
+A World Entity can be a:
+- Crew
+- Project
+- Plan
+- Event
+- Circle
+- Question
+- Exchange offer
+- or another future object inside a Place.
 
-The Inception-style depth trail supports World to Place to nested Crew, Project, or Plan.
+Each entity has a durable identity, Place, type, parent, creator, title, summary, visibility, status, metadata, timestamps, membership state, and cross-Place links.
 
-Time Machine is now an interactive scenario explorer after discovery with +6 months, +1 year, and +5 years views. Every generated future is labeled as a scenario rather than a prediction.
+That makes the Inception model structural rather than cosmetic:
 
-GitHub QA checks JavaScript syntax, World state behavior, and required shell elements.
+**World → Place → Entity → nested Entity**
 
-## Product rules
+Examples now supported by the prototype:
+- a Plan can become an Event;
+- creating that Event can also create a nested organizer Circle;
+- an Ask question can become a Project;
+- linked entities remain separately addressable instead of being renamed into one another.
 
-- Separate by purpose. Connect by intent.
-- One Citizen identity can appear differently in different places.
-- Perception proposes cross-place routes before actions are carried out.
-- Time Machine scenarios are exploratory, not factual forecasts.
+## Existing V2 capabilities preserved
 
-## Still to build for production
+- persistent Citizen state;
+- Citizen Mark;
+- XP, levels and earned artifacts;
+- likeness, stylized, fictional and privacy avatar forms;
+- Place Modes;
+- Commons, Crews, Local, Projects, Ask, Exchange, Circles, Events, Plans and Yes or No;
+- local-first mutation queue;
+- session-scoped live Perception client;
+- local World-route fallback;
+- hidden Time Machine with +6 months, +1 year and +5 years scenarios;
+- scenario-not-prediction labeling;
+- GitHub QA.
 
-The current prototype does not yet include production authentication, server-side durable state, real user messaging, moderation services, geospatial discovery, live Perception execution, notifications, production reputation, media upload, or real-time collaboration.
+## V2 → V3 migration
 
-The next phase is the durable World backend contract covering identity, places, memberships, plans, projects, events, permissions, reputation, Perception objectives, and append-only action and verification history.
+The client reads the previous V2 local state if no V3 state exists. Existing Plans are promoted into enterable V3 World Entities without destroying the legacy state.
+
+The V3 state is stored separately so migration can be verified before older local state is discarded.
+
+## Perception
+
+Perception remains the canonical intelligence and orchestration runtime. NETIZENS sends bounded Place and Entity context with an objective. Perception owns objective interpretation, routes, runtime permissions, execution, verification and learning.
+
+NETIZENS stores only the World state and lightweight Perception binding IDs it needs to reconnect those verified results to the right Place and Entity.
+
+## Still required for production
+
+The prototype is not yet the production social network. Remaining production work includes:
+- authenticated NETIZENS server state;
+- real Citizens and memberships;
+- messaging and notifications;
+- moderation and safety systems;
+- geospatial discovery;
+- server-side access controls;
+- production reputation;
+- media;
+- real-time collaboration;
+- deployment and operational hardening.
+
+The client entity graph intentionally mirrors the durable PostgreSQL contract so local-first behavior can move to the server without redesigning the World model.
 
 ## Run
 
-Serve the repository with any static HTTP server and open:
+Serve the repository with a static HTTP server and open:
 
 `prototype/netizens-world/index.html`
 
-Run state QA with:
+Run QA with:
 
 `node prototype/netizens-world/qa.mjs`

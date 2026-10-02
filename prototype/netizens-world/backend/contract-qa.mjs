@@ -29,8 +29,12 @@ assert.ok(sql.includes("perception_objective_id"),"Perception bridge should pers
 assert.ok(sql.includes("perception_route_id"),"Perception bridge should persist canonical route IDs");
 
 assert.equal(stateSchema.type,"object");
+assert.equal(stateSchema.properties.version.const,3);
 assert.ok(stateSchema.required.includes("citizen"));
 assert.ok(stateSchema.required.includes("world"));
+for(const field of ["entities","entityOrder","entityMemberships","entityLinks","perceptionBindings"]){
+  assert.ok(stateSchema.properties.world.required.includes(field),"V3 client state missing required field: "+field);
+}
 assert.deepEqual(stateSchema.properties.citizen.properties.form.enum,["likeness","stylized","fictional","privacy"]);
 
 console.log("NETIZENS backend contract QA passed");

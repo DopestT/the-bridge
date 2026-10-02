@@ -11,7 +11,7 @@ const placeData = {
   yesno:{name:"Yes or No",symbol:"◐",color:"#63e89b",bg:"#173d35",tag:"QUICK DECISIONS",desc:"One question. Two choices. Vote first, then see the room.",items:[],chips:["Now","Local","Friends","World"]}
 };
 
-const state = { depth:[{type:"world",label:"WORLD"}], currentPlace:null, routeOrigin:null };
+const state = { depth:[{type:"world",label:"WORLD"}], currentPlace:null, currentEntityId:null, routeOrigin:null };
 const surface = document.getElementById("surfaceApp");
 const world = document.getElementById("worldApp");
 const mapView = document.getElementById("worldMap");
@@ -33,7 +33,7 @@ function exitWorld(){
   world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels(); emit("world_exit");
 }
 function showMap(){
-  state.depth=[{type:"world",label:"WORLD"}]; state.currentPlace=null;
+  state.depth=[{type:"world",label:"WORLD"}]; state.currentPlace=null; state.currentEntityId=null; state.routeOrigin=null;
   mapView.classList.add("active"); placeView.classList.remove("active");
   renderDepth(); document.getElementById("worldMain").focus({preventScroll:true}); emit("world_map_view");
 }
@@ -52,7 +52,9 @@ function pushDepth(label,type){
 function popDepthTo(index){
   if(index===state.depth.length-1) return;
   if(index===0) return showMap();
+  var target=state.depth[index];
   state.depth=state.depth.slice(0,index+1); renderDepth();
+  if(target && target.type==="entity") return openEntity(target.id,true);
   var placeItem=state.depth.find(function(x){return x.type==="place";});
   if(placeItem) openPlace(placeItem.id,true);
 }
@@ -71,9 +73,105 @@ function timeMachinePlace(){
 }
 function showTimeDoor(id){ return localStorage.getItem("netizens_tm_found")!==getTodayKey() && id===timeMachinePlace(); }
 
+function renderEntityCards(placeId){
+  if(!store.listEntities) return "";
+  var entities=store.listEntities(placeId,null);
+  if(!entities.length) return "<div class='entity-empty'>Nothing has taken shape here yet.</div>";
+  return "<div class='entity-grid'>"+entities.map(function(entity){
+    var membership=store.getEntityMembership ? store.getEntityMembership(entity.id) : null;
+    var status=membership && membership.status && !["left","removed"].includes(membership.status) ? membership.status : entity.status;
+    return "<button class='entity-card' data-open-entity='"+escapeHtml(entity.id)+"'>"
+      +"<span class='entity-type'>"+escapeHtml(entity.entityType)+"</span>"
+      +"<strong>"+escapeHtml(entity.title)+"</strong>"
+      +"<p>"+escapeHtml(entity.summary||"Enter this layer of the World.")+"</p>"
+      +"<small>"+escapeHtml(status||"active")+" · "+escapeHtml(entity.visibility||"public")+"</small>"
+      +"</button>";
+  }).join("")+"</div>";
+}
+
+function entityActionMarkup(entity){
+  var membership=store.getEntityMembership ? store.getEntityMembership(entity.id) : null;
+  var active=membership && !["left","removed"].includes(membership.status);
+  var actions=[];
+
+  if(entity.placeId==="crews" || entity.placeId==="circles"){
+    actions.push("<button class='place-action' data-entity-membership='"+escapeHtml(entity.id)+"' data-active-status='active'>"+(active?"LEAVE":"JOIN")+"</button>");
+  }
+  if(entity.placeId==="projects"){
+    actions.push("<button class='place-action' data-entity-membership='"+escapeHtml(entity.id)+"' data-active-status='following'>"+(active?"UNFOLLOW":"FOLLOW")+"</button>");
+  }
+  if(entity.placeId==="events"){
+    actions.push("<button class='place-action' data-entity-membership='"+escapeHtml(entity.id)+"' data-active-status='interested'>"+(active?"REMOVE INTEREST":"I'M INTERESTED")+"</button>");
+  }
+  if(entity.placeId==="plans" && entity.status!=="converted"){
+    actions.push("<button class='place-action transform-action' data-promote-plan='"+escapeHtml(entity.id)+"'>TURN PLAN INTO EVENT</button>");
+  }
+  if(entity.placeId==="ask"){
+    actions.push("<button class='place-action transform-action' data-transform-entity='"+escapeHtml(entity.id)+"' data-target-place='projects'>TURN THIS INTO A PROJECT</button>");
+  }
+
+  actions.push("<button class='place-action secondary-action' data-perception-entity='"+escapeHtml(entity.id)+"'>ASK PERCEPTION FROM HERE</button>");
+  return actions.join("");
+}
+
+function openEntity(id,preserveDepth){
+  if(!store.getEntity) return;
+  var entity=store.getEntity(id); if(!entity)return;
+  var p=placeData[entity.placeId]||placeData.commons;
+  state.currentPlace=entity.placeId;
+  state.currentEntityId=entity.id;
+  state.routeOrigin=entity.placeId;
+  store.setMode(entity.placeId);
+  renderCitizen();
+
+  if(!preserveDepth){
+    state.depth=[
+      {type:"world",label:"WORLD"},
+      {type:"place",id:entity.placeId,label:p.name.toUpperCase()},
+      {type:"entity",id:entity.id,label:entity.title.toUpperCase()}
+    ];
+  }
+
+  mapView.classList.remove("active"); placeView.classList.add("active"); renderDepth();
+  placeView.style.setProperty("--place-color",p.color);
+  placeView.style.setProperty("--place-bg",p.bg);
+  placeView.style.setProperty("--place-glow",p.color+"33");
+
+  var links=store.linksForEntity ? store.linksForEntity(entity.id) : [];
+  var linked=links.map(function(link){
+    var otherId=link.fromEntityId===entity.id ? link.toEntityId : link.fromEntityId;
+    var other=store.getEntity(otherId);
+    if(!other)return "";
+    return "<button class='entity-link' data-open-entity='"+escapeHtml(other.id)+"'><span>"+escapeHtml(link.linkType.replace(/_/g," "))+"</span><strong>"+escapeHtml(other.title)+"</strong><small>"+escapeHtml((placeData[other.placeId]||{}).name||other.placeId)+"</small></button>";
+  }).join("");
+
+  var children=store.listEntities ? store.listEntities(null,entity.id) : [];
+  var childMarkup=children.map(function(child){
+    return "<button class='entity-link' data-open-entity='"+escapeHtml(child.id)+"'><span>inside</span><strong>"+escapeHtml(child.title)+"</strong><small>"+escapeHtml((placeData[child.placeId]||{}).name||child.placeId)+"</small></button>";
+  }).join("");
+
+  var membership=store.getEntityMembership ? store.getEntityMembership(entity.id) : null;
+  var pathNote=membership ? "<p class='entity-membership-note'>YOUR STATUS · "+escapeHtml(membership.status.toUpperCase())+" · "+escapeHtml(membership.role.toUpperCase())+"</p>" : "";
+
+  placeView.innerHTML=
+    "<section class='entity-hero'>"
+      +"<div><p class='kicker'>"+escapeHtml(p.name.toUpperCase())+" · "+escapeHtml(entity.entityType.toUpperCase())+"</p>"
+      +"<h1>"+escapeHtml(entity.title)+"</h1>"
+      +"<p>"+escapeHtml(entity.summary||"A living object inside NETIZENS World.")+"</p>"+pathNote+"</div>"
+      +"<div class='entity-symbol'>"+p.symbol+"</div>"
+    +"</section>"
+    +"<div class='entity-layout'>"
+      +"<section class='panel'><h3>THIS LAYER</h3><div class='entity-facts'><span>STATUS <b>"+escapeHtml(entity.status)+"</b></span><span>VISIBILITY <b>"+escapeHtml(entity.visibility)+"</b></span><span>PLACE <b>"+escapeHtml(p.name)+"</b></span></div>"+entityActionMarkup(entity)+"</section>"
+      +"<aside class='panel'><h3>CONNECTED LAYERS</h3>"+(linked||childMarkup?linked+childMarkup:"<p class='muted'>Nothing connected yet. Connections appear when this object becomes something else or creates a deeper layer.</p>")+"</aside>"
+    +"</div>";
+
+  emit("entity_view",{entity_id:entity.id,place:entity.placeId,entity_type:entity.entityType});
+}
+
 function openPlace(id,preserveDepth){
   var p=placeData[id]; if(!p)return;
   state.currentPlace=id;
+  state.currentEntityId=null;
   store.visitPlace(id);
   store.setMode(id);
   renderCitizen();
@@ -88,16 +186,11 @@ function openPlace(id,preserveDepth){
     content="<section class='panel yesno-stage'><p class='kicker'>QUESTION NOW</p><h2>Should group chats have an expiration date?</h2><div class='vote-row'><button class='vote yes' data-vote='yes'>YES</button><button class='vote no' data-vote='no'>NO</button></div><div id='voteResult' class='vote-result'>Results stay hidden until you vote.</div></section>";
   } else {
     var activities=p.items.map(function(x,i){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>"+(i+2)+" people active now · context travels with you</span></div>";}).join("");
-    var nested="";
-    if(id==="crews") nested="<div class='nested-card'><strong>Film & Creators</strong><span class='muted'>A Crew can contain rooms, plans and projects.</span><div class='nested-actions'><button data-world-action='toggle' data-list='joinedCrews' data-value='Film & Creators'>JOIN / LEAVE CREW</button><button data-enter-depth='Film & Creators Crew'>ENTER CREW</button></div></div>";
-    if(id==="projects") nested="<div class='nested-card'><strong>Indie Film Series</strong><span class='muted'>32 members · 40% complete</span><div class='nested-actions'><button data-world-action='toggle' data-list='followedProjects' data-value='Indie Film Series'>FOLLOW / UNFOLLOW</button><button data-enter-depth='Indie Film Series Project'>ENTER PROJECT</button></div></div>";
-    if(id==="events") nested="<div class='nested-card'><strong>Rooftop Concert</strong><span class='muted'>Saturday · people you follow are interested.</span><button data-world-action='toggle' data-list='interestedEvents' data-value='Rooftop Concert'>INTERESTED / REMOVE</button></div>";
-    if(id==="plans"){
-      var savedPlans=store.snapshot().world.plans;
-      var savedMarkup=savedPlans.length?savedPlans.slice(0,4).map(function(plan){return "<div class='saved-plan'><strong>"+escapeHtml(plan.title)+"</strong><span>"+escapeHtml(plan.status)+" · created in your World</span></div>";}).join(""):"<p class='muted small-copy'>No personal Plans yet.</p>";
-      nested="<div class='nested-card'><strong>Ramen Friday</strong><span class='muted'>4 interested · becomes an Event when time + place lock.</span><button data-enter-depth='Ramen Friday Plan'>OPEN PLAN</button></div><div class='plan-composer'><label for='planTitle'>START A PLAN</label><div><input id='planTitle' maxlength='100' placeholder='Anybody want to...'><button data-create-plan>CREATE</button></div></div><div class='saved-plans'>"+savedMarkup+"</div>";
-    }
-    content="<div class='place-grid'><section class='panel'><h3>Happening here</h3>"+activities+nested+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
+    var entities=renderEntityCards(id);
+    var composer=id==="plans"
+      ? "<div class='plan-composer'><label for='planTitle'>START A PLAN</label><div><input id='planTitle' maxlength='100' placeholder='Anybody want to...'><button data-create-plan>CREATE</button></div></div>"
+      : "";
+    content="<div class='place-grid'><section class='panel'><h3>ENTERABLE LAYERS</h3>"+entities+composer+"<h3 class='ambient-heading'>HAPPENING AROUND HERE</h3>"+activities+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
   }
 
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
@@ -195,6 +288,7 @@ async function routeIntent(){
       var snap=store.snapshot();
       var result=await perception.submit(raw,{
         placeId:state.routeOrigin||state.currentPlace||"",
+        entityId:state.currentEntityId||"",
         snapshotHash:String(store.hash(JSON.stringify(snap)))
       });
 
@@ -217,6 +311,7 @@ async function routeIntent(){
             objectiveId:result.objectiveId,
             routeId:result.routeId,
             sourcePlaceId:state.routeOrigin||state.currentPlace||null,
+            sourceEntityId:state.currentEntityId||null,
             reason:result.reason||"",
             nodes:result.nodes||[],
             status:"route_proposed"
@@ -295,6 +390,11 @@ document.addEventListener("click",function(e){
   var d=e.target.closest("[data-depth-index]"); if(d)return popDepthTo(Number(d.dataset.depthIndex));
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }
+  var openEntityBtn=e.target.closest("[data-open-entity]"); if(openEntityBtn)return openEntity(openEntityBtn.dataset.openEntity);
+  var membershipBtn=e.target.closest("[data-entity-membership]"); if(membershipBtn){var current=store.getEntityMembership(membershipBtn.dataset.entityMembership);var next=current && !["left","removed"].includes(current.status) ? "left" : (membershipBtn.dataset.activeStatus||"active");store.setEntityMembership(membershipBtn.dataset.entityMembership,next,next==="following"?"follower":next==="interested"?"attendee":"member");renderCitizen();return openEntity(membershipBtn.dataset.entityMembership,true);}
+  var promoteBtn=e.target.closest("[data-promote-plan]"); if(promoteBtn){var eventEntity=store.promotePlanToEvent(promoteBtn.dataset.promotePlan);renderCitizen();if(eventEntity&&eventEntity.id)return openEntity(eventEntity.id);return;}
+  var transformBtn=e.target.closest("[data-transform-entity]"); if(transformBtn){var transformed=store.transformEntity(transformBtn.dataset.transformEntity,transformBtn.dataset.targetPlace,{linkType:"became_project",entityType:"project"});renderCitizen();if(transformed&&transformed.id)return openEntity(transformed.id);return;}
+  var entityPerception=e.target.closest("[data-perception-entity]"); if(entityPerception){var sourceEntity=store.getEntity(entityPerception.dataset.perceptionEntity);if(sourceEntity){state.currentEntityId=sourceEntity.id;state.routeOrigin=sourceEntity.placeId;renderPerceptionStatus();openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me move "+sourceEntity.title+" forward."; }return;}
   var voteBtn=e.target.closest("[data-vote]"); if(voteBtn)return vote(voteBtn.dataset.vote);
   var horizon=e.target.closest("[data-horizon]"); if(horizon)return renderFutureScenario(horizon.dataset.horizon);
   var createPlan=e.target.closest("[data-create-plan]"); if(createPlan){var input=document.getElementById("planTitle");var title=input?input.value.trim():"";if(title){store.createPlan(title,{source:"plans"});store.addArtifact("PLANNER");renderCitizen();openPlace("plans",true);}return;}
@@ -304,7 +404,7 @@ document.addEventListener("click",function(e){
   var close=e.target.closest("[data-close-panel]"); if(close){var panel=document.getElementById(close.dataset.closePanel);panel.classList.remove("open");panel.setAttribute("aria-hidden","true");return;}
   var mode=e.target.closest("[data-preview-mode]"); if(mode)return previewMode(mode.dataset.previewMode);
   var form=e.target.closest("[data-avatar-form]"); if(form){store.setForm(form.dataset.avatarForm);store.addArtifact("SHAPESHIFTER");renderCitizen();emit("avatar_form_change",{form:form.dataset.avatarForm});return;}
-  var from=e.target.closest("[data-perception-from]"); if(from){state.routeOrigin=from.dataset.perceptionFrom;renderPerceptionStatus();openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me do something useful from "+placeData[from.dataset.perceptionFrom].name+".";return;}
+  var from=e.target.closest("[data-perception-from]"); if(from){state.currentEntityId=null;state.routeOrigin=from.dataset.perceptionFrom;renderPerceptionStatus();openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me do something useful from "+placeData[from.dataset.perceptionFrom].name+".";return;}
   var route=e.target.closest("[data-open-route]"); if(route){closePanels();return openPlace(route.dataset.openRoute);}
 });
 
@@ -312,7 +412,7 @@ document.getElementById("enterWorld").addEventListener("click",showWorld);
 document.getElementById("exitWorld").addEventListener("click",exitWorld);
 document.getElementById("worldHome").addEventListener("click",showMap);
 document.getElementById("openCitizen").addEventListener("click",function(){openPanel(citizenPanel);});
-document.getElementById("openPerception").addEventListener("click",function(){state.routeOrigin=null;renderPerceptionStatus();openPanel(perceptionPanel);});
+document.getElementById("openPerception").addEventListener("click",function(){state.routeOrigin=state.currentPlace||null;renderPerceptionStatus();openPanel(perceptionPanel);});
 document.getElementById("routeIntent").addEventListener("click",routeIntent);
 document.getElementById("closeTimeMachine").addEventListener("click",function(){timeDialog.close();});
 timeDialog.addEventListener("click",function(e){if(e.target===timeDialog)timeDialog.close();});
