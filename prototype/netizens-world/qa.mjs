@@ -30,6 +30,9 @@ assert.equal(store.snapshot().world.plans[0].title,"Museum Saturday");
 store.vote("qa-question","yes");
 assert.equal(store.snapshot().world.yesNoVotes["qa-question"].choice,"yes");
 
+store.setForm("privacy");
+assert.equal(store.snapshot().citizen.form,"privacy");
+
 store.saveRoute("Build a local film club",["local","crews","projects"]);
 assert.deepEqual(Array.from(store.snapshot().world.savedRoutes[0].route),["local","crews","projects"]);
 
