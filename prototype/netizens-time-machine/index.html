@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0b0f" />
+  <title>NETIZENS — Time Machine Prototype</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" data-home aria-label="NETIZENS home">
+        <span class="brand-mark">N</span>
+        <span>NETIZENS</span>
+      </button>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Search">⌕</button>
+        <button class="icon-btn" aria-label="Messages">✦</button>
+        <button class="avatar" aria-label="Profile">K</button>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section id="homeView" class="view active" aria-labelledby="homeTitle">
+        <div class="hero">
+          <span class="eyebrow">ONE NETWORK · MANY PLACES</span>
+          <h1 id="homeTitle">Where do you want to go?</h1>
+          <p>Every place has its own purpose, feel and rules. They connect only when it helps.</p>
+        </div>
+        <div id="placesGrid" class="places-grid" aria-label="NETIZENS places"></div>
+      </section>
+
+      <section id="placeView" class="view" aria-live="polite"></section>
+    </main>
+
+    <nav class="dock" aria-label="Primary">
+      <button data-home class="dock-item active"><span>⌂</span><small>Home</small></button>
+      <button data-place="local" class="dock-item"><span>⌖</span><small>Local</small></button>
+      <button data-place="yesno" class="dock-item"><span>◐</span><small>Yes / No</small></button>
+      <button data-place="circles" class="dock-item"><span>◉</span><small>Circles</small></button>
+    </nav>
+  </div>
+
+  <dialog id="timeMachineDialog" class="time-dialog">
+    <div class="time-machine">
+      <button id="closeTimeMachine" class="close-btn" aria-label="Close Time Machine">×</button>
+      <div class="time-halo" aria-hidden="true">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <span class="time-glyph">◌</span>
+      </div>
+      <p class="time-label">TIME MACHINE</p>
+      <h2>Be right back.</h2>
+      <p class="time-whisper" aria-hidden="true">2031 · 2036 · 2046</p>
+    </div>
+  </dialog>
+
+  <script src="./app.js"></script>
+</body>
+</html>
