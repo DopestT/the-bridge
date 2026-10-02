@@ -23,7 +23,7 @@ vm.runInContext(source,context,{filename:"world-state.js"});
 
 const store=window.NetizensStore;
 assert.ok(store,"NetizensStore should be exposed");
-assert.equal(store.snapshot().version,2);
+assert.equal(store.snapshot().version,3);
 
 const initialXp=store.snapshot().citizen.xp;
 store.visitPlace("commons");
@@ -33,6 +33,28 @@ assert.equal(store.snapshot().world.visitedPlaces.commons.count,2);
 
 store.createPlan("Museum Saturday",{source:"qa"});
 assert.equal(store.snapshot().world.plans[0].title,"Museum Saturday");
+
+const museumPlan=store.listEntities("plans",null).find(entity=>entity.title==="Museum Saturday");
+assert.ok(museumPlan,"creating a Plan should also create an enterable World entity");
+assert.equal(museumPlan.entityType,"plan");
+
+const promotedEvent=store.promotePlanToEvent(museumPlan.id);
+assert.ok(promotedEvent,"a Plan should promote into an Event");
+assert.equal(promotedEvent.placeId,"events");
+assert.equal(store.getEntity(museumPlan.id).status,"converted");
+assert.ok(store.linksForEntity(museumPlan.id).some(link=>link.linkType==="became_event"),"Plan to Event relationship should be durable");
+assert.ok(store.listEntities("circles",promotedEvent.id).some(entity=>entity.entityType==="circle"),"promoting a Plan should create a nested organizer Circle");
+
+const askEntity=store.createEntity({
+  placeId:"ask",
+  entityType:"question",
+  title:"How do we build a neighborhood media club?",
+  summary:"Turn an open question into coordinated work."
+});
+const transformedProject=store.transformEntity(askEntity.id,"projects",{entityType:"project",linkType:"became_project"});
+assert.ok(transformedProject,"Ask should be transformable into a Project");
+assert.equal(transformedProject.placeId,"projects");
+assert.ok(store.linksForEntity(askEntity.id).some(link=>link.toEntityId===transformedProject.id));
 
 store.vote("qa-question","yes");
 assert.equal(store.snapshot().world.yesNoVotes["qa-question"].choice,"yes");
@@ -63,6 +85,13 @@ const flushResult=await data.flush();
 assert.ok(flushResult.flushed>=1,"adapter should flush queued operations");
 assert.equal(data.getSyncStatus().pending,0,"queue should clear after successful transport");
 assert.ok(delivered.some(op=>op.kind==="plan.create"),"transport should receive plan operation");
+
+const queuedEntity=data.createEntity({placeId:"crews",entityType:"crew",title:"QA Crew"});
+assert.equal(queuedEntity.placeId,"crews");
+assert.equal(data.getSyncStatus().pending,1,"entity mutation should enter the local-first queue");
+const entityFlush=await data.flush();
+assert.equal(entityFlush.pending,0);
+assert.ok(delivered.some(op=>op.kind==="entity.create"),"transport should receive entity operations");
 
 vm.runInContext(perceptionSource,context,{filename:"perception-client.js"});
 const perception=window.NetizensPerception;
@@ -108,4 +137,39 @@ assert.equal(live.routeId,"route-1");
 assert.equal(live.sourceContextAccepted,1);
 assert.equal(live.nodes[0].permissionLevel,"P1");
 
-console.log("NETIZENS World state + adapter + Perception client QA passed");
+const legacyState={
+  version:2,
+  createdAt:"2026-01-01T00:00:00Z",
+  updatedAt:"2026-01-01T00:00:00Z",
+  citizen:{id:"citizen_legacy",name:"Legacy Citizen",initial:"L",xp:200,level:1,artifacts:["FOUNDER"],mode:"plans",form:"stylized",markSeed:"legacy-seed"},
+  world:{
+    visitedPlaces:{},
+    joinedCrews:[],
+    followedProjects:[],
+    interestedEvents:[],
+    plans:[{id:"plan_legacy",title:"Legacy Plan",status:"forming",createdAt:"2026-01-02T00:00:00Z",meta:{source:"migration-test"}}],
+    yesNoVotes:{},
+    savedRoutes:[],
+    perceptionBindings:[],
+    timeline:[]
+  }
+};
+const legacyMemory=new Map([
+  ["netizens_world_seed","legacy-seed"],
+  ["netizens_world_state_v2",JSON.stringify(legacyState)]
+]);
+const legacyStorage={
+  getItem(key){return legacyMemory.has(key)?legacyMemory.get(key):null;},
+  setItem(key,value){legacyMemory.set(key,String(value));},
+  removeItem(key){legacyMemory.delete(key);}
+};
+const legacyWindow={events:[],dispatchEvent(event){this.events.push(event);},addEventListener(){}};
+const legacyContext=vm.createContext({window:legacyWindow,localStorage:legacyStorage,CustomEvent,console,Math,Date,JSON,Array,String,Number,Object});
+vm.runInContext(source,legacyContext,{filename:"world-state-migration.js"});
+const migrated=legacyWindow.NetizensStore.snapshot();
+assert.equal(migrated.version,3,"V2 state should migrate to V3");
+assert.equal(migrated.citizen.name,"Legacy Citizen");
+assert.equal(legacyWindow.NetizensStore.getEntity("plan_legacy").placeId,"plans","legacy Plans should become World entities");
+assert.ok(legacyMemory.has("netizens_world_state_v2"),"migration should not destroy the legacy state before the V3 state is saved");
+
+console.log("NETIZENS World V3 state + entity graph + adapter + Perception client QA passed");
