@@ -3,6 +3,7 @@ import vm from "node:vm";
 import assert from "node:assert/strict";
 
 const source=fs.readFileSync(new URL("./world-state.js",import.meta.url),"utf8");
+const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);
 const localStorage={
   getItem(key){ return memory.has(key)?memory.get(key):null; },
@@ -10,7 +11,12 @@ const localStorage={
   removeItem(key){ memory.delete(key); }
 };
 class CustomEvent { constructor(type,init={}){ this.type=type; this.detail=init.detail; } }
-const window={ events:[], dispatchEvent(event){ this.events.push(event); } };
+const window={
+  events:[],
+  listeners:{},
+  dispatchEvent(event){ this.events.push(event); const list=this.listeners[event.type]||[]; for(const fn of list) fn(event); },
+  addEventListener(type,fn){ (this.listeners[type]||(this.listeners[type]=[])).push(fn); }
+};
 const context=vm.createContext({window,localStorage,CustomEvent,console,Math,Date,JSON,Array,String,Number,Object});
 vm.runInContext(source,context,{filename:"world-state.js"});
 
@@ -42,4 +48,19 @@ assert.equal(futureA.label,"+1 YEAR");
 assert.deepEqual(futureA.metrics,futureB.metrics,"future scenario should be deterministic for the same state");
 assert.equal(futureA.disclaimer,"Scenario, not prediction.");
 
-console.log("NETIZENS World state QA passed");
+vm.runInContext(adapterSource,context,{filename:"data-adapter.js"});
+const data=window.NetizensData;
+assert.ok(data,"NetizensData should be exposed");
+
+const pendingBefore=data.getSyncStatus().pending;
+data.createPlan("Adapter Plan",{source:"qa"});
+assert.equal(data.getSyncStatus().pending,pendingBefore+1,"adapter should queue local-first mutations");
+
+const delivered=[];
+data.setTransport(async op=>{ delivered.push(op); return {ok:true}; });
+const flushResult=await data.flush();
+assert.ok(flushResult.flushed>=1,"adapter should flush queued operations");
+assert.equal(data.getSyncStatus().pending,0,"queue should clear after successful transport");
+assert.ok(delivered.some(op=>op.kind==="plan.create"),"transport should receive plan operation");
+
+console.log("NETIZENS World state + adapter QA passed");
