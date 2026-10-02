@@ -20,7 +20,7 @@ const depthTrail = document.getElementById("depthTrail");
 const citizenPanel = document.getElementById("citizenPanel");
 const perceptionPanel = document.getElementById("perceptionPanel");
 const timeDialog = document.getElementById("timeMachineDialog");
-const store = window.NetizensStore;
+const store = window.NetizensData || window.NetizensStore;
 let lastRoute = null;
 
 function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
@@ -152,7 +152,15 @@ function routeIntent(){
   emit("perception_route",{objective:raw,route:route});
 }
 
+function renderSyncStatus(){
+  var badge=document.getElementById("syncBadge"); if(!badge || !store.getSyncStatus) return;
+  var status=store.getSyncStatus();
+  badge.textContent=status.mode==="transport-ready" ? (status.pending ? "SYNC "+status.pending : "SYNCED") : (status.pending ? "LOCAL "+status.pending : "LOCAL-FIRST");
+  badge.classList.toggle("pending",status.pending>0);
+}
+
 function renderCitizen(){
+  renderSyncStatus();
   var snap=store.snapshot();
   var citizen=snap.citizen;
   var current=placeData[citizen.mode]||placeData.commons;
@@ -210,5 +218,6 @@ timeDialog.addEventListener("click",function(e){if(e.target===timeDialog)timeDia
 timeDialog.addEventListener("close",function(){emit("time_machine_close");});
 
 var mark=document.getElementById("citizenMark"); mark.style.setProperty("--turn",(hash(seed())%90)+"deg");
+window.addEventListener("netizens:sync-state",renderSyncStatus);
 renderCitizen();
 emit("surface_view");
