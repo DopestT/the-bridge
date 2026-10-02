@@ -1,20 +1,45 @@
 # NETIZENS World API Contract
 
-This contract defines the production boundary between the Surface App, NETIZENS World, and Perception.
+This contract defines the production boundary between the Surface App, NETIZENS World, and the existing Perception runtime.
 
 ## Principles
 
 - Places remain separate by purpose.
 - Cross-place actions happen through explicit routes.
 - The Citizen identity is shared across the network.
+- NETIZENS owns social World state.
+- Perception owns objectives, routes, execution, runtime permissions, verification, and learning.
 - Write operations return enough evidence to verify what actually happened.
-- Perception proposes actions before executing actions that require permission.
 - Time Machine creates scenarios without mutating present-day state.
+
+## Ownership boundary
+
+NETIZENS persists:
+- Citizens;
+- Places and World Entities;
+- memberships and entity links;
+- social access grants;
+- Yes or No votes;
+- artifacts and reputation;
+- Perception bindings;
+- Time Machine scenario snapshots.
+
+Perception persists:
+- projects;
+- objectives;
+- routes and route nodes;
+- runtime permission grants;
+- execution ledger;
+- worker runs;
+- verification runs;
+- scenario intelligence.
+
+NETIZENS references Perception records by ID through `netizens_perception_bindings`. NETIZENS does not maintain a second copy of Perception's ledgers.
 
 ## Core resources
 
 ### Citizen
-Represents one network identity and its public World-facing state.
+One network identity and its World-facing state.
 
 ### Place
 A stable World surface such as Commons, Crews, Local, Projects, Ask, Exchange, Circles, Events, Plans, or Yes or No.
@@ -25,22 +50,16 @@ A nested object inside a Place. Examples include a Crew, Project, Plan, Event, Q
 ### Membership
 Connects a Citizen to a World Entity with a role and status.
 
-### Perception Objective
-A natural-language goal entered from either the Surface App or a World Place.
+### Netizens Access Grant
+Controls social access such as private visibility, invitations, or messaging boundaries.
 
-### Perception Route
-The proposed cross-place plan for achieving an Objective.
-
-### Execution Step
-One bounded action in an approved route.
-
-### Verification Event
-Evidence that an execution step actually produced the intended result.
+### Perception Binding
+Links a Citizen, Place, and optional World Entity to the canonical Perception project/objective/route records.
 
 ### Time Machine Scenario
-A non-destructive future scenario derived from a durable World snapshot.
+A non-destructive future scenario derived from a durable World snapshot and, when available, Perception scenario intelligence.
 
-## Proposed HTTP endpoints
+## Proposed NETIZENS endpoints
 
 ### World bootstrap
 
@@ -52,7 +71,8 @@ Returns:
 - visible memberships;
 - recent World entities;
 - artifacts and reputation summary;
-- active permissions;
+- social access controls;
+- recent Perception bindings;
 - unread counts needed by the World shell.
 
 ### Places
@@ -81,99 +101,103 @@ Creates or changes the calling Citizen's membership state.
 
 Creates an early intent object in Plans.
 
-A Plan may later produce:
-- an Event;
-- a Circle;
-- a Crew;
-- a Project.
-
-The resulting objects are linked rather than replacing the original Plan.
+A Plan may later produce an Event, Circle, Crew, or Project. The resulting objects are linked rather than replacing the original Plan.
 
 ### Yes or No
 
 `POST /v1/yes-no/{entityId}/vote`
 
 Request:
+
 ```json
 {"choice":"yes","explanation":null}
 ```
 
 The response returns aggregate results only after the vote is accepted.
 
-### Perception
+## Perception gateway
+
+These NETIZENS endpoints are gateways into the canonical Perception runtime. They do not create duplicate NETIZENS-owned objective or route ledgers.
 
 `POST /v1/perception/objectives`
 
 Request:
+
 ```json
 {
   "objective":"I want to start a local film club",
-  "sourcePlaceId":"local"
+  "sourcePlaceId":"local",
+  "sourceEntityId":null
 }
 ```
 
-Response includes:
-- interpreted goal;
-- proposed route;
-- required permissions;
-- verification requirements.
+Flow:
+1. NETIZENS creates or resolves the Perception project binding.
+2. The objective is sent to Perception with World context.
+3. Perception creates the canonical objective and route.
+4. NETIZENS stores the returned IDs in `netizens_perception_bindings`.
+5. NETIZENS renders the route and permission requirements.
 
-`POST /v1/perception/routes/{routeId}/approve`
+`POST /v1/perception/bindings/{bindingId}/approve`
 
-Approves the exact presented route and permission set.
+Approves the presented route and requested runtime permission scope.
 
-`POST /v1/perception/routes/{routeId}/execute`
+`POST /v1/perception/bindings/{bindingId}/execute`
 
-Starts bounded execution.
+Asks Perception to execute the approved route.
 
-`GET /v1/perception/routes/{routeId}`
+`GET /v1/perception/bindings/{bindingId}`
 
-Returns route state, execution steps, blockers, and verification evidence.
+Returns the NETIZENS binding plus current canonical Perception status, execution evidence, and verification summary.
 
-### Time Machine
+## Time Machine
 
 `POST /v1/time-machine/scenarios`
 
 Request:
+
 ```json
 {"horizon":"1y"}
 ```
 
 Response:
+
 ```json
 {
   "label":"Scenario, not prediction.",
   "horizon":"1y",
   "assumptions":[],
   "scenario":{},
+  "perceptionScenarioId":null,
   "createdAt":"..."
 }
 ```
 
-This endpoint must not modify present-day entities, memberships, permissions, reputation, or messages.
+This endpoint must not modify present-day World entities, memberships, access grants, reputation, or messages.
+
+## Two permission layers
+
+### NETIZENS social access
+Controls who can see, enter, message, invite, or interact with World objects.
+
+### Perception runtime permission
+Controls what an AI route can create, connect, publish, execute, or otherwise do on the Citizen's behalf.
+
+A Perception route should carry its required runtime permissions. Missing permissions keep execution blocked.
 
 ## Idempotency
 
-All mutation endpoints should accept an `Idempotency-Key` header. Retried requests with the same key and same authenticated Citizen should not create duplicate entities or duplicate execution steps.
-
-## Permission model
-
-Permissions are explicit capabilities such as:
-- create entity;
-- invite Citizens;
-- publish to a Place;
-- message a Citizen;
-- expose broader audience visibility;
-- execute a Perception route;
-- create links between entities.
-
-A route should carry its required permissions. If any required permission is missing, execution remains blocked.
+All mutation endpoints should accept an `Idempotency-Key` header. Retried requests with the same key and same authenticated Citizen should not create duplicate entities or duplicate side effects.
 
 ## Verification
 
 A successful API response is not automatically a verified Perception result.
 
-For actions that change World state, verification should confirm the durable record exists and matches the requested intent.
+For actions that change World state:
+1. Perception records execution evidence in its canonical execution ledger.
+2. Verification confirms the intended change.
+3. NETIZENS refreshes the affected World objects.
+4. The binding is marked verified only when the expected state is observable.
 
 ## Events
 
@@ -183,10 +207,10 @@ The production client should consume server events for:
 - membership.changed;
 - plan.converted;
 - event.updated;
-- perception.route.updated;
-- execution.step.updated;
-- verification.created;
+- perception.binding.updated;
+- perception.execution.updated;
+- perception.verification.updated;
 - citizen.reputation.updated;
 - notification.created.
 
-The transport may be WebSocket, server-sent events, or a managed real-time channel. The event names are part of the application contract even if the transport changes.
+The transport may change without changing these application-level event names.

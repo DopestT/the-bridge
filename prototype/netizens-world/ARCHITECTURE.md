@@ -36,63 +36,89 @@ The World must never make routine app utility slower or harder.
 
 Each place owns its interaction model. Shared services may span places, but shared services do not erase place boundaries.
 
+## Ownership boundary
+
+NETIZENS owns:
+- Citizen identity presentation;
+- World places and nested social objects;
+- memberships;
+- plans, projects, events and conversations;
+- social access controls;
+- artifacts and reputation;
+- World navigation and history;
+- Time Machine presentation.
+
+Perception owns:
+- objective interpretation;
+- Reality Maps and routes;
+- runtime permission grants;
+- worker execution;
+- execution ledger;
+- verification;
+- learning;
+- scenario intelligence.
+
+NETIZENS stores a lightweight binding between World context and Perception IDs. It does not duplicate Perception's canonical objective, route, execution or verification ledgers.
+
 ## Shared services
 
-The following belong to the network layer rather than any one place:
+The following span multiple NETIZENS places:
 - Citizen identity
 - Citizen Mark
 - avatar forms and place modes
-- permissions
+- social access controls
 - reputation and artifacts
 - search
 - messaging
 - notifications
 - moderation
-- Perception
+- Perception bridge
 - analytics
 - World history
 
-## Durable backend entities
+## Durable NETIZENS backend entities
 
-The production backend should model these as first-class records:
+The production World should model:
 
 - Citizen
 - Place
+- WorldEntity
 - Membership
-- Crew
-- Circle
-- Project
-- Plan
-- Event
-- Question
-- Answer
-- ExchangeOffer
-- YesNoQuestion
+- EntityLink
 - YesNoVote
 - Artifact
+- CitizenArtifact
 - ReputationEvent
-- PermissionGrant
-- PerceptionObjective
-- PerceptionRoute
-- ExecutionStep
-- VerificationEvent
+- NetizensAccessGrant
+- NetizensPerceptionBinding
 - TimeMachineScenario
+- WorldAuditEvent
 
-## Perception contract
+PerceptionObjective, PerceptionRoute, runtime permission grants, execution steps and verification records remain canonical in Perception.
 
-Perception receives an objective and returns:
+## Perception bridge contract
+
+A NETIZENS objective carries:
+1. Citizen context;
+2. source Place;
+3. optional source World Entity;
+4. objective text;
+5. relevant World state snapshot;
+6. requested audience boundaries.
+
+Perception returns:
 1. interpreted goal;
 2. relevant World places;
 3. required people and resources;
-4. proposed actions;
-5. permission requirements;
+4. proposed route;
+5. runtime permission requirements;
 6. verification requirements.
 
-No proposed action is considered complete until the relevant execution and verification records exist.
+NETIZENS presents the route to the Citizen. If approved, Perception executes the bounded route and writes its own execution and verification records. NETIZENS stores only the binding and resulting World changes.
 
 ## Time Machine contract
 
-Time Machine reads current durable World state and produces a labeled scenario for a selected horizon.
+Time Machine reads current durable World state and may use Perception scenario intelligence to produce a labeled scenario for a selected horizon.
 
 A scenario must:
 - preserve the Citizen and their World context;
@@ -109,16 +135,21 @@ World → Place → nested place/object → room/task/thread
 
 The breadcrumb is a real state path, not decorative UI. A Citizen can descend without losing identity, permissions, or the ability to return to the parent layer.
 
-## Safety and privacy
+## Two permission systems
 
-The production design should minimize unnecessary exposure and make audience boundaries legible. Location, direct-message access, private Circle membership, invitation reach, and cross-place publishing should each have explicit audience or permission controls.
+NETIZENS social access controls govern things such as who may message, enter a private Circle, see a restricted object, or receive an invitation.
+
+Perception runtime permissions govern whether an AI route may create, connect, publish, execute, or otherwise act on the Citizen's behalf.
+
+The two systems may reference one another, but neither replaces the other.
 
 ## Production phases
 
 1. Persistent interactive prototype.
-2. Durable backend contract and authentication.
-3. Real memberships, Plans, Projects, Events, messaging and notifications.
-4. Perception objective routing with permissioned execution.
-5. Moderation, reputation and verification systems.
-6. Time Machine backed by durable state.
-7. Production QA, performance, accessibility and release hardening.
+2. Durable NETIZENS backend contract.
+3. Perception bridge using canonical runtime objects.
+4. Real memberships, Plans, Projects, Events, messaging and notifications.
+5. Permissioned Perception execution connected to World mutations.
+6. Moderation, reputation and verification systems.
+7. Time Machine backed by durable state and Perception scenario intelligence.
+8. Production QA, performance, accessibility and release hardening.
