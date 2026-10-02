@@ -1,5 +1,7 @@
 -- NETIZENS World durable backend contract (PostgreSQL)
--- Prototype contract: schema is intentionally portable and not yet wired to production auth.
+-- NETIZENS owns social-world state.
+-- Perception remains the canonical owner of objectives, routes, execution ledgers,
+-- runtime permission grants, verification, and scenario intelligence.
 
 create extension if not exists pgcrypto;
 
@@ -122,68 +124,48 @@ create table if not exists reputation_events (
 
 create index if not exists reputation_events_citizen_idx on reputation_events(citizen_id,created_at desc);
 
-create table if not exists permission_grants (
+-- NETIZENS access controls are social/audience controls.
+-- They are intentionally separate from Perception runtime execution grants.
+create table if not exists netizens_access_grants (
   id uuid primary key default gen_random_uuid(),
   citizen_id uuid not null references citizens(id) on delete cascade,
-  scope_type text not null,
-  scope_id text,
-  permission text not null,
-  granted_to text not null default 'perception',
+  grantee_citizen_id uuid references citizens(id) on delete cascade,
+  grantee_entity_id uuid references world_entities(id) on delete cascade,
+  capability text not null,
+  scope jsonb not null default '{}'::jsonb,
   status text not null default 'active'
     check (status in ('active','expired','revoked')),
   expires_at timestamptz,
   created_at timestamptz not null default now(),
-  revoked_at timestamptz
+  revoked_at timestamptz,
+  check (grantee_citizen_id is not null or grantee_entity_id is not null)
 );
 
-create index if not exists permission_grants_lookup_idx
-  on permission_grants(citizen_id,permission,status);
+create index if not exists netizens_access_grants_lookup_idx
+  on netizens_access_grants(citizen_id,capability,status);
 
-create table if not exists perception_objectives (
+-- Bridge records bind NETIZENS World context to the canonical Perception runtime.
+-- Perception IDs are deliberately not foreign-keyed here so the runtimes can
+-- remain provider-independent or move across databases without corrupting World state.
+create table if not exists netizens_perception_bindings (
   id uuid primary key default gen_random_uuid(),
   citizen_id uuid not null references citizens(id) on delete cascade,
   source_place_id text references places(id),
-  objective_text text not null,
-  interpreted_goal jsonb not null default '{}'::jsonb,
-  status text not null default 'proposed'
-    check (status in ('proposed','awaiting_permission','approved','executing','verified','failed','cancelled')),
+  source_entity_id uuid references world_entities(id) on delete set null,
+  perception_project_id uuid not null,
+  perception_objective_id uuid,
+  perception_route_id uuid,
+  binding_status text not null default 'objective_created'
+    check (binding_status in ('objective_created','route_proposed','awaiting_permission','executing','verified','failed','cancelled')),
+  context_snapshot jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table if not exists perception_routes (
-  id uuid primary key default gen_random_uuid(),
-  objective_id uuid not null references perception_objectives(id) on delete cascade,
-  route jsonb not null,
-  permission_requirements jsonb not null default '[]'::jsonb,
-  verification_requirements jsonb not null default '[]'::jsonb,
-  approved_at timestamptz,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists execution_steps (
-  id uuid primary key default gen_random_uuid(),
-  route_id uuid not null references perception_routes(id) on delete cascade,
-  step_index integer not null,
-  place_id text references places(id),
-  action_type text not null,
-  input jsonb not null default '{}'::jsonb,
-  output jsonb,
-  status text not null default 'pending'
-    check (status in ('pending','blocked','running','complete','failed','cancelled')),
-  created_at timestamptz not null default now(),
-  completed_at timestamptz,
-  unique (route_id,step_index)
-);
-
-create table if not exists verification_events (
-  id uuid primary key default gen_random_uuid(),
-  execution_step_id uuid not null references execution_steps(id) on delete cascade,
-  verifier_type text not null,
-  result text not null check (result in ('verified','rejected','inconclusive')),
-  evidence jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now()
-);
+create index if not exists netizens_perception_bindings_citizen_idx
+  on netizens_perception_bindings(citizen_id,created_at desc);
+create index if not exists netizens_perception_bindings_objective_idx
+  on netizens_perception_bindings(perception_objective_id);
 
 create table if not exists time_machine_scenarios (
   id uuid primary key default gen_random_uuid(),
@@ -192,6 +174,7 @@ create table if not exists time_machine_scenarios (
   input_snapshot jsonb not null,
   assumptions jsonb not null default '[]'::jsonb,
   scenario jsonb not null,
+  perception_scenario_id uuid,
   model_version text,
   created_at timestamptz not null default now()
 );
