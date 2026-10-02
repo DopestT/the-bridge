@@ -20,11 +20,13 @@ const depthTrail = document.getElementById("depthTrail");
 const citizenPanel = document.getElementById("citizenPanel");
 const perceptionPanel = document.getElementById("perceptionPanel");
 const timeDialog = document.getElementById("timeMachineDialog");
+const store = window.NetizensStore;
+let lastRoute = null;
 
 function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
 
 function showWorld(){
-  surface.classList.add("hidden"); world.classList.remove("hidden"); emit("world_enter"); showMap();
+  surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); emit("world_enter"); showMap();
 }
 function exitWorld(){
   world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels(); emit("world_exit");
@@ -71,6 +73,9 @@ function showTimeDoor(id){ return localStorage.getItem("netizens_tm_found")!==ge
 function openPlace(id,preserveDepth){
   var p=placeData[id]; if(!p)return;
   state.currentPlace=id;
+  store.visitPlace(id);
+  store.setMode(id);
+  renderCitizen();
   if(!preserveDepth){ state.depth=[{type:"world",label:"WORLD"},{type:"place",id:id,label:p.name.toUpperCase()}]; }
   mapView.classList.remove("active"); placeView.classList.add("active"); renderDepth();
   placeView.style.setProperty("--place-color",p.color);
@@ -83,9 +88,14 @@ function openPlace(id,preserveDepth){
   } else {
     var activities=p.items.map(function(x,i){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>"+(i+2)+" people active now · context travels with you</span></div>";}).join("");
     var nested="";
-    if(id==="crews") nested="<div class='nested-card'><strong>Film & Creators</strong><span class='muted'>A Crew can contain rooms, plans and projects.</span><button data-enter-depth='Film & Creators Crew'>ENTER CREW</button></div>";
-    if(id==="projects") nested="<div class='nested-card'><strong>Indie Film Series</strong><span class='muted'>32 members · 40% complete</span><button data-enter-depth='Indie Film Series Project'>ENTER PROJECT</button></div>";
-    if(id==="plans") nested="<div class='nested-card'><strong>Ramen Friday</strong><span class='muted'>4 interested · becomes an Event when time + place lock.</span><button data-enter-depth='Ramen Friday Plan'>OPEN PLAN</button></div>";
+    if(id==="crews") nested="<div class='nested-card'><strong>Film & Creators</strong><span class='muted'>A Crew can contain rooms, plans and projects.</span><div class='nested-actions'><button data-world-action='toggle' data-list='joinedCrews' data-value='Film & Creators'>JOIN / LEAVE CREW</button><button data-enter-depth='Film & Creators Crew'>ENTER CREW</button></div></div>";
+    if(id==="projects") nested="<div class='nested-card'><strong>Indie Film Series</strong><span class='muted'>32 members · 40% complete</span><div class='nested-actions'><button data-world-action='toggle' data-list='followedProjects' data-value='Indie Film Series'>FOLLOW / UNFOLLOW</button><button data-enter-depth='Indie Film Series Project'>ENTER PROJECT</button></div></div>";
+    if(id==="events") nested="<div class='nested-card'><strong>Rooftop Concert</strong><span class='muted'>Saturday · people you follow are interested.</span><button data-world-action='toggle' data-list='interestedEvents' data-value='Rooftop Concert'>INTERESTED / REMOVE</button></div>";
+    if(id==="plans"){
+      var savedPlans=store.snapshot().world.plans;
+      var savedMarkup=savedPlans.length?savedPlans.slice(0,4).map(function(plan){return "<div class='saved-plan'><strong>"+escapeHtml(plan.title)+"</strong><span>"+escapeHtml(plan.status)+" · created in your World</span></div>";}).join(""):"<p class='muted small-copy'>No personal Plans yet.</p>";
+      nested="<div class='nested-card'><strong>Ramen Friday</strong><span class='muted'>4 interested · becomes an Event when time + place lock.</span><button data-enter-depth='Ramen Friday Plan'>OPEN PLAN</button></div><div class='plan-composer'><label for='planTitle'>START A PLAN</label><div><input id='planTitle' maxlength='100' placeholder='Anybody want to...'><button data-create-plan>CREATE</button></div></div><div class='saved-plans'>"+savedMarkup+"</div>";
+    }
     content="<div class='place-grid'><section class='panel'><h3>Happening here</h3>"+activities+nested+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
   }
 
@@ -97,11 +107,17 @@ function openPlace(id,preserveDepth){
 function openTimeMachine(){
   localStorage.setItem("netizens_tm_found",getTodayKey());
   var door=document.getElementById("timeDoor"); if(door) door.remove();
-  timeDialog.showModal(); emit("time_machine_open",{from:state.currentPlace});
+  store.addArtifact("TIME TRAVELER");
+  renderCitizen();
+  timeDialog.showModal();
+  renderFutureScenario("6m");
+  emit("time_machine_open",{from:state.currentPlace});
 }
 function vote(choice){
   var r=document.getElementById("voteResult"); if(!r)return;
   r.innerHTML=choice==="yes"?"<strong style='color:#91f3bb'>YES 62%</strong> · NO 38% — now explain why.":"YES 62% · <strong style='color:#ff99a8'>NO 38%</strong> — now explain why.";
+  store.vote("group-chat-expiration",choice);
+  renderCitizen();
   emit("yes_no_vote",{choice:choice});
 }
 function closePanels(){
@@ -111,7 +127,11 @@ function openPanel(panel){
   closePanels(); panel.classList.add("open"); panel.setAttribute("aria-hidden","false");
 }
 function previewMode(id){
-  var p=placeData[id]; if(!p)return; document.getElementById("citizenAvatar").style.setProperty("--mode",p.color); emit("avatar_place_mode_preview",{place:id});
+  var p=placeData[id]; if(!p)return;
+  store.setMode(id);
+  document.getElementById("citizenAvatar").style.setProperty("--mode",p.color);
+  renderCitizen();
+  emit("avatar_place_mode_preview",{place:id});
 }
 function routeIntent(){
   var raw=document.getElementById("intentInput").value.trim();
@@ -126,9 +146,38 @@ function routeIntent(){
   if(/ask|know|how|advice|recommend/.test(q)) add("ask");
   if(/help|skill|teach|trade|photographer|designer|developer/.test(q)) add("exchange");
   if(!route.length){add("commons");add("ask");}
+  lastRoute={objective:raw,route:route.slice()};
   var box=document.getElementById("routeResult");
-  box.innerHTML="<div class='route-path'>"+route.map(function(id,i){return (i?"<b>→</b>":"")+"<span>"+placeData[id].name+"</span>";}).join("")+"</div><p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw||"No objective entered.")+"<br>Perception would ask permission before creating, inviting or publishing anything.</p><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button>";
+  box.innerHTML="<div class='route-path'>"+route.map(function(id,i){return (i?"<b>→</b>":"")+"<span>"+placeData[id].name+"</span>";}).join("")+"</div><p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw||"No objective entered.")+"<br>Perception will ask permission before creating, inviting or publishing anything.</p><div class='route-actions'><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button><button class='place-action secondary-action' data-save-route>SAVE APPROVED ROUTE</button></div>";
   emit("perception_route",{objective:raw,route:route});
+}
+
+function renderCitizen(){
+  var snap=store.snapshot();
+  var citizen=snap.citizen;
+  var current=placeData[citizen.mode]||placeData.commons;
+  var levelNode=document.getElementById("citizenLevel");
+  var xpNode=document.getElementById("citizenXp");
+  var progressNode=document.getElementById("citizenProgress");
+  var artifacts=document.getElementById("artifactGrid");
+  var mini=document.getElementById("avatarMini");
+  var avatar=document.getElementById("citizenAvatar");
+  var nameNode=document.getElementById("citizenName");
+  if(levelNode) levelNode.textContent="LEVEL "+String(citizen.level).padStart(2,"0");
+  if(xpNode) xpNode.textContent=citizen.xp+" XP";
+  if(progressNode) progressNode.style.width=((citizen.xp%500)/5)+"%";
+  if(artifacts) artifacts.innerHTML=citizen.artifacts.map(function(a){return "<span>"+escapeHtml(a)+"</span>";}).join("");
+  if(mini) mini.textContent=citizen.initial;
+  if(avatar){avatar.style.setProperty("--mode",current.color);var s=avatar.querySelector("span");if(s)s.textContent=citizen.initial;}
+  if(nameNode) nameNode.textContent=citizen.name;
+}
+
+function renderFutureScenario(horizon){
+  var scenario=store.futureScenario(horizon);
+  document.querySelectorAll("[data-horizon]").forEach(function(btn){btn.classList.toggle("active",btn.dataset.horizon===horizon);});
+  var box=document.getElementById("futureScenario"); if(!box)return;
+  box.innerHTML="<div class='future-heading'><span>"+scenario.label+"</span><strong>"+escapeHtml(scenario.headline)+"</strong><small>"+scenario.disclaimer+"</small></div><div class='future-metrics'>"+scenario.metrics.map(function(m){return "<div><strong>"+escapeHtml(m.value)+"</strong><span>"+escapeHtml(m.label)+"</span></div>";}).join("")+"</div><div class='future-moments'>"+scenario.moments.map(function(m){return "<p>◌ "+escapeHtml(m)+"</p>";}).join("")+"</div>";
+  emit("time_machine_scenario",{horizon:horizon});
 }
 
 document.addEventListener("click",function(e){
@@ -137,6 +186,10 @@ document.addEventListener("click",function(e){
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }
   var voteBtn=e.target.closest("[data-vote]"); if(voteBtn)return vote(voteBtn.dataset.vote);
+  var horizon=e.target.closest("[data-horizon]"); if(horizon)return renderFutureScenario(horizon.dataset.horizon);
+  var createPlan=e.target.closest("[data-create-plan]"); if(createPlan){var input=document.getElementById("planTitle");var title=input?input.value.trim():"";if(title){store.createPlan(title,{source:"plans"});store.addArtifact("PLANNER");renderCitizen();openPlace("plans",true);}return;}
+  var worldAction=e.target.closest("[data-world-action]"); if(worldAction){store.toggleList(worldAction.dataset.list,worldAction.dataset.value);renderCitizen();openPlace(state.currentPlace,true);return;}
+  if(e.target.closest("[data-save-route]")){if(lastRoute){store.saveRoute(lastRoute.objective,lastRoute.route);store.addArtifact("ROUTE MAKER");renderCitizen();var saveBtn=e.target.closest("[data-save-route]");saveBtn.textContent="ROUTE SAVED";saveBtn.disabled=true;}return;}
   if(e.target.closest("#timeDoor"))return openTimeMachine();
   var close=e.target.closest("[data-close-panel]"); if(close){var panel=document.getElementById(close.dataset.closePanel);panel.classList.remove("open");panel.setAttribute("aria-hidden","true");return;}
   var mode=e.target.closest("[data-preview-mode]"); if(mode)return previewMode(mode.dataset.previewMode);
@@ -155,4 +208,5 @@ timeDialog.addEventListener("click",function(e){if(e.target===timeDialog)timeDia
 timeDialog.addEventListener("close",function(){emit("time_machine_close");});
 
 var mark=document.getElementById("citizenMark"); mark.style.setProperty("--turn",(hash(seed())%90)+"deg");
+renderCitizen();
 emit("surface_view");
