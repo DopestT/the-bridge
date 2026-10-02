@@ -21,6 +21,7 @@ const citizenPanel = document.getElementById("citizenPanel");
 const perceptionPanel = document.getElementById("perceptionPanel");
 const timeDialog = document.getElementById("timeMachineDialog");
 const store = window.NetizensData || window.NetizensStore;
+const perception = window.NetizensPerception || null;
 let lastRoute = null;
 
 function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
@@ -133,23 +134,123 @@ function previewMode(id){
   renderCitizen();
   emit("avatar_place_mode_preview",{place:id});
 }
-function routeIntent(){
-  var raw=document.getElementById("intentInput").value.trim();
-  var q=raw.toLowerCase(); var route=[];
-  function add(id){if(route.indexOf(id)<0)route.push(id);}
+function computeWorldRoute(text){
+  var q=String(text||"").toLowerCase(); var route=[];
+  function add(id){if(placeData[id] && route.indexOf(id)<0) route.push(id);}
   if(state.routeOrigin && placeData[state.routeOrigin]) add(state.routeOrigin);
-  if(/local|near|nearby|neighborhood|city|around here|moved/.test(q)) add("local");
-  if(/friend|people|crew|club|group|team|basketball|film|gaming|hiking/.test(q)) add("crews");
-  if(/build|make|create|start|project|app|business|film/.test(q)) add("projects");
-  if(/tonight|saturday|sunday|event|concert|meetup|game/.test(q)) add("events");
-  if(/want to|anybody|someone to|dinner|restaurant|museum|watch/.test(q)) add("plans");
-  if(/ask|know|how|advice|recommend/.test(q)) add("ask");
-  if(/help|skill|teach|trade|photographer|designer|developer/.test(q)) add("exchange");
+  if(/local|near|nearby|neighborhood|city|around here|moved|location/.test(q)) add("local");
+  if(/friend|people|crew|club|group|team|basketball|film|gaming|hiking|community/.test(q)) add("crews");
+  if(/build|make|create|start|project|app|business|produce|film/.test(q)) add("projects");
+  if(/tonight|saturday|sunday|event|concert|meetup|game|schedule|host/.test(q)) add("events");
+  if(/want to|anybody|someone to|dinner|restaurant|museum|watch|plan/.test(q)) add("plans");
+  if(/ask|know|how|advice|recommend|question/.test(q)) add("ask");
+  if(/help|skill|teach|trade|photographer|designer|developer|exchange/.test(q)) add("exchange");
+  if(/private|trusted|organizer|organise|organize/.test(q)) add("circles");
+  if(/yes or no|vote|poll|decide/.test(q)) add("yesno");
   if(!route.length){add("commons");add("ask");}
-  lastRoute={objective:raw,route:route.slice()};
+  return route;
+}
+
+function renderPerceptionStatus(){
+  var node=document.getElementById("perceptionStatus"); if(!node)return;
+  var live=perception && perception.status ? perception.status() : {configured:false};
+  node.textContent=live.configured ? "PERCEPTION LIVE" : "LOCAL PREVIEW";
+  node.classList.toggle("live",Boolean(live.configured));
+}
+
+function renderWorldRoute(route){
+  return "<div class='route-path'>"+route.map(function(id,i){return (i?"<b>→</b>":"")+"<span>"+escapeHtml(placeData[id].name)+"</span>";}).join("")+"</div>";
+}
+
+function renderRouteActions(route){
+  return "<div class='route-actions'><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button><button class='place-action secondary-action' data-save-route>SAVE ROUTE</button></div>";
+}
+
+function renderLocalRoute(raw,route,error){
   var box=document.getElementById("routeResult");
-  box.innerHTML="<div class='route-path'>"+route.map(function(id,i){return (i?"<b>→</b>":"")+"<span>"+placeData[id].name+"</span>";}).join("")+"</div><p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw||"No objective entered.")+"<br>Perception will ask permission before creating, inviting or publishing anything.</p><div class='route-actions'><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button><button class='place-action secondary-action' data-save-route>SAVE APPROVED ROUTE</button></div>";
-  emit("perception_route",{objective:raw,route:route});
+  box.innerHTML=(error?"<div class='perception-warning'>Live Perception was unavailable: "+escapeHtml(error)+"</div>":"")
+    +"<p class='route-mode'>WORLD ROUTE PREVIEW</p>"
+    +renderWorldRoute(route)
+    +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>This local preview connects likely NETIZENS places. It does not execute anything.</p>"
+    +renderRouteActions(route);
+}
+
+async function routeIntent(){
+  var input=document.getElementById("intentInput");
+  var raw=input.value.trim();
+  var box=document.getElementById("routeResult");
+  if(raw.length<3){
+    box.innerHTML="<p class='perception-warning'>Describe what you want to do first.</p>";
+    return;
+  }
+
+  var localRoute=computeWorldRoute(raw);
+  lastRoute={objective:raw,route:localRoute.slice(),live:false};
+  box.innerHTML="<div class='perception-loading'>Mapping objective through Perception…</div>";
+  renderPerceptionStatus();
+
+  var live=perception && perception.status ? perception.status() : {configured:false};
+  if(live.configured){
+    try{
+      var snap=store.snapshot();
+      var result=await perception.submit(raw,{
+        placeId:state.routeOrigin||state.currentPlace||"",
+        snapshotHash:String(store.hash(JSON.stringify(snap)))
+      });
+
+      if(result && result.ok){
+        var routeEvidence=(result.nodes||[]).map(function(node){return (node.label||"")+" "+(node.outcome||"");}).join(" ");
+        var worldRoute=computeWorldRoute(raw+" "+routeEvidence);
+        lastRoute={
+          objective:raw,
+          route:worldRoute.slice(),
+          live:true,
+          projectId:result.projectId,
+          objectiveId:result.objectiveId,
+          routeId:result.routeId,
+          nodes:result.nodes||[]
+        };
+
+        if(store.savePerceptionBinding){
+          store.savePerceptionBinding({
+            projectId:result.projectId,
+            objectiveId:result.objectiveId,
+            routeId:result.routeId,
+            sourcePlaceId:state.routeOrigin||state.currentPlace||null,
+            reason:result.reason||"",
+            nodes:result.nodes||[],
+            status:"route_proposed"
+          });
+        }
+
+        var nodes=(result.nodes||[]).map(function(node,index){
+          return "<div class='perception-node'><div><span>"+String(index+1).padStart(2,"0")+"</span><strong>"+escapeHtml(node.label||node.key||"Route step")+"</strong></div><p>"+escapeHtml(node.outcome||"")+"</p><small>"+escapeHtml(node.capability||"reason")+" · "+escapeHtml(node.permissionLevel||"P0")+" · "+escapeHtml(node.risk||"low")+" risk</small></div>";
+        }).join("");
+
+        box.innerHTML="<p class='route-mode live-route'>PERCEPTION LIVE</p>"
+          +renderWorldRoute(worldRoute)
+          +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>"+escapeHtml(result.reason||"Perception produced a bounded route.")+"</p>"
+          +(nodes?"<div class='perception-nodes'>"+nodes+"</div>":"")
+          +"<p class='permission-note'>This is a proposed route. Any action beyond the runtime's allowed scope remains subject to Perception permissions and verification.</p>"
+          +renderRouteActions(worldRoute);
+
+        renderCitizen();
+        emit("perception_live_route",{objective:raw,route:worldRoute,route_id:result.routeId,node_count:(result.nodes||[]).length});
+        return;
+      }
+
+      renderLocalRoute(raw,localRoute,result && result.error ? result.error : "Unknown live-routing error");
+      emit("perception_live_fallback",{objective:raw});
+      return;
+    }catch(error){
+      renderLocalRoute(raw,localRoute,error instanceof Error ? error.message : "Request failed");
+      emit("perception_live_fallback",{objective:raw});
+      return;
+    }
+  }
+
+  renderLocalRoute(raw,localRoute);
+  emit("perception_route_preview",{objective:raw,route:localRoute});
 }
 
 function renderSyncStatus(){
@@ -203,7 +304,7 @@ document.addEventListener("click",function(e){
   var close=e.target.closest("[data-close-panel]"); if(close){var panel=document.getElementById(close.dataset.closePanel);panel.classList.remove("open");panel.setAttribute("aria-hidden","true");return;}
   var mode=e.target.closest("[data-preview-mode]"); if(mode)return previewMode(mode.dataset.previewMode);
   var form=e.target.closest("[data-avatar-form]"); if(form){store.setForm(form.dataset.avatarForm);store.addArtifact("SHAPESHIFTER");renderCitizen();emit("avatar_form_change",{form:form.dataset.avatarForm});return;}
-  var from=e.target.closest("[data-perception-from]"); if(from){state.routeOrigin=from.dataset.perceptionFrom;openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me do something useful from "+placeData[from.dataset.perceptionFrom].name+".";return;}
+  var from=e.target.closest("[data-perception-from]"); if(from){state.routeOrigin=from.dataset.perceptionFrom;renderPerceptionStatus();openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me do something useful from "+placeData[from.dataset.perceptionFrom].name+".";return;}
   var route=e.target.closest("[data-open-route]"); if(route){closePanels();return openPlace(route.dataset.openRoute);}
 });
 
@@ -211,7 +312,7 @@ document.getElementById("enterWorld").addEventListener("click",showWorld);
 document.getElementById("exitWorld").addEventListener("click",exitWorld);
 document.getElementById("worldHome").addEventListener("click",showMap);
 document.getElementById("openCitizen").addEventListener("click",function(){openPanel(citizenPanel);});
-document.getElementById("openPerception").addEventListener("click",function(){state.routeOrigin=null;openPanel(perceptionPanel);});
+document.getElementById("openPerception").addEventListener("click",function(){state.routeOrigin=null;renderPerceptionStatus();openPanel(perceptionPanel);});
 document.getElementById("routeIntent").addEventListener("click",routeIntent);
 document.getElementById("closeTimeMachine").addEventListener("click",function(){timeDialog.close();});
 timeDialog.addEventListener("click",function(e){if(e.target===timeDialog)timeDialog.close();});
@@ -219,5 +320,7 @@ timeDialog.addEventListener("close",function(){emit("time_machine_close");});
 
 var mark=document.getElementById("citizenMark"); mark.style.setProperty("--turn",(hash(seed())%90)+"deg");
 window.addEventListener("netizens:sync-state",renderSyncStatus);
+window.addEventListener("netizens:perception-config",renderPerceptionStatus);
 renderCitizen();
+renderPerceptionStatus();
 emit("surface_view");

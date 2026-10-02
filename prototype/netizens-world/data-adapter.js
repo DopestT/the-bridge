@@ -86,7 +86,8 @@
     toggleList:(listName,value)=>mutate("world.toggle",{list:listName,value:value},()=>local.toggleList(listName,value)),
     createPlan:(title,meta)=>mutate("plan.create",{title:title,meta:meta||{}},()=>local.createPlan(title,meta)),
     vote:(questionId,choice)=>mutate("yesno.vote",{questionId:questionId,choice:choice},()=>local.vote(questionId,choice)),
-    saveRoute:(objective,route)=>mutate("perception.route.save",{objective:objective,route:Array.from(route||[])},()=>local.saveRoute(objective,route))
+    saveRoute:(objective,route)=>mutate("perception.route.save",{objective:objective,route:Array.from(route||[])},()=>local.saveRoute(objective,route)),
+    savePerceptionBinding:(binding)=>mutate("perception.binding.save",{binding:binding},()=>local.savePerceptionBinding(binding))
   };
 
   window.NetizensData=data;

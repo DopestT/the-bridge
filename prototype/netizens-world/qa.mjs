@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 
 const source=fs.readFileSync(new URL("./world-state.js",import.meta.url),"utf8");
 const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
+const perceptionSource=fs.readFileSync(new URL("./perception-client.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);
 const localStorage={
   getItem(key){ return memory.has(key)?memory.get(key):null; },
@@ -63,4 +64,48 @@ assert.ok(flushResult.flushed>=1,"adapter should flush queued operations");
 assert.equal(data.getSyncStatus().pending,0,"queue should clear after successful transport");
 assert.ok(delivered.some(op=>op.kind==="plan.create"),"transport should receive plan operation");
 
-console.log("NETIZENS World state + adapter QA passed");
+vm.runInContext(perceptionSource,context,{filename:"perception-client.js"});
+const perception=window.NetizensPerception;
+assert.ok(perception,"NetizensPerception should be exposed");
+assert.equal(perception.status().configured,false,"Perception should not pretend to be live without an authenticated host session");
+
+const refs=perception.sourceRefs({placeId:"local",entityId:"crew-123",snapshotHash:"abc"});
+assert.equal(refs[0].kind,"netizens_world");
+assert.equal(refs[0].place_id,"local");
+assert.equal(refs[0].entity_id,"crew-123");
+
+perception.configure({endpoint:"https://example.test/perceive-objective",accessToken:"session-token"});
+assert.equal(perception.status().configured,true);
+
+context.fetch=async (_url,options)=>{
+  const body=JSON.parse(options.body);
+  assert.equal(body.statement,"Start a local film club");
+  assert.equal(body.source_refs[0].place_id,"local");
+  return {
+    ok:true,
+    status:200,
+    async json(){
+      return {
+        ok:true,
+        project_id:"project-1",
+        objective_id:"objective-1",
+        route_id:"route-1",
+        source_context:{accepted:1},
+        route_plan:{
+          reason:"Connect the right places.",
+          nodes:[
+            {key:"discover",label:"Find local film people",outcome:"Build a candidate group",status:"ready",capability:"retrieve",permissionLevel:"P1",risk:"low"}
+          ]
+        }
+      };
+    }
+  };
+};
+
+const live=await perception.submit("Start a local film club",{placeId:"local"});
+assert.equal(live.ok,true);
+assert.equal(live.routeId,"route-1");
+assert.equal(live.sourceContextAccepted,1);
+assert.equal(live.nodes[0].permissionLevel,"P1");
+
+console.log("NETIZENS World state + adapter + Perception client QA passed");

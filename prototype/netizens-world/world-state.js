@@ -46,6 +46,7 @@
         plans:[],
         yesNoVotes:{},
         savedRoutes:[],
+        perceptionBindings:[],
         timeline:[]
       }
     };
@@ -151,6 +152,27 @@
     state.citizen.level=calcLevel(state.citizen.xp);
     return save();
   }
+  function savePerceptionBinding(binding){
+    const value=binding && typeof binding==="object" ? binding : {};
+    const item={
+      id:uid("binding"),
+      projectId:typeof value.projectId==="string" ? value.projectId.slice(0,160) : null,
+      objectiveId:typeof value.objectiveId==="string" ? value.objectiveId.slice(0,160) : null,
+      routeId:typeof value.routeId==="string" ? value.routeId.slice(0,160) : null,
+      sourcePlaceId:typeof value.sourcePlaceId==="string" ? value.sourcePlaceId.slice(0,120) : null,
+      reason:typeof value.reason==="string" ? value.reason.slice(0,2000) : "",
+      nodeCount:Array.isArray(value.nodes) ? value.nodes.length : 0,
+      status:typeof value.status==="string" ? value.status.slice(0,80) : "route_proposed",
+      createdAt:now()
+    };
+    state.world.perceptionBindings.unshift(item);
+    state.world.perceptionBindings=state.world.perceptionBindings.slice(0,50);
+    timeline("perception_binding",{id:item.id,routeId:item.routeId,status:item.status});
+    state.citizen.xp+=40;
+    state.citizen.level=calcLevel(state.citizen.xp);
+    return save();
+  }
+
   function futureScenario(horizon){
     const horizons={
       "6m":{label:"+6 MONTHS",factor:1},
@@ -196,6 +218,6 @@
 
   window.NetizensStore={
     snapshot,save,reset,seed,hash,awardXP,addArtifact,visitPlace,setMode,setCitizen,
-    toggleList,createPlan,vote,saveRoute,futureScenario,setForm
+    toggleList,createPlan,vote,saveRoute,savePerceptionBinding,futureScenario,setForm
   };
 })();

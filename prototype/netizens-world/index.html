@@ -140,8 +140,10 @@
     <aside id="perceptionPanel" class="side-panel perception-panel" aria-hidden="true">
       <button class="panel-close" data-close-panel="perceptionPanel">×</button>
       <p class="kicker">PERCEPTION</p>
+      <div class="perception-status-row"><span id="perceptionStatus" class="perception-status">LOCAL PREVIEW</span></div>
       <h2>What do you want to do?</h2>
-      <p class="muted">Describe the objective. Perception will map the places that need to work together.</p>
+      <p class="muted">Describe the objective. Perception will map the places that need to work together. Live routing activates when the host provides an authenticated Perception session.</p>
+      <div id="perceptionStatus" class="perception-status">LOCAL ROUTING · LIVE PERCEPTION NOT CONNECTED</div>
       <textarea id="intentInput" rows="5" placeholder="I want to start a local film club..."></textarea>
       <button id="routeIntent" class="primary-cta full">MAP MY ROUTE</button>
       <div id="routeResult" class="route-result">
@@ -171,6 +173,7 @@
 
   <script src="./world-state.js"></script>
   <script src="./data-adapter.js"></script>
+  <script src="./perception-client.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
