@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "prototype/netizens-world/**"
+      - "supabase/**"
       - ".github/workflows/netizens-world.yml"
   push:
     branches: [main]
     paths:
       - "prototype/netizens-world/**"
+      - "supabase/**"
       - ".github/workflows/netizens-world.yml"
 
 jobs:
@@ -30,6 +32,8 @@ jobs:
         run: node prototype/netizens-world/qa.mjs
       - name: Backend contract tests
         run: node prototype/netizens-world/backend/contract-qa.mjs
+      - name: Production database contract tests
+        run: node prototype/netizens-world/backend/production-contract-qa.mjs
       - name: Required shell checks
         run: |
           grep -q 'id="enterWorld"' prototype/netizens-world/index.html
