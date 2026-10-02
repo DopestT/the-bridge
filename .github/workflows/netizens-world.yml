@@ -26,6 +26,8 @@ jobs:
           node --check prototype/netizens-world/app.js
       - name: Persistent world state tests
         run: node prototype/netizens-world/qa.mjs
+      - name: Backend contract tests
+        run: node prototype/netizens-world/backend/contract-qa.mjs
       - name: Required shell checks
         run: |
           grep -q 'id="enterWorld"' prototype/netizens-world/index.html
