@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#07090d" />
-  <title>NETIZENS World — V1 Prototype</title>
+  <title>NETIZENS World — V2 Prototype</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -116,12 +116,10 @@
         </div>
         <div><strong>Citizen Mark</strong><small>Your unique world symbol</small></div>
       </div>
-      <div class="level-row"><span>LEVEL 03</span><span>420 XP</span></div>
-      <div class="progress"><i style="width:42%"></i></div>
+      <div class="level-row"><span id="citizenLevel">LEVEL 01</span><span id="citizenXp">0 XP</span></div>
+      <div class="progress"><i id="citizenProgress" style="width:0%"></i></div>
       <h3>Artifacts</h3>
-      <div class="artifact-grid">
-        <span>FOUNDER</span><span>HELPER</span><span>EXPLORER</span><span>FIRST EVENT</span>
-      </div>
+      <div id="artifactGrid" class="artifact-grid"></div>
       <h3>Place Modes</h3>
       <div class="mode-list">
         <button data-preview-mode="commons">Commons</button>
@@ -144,19 +142,26 @@
     </aside>
 
     <dialog id="timeMachineDialog" class="time-dialog">
-      <div class="time-machine">
+      <div class="time-machine time-machine-live">
         <button id="closeTimeMachine" class="panel-close time-close">×</button>
-        <div class="time-halo" aria-hidden="true">
+        <div class="time-halo compact-halo" aria-hidden="true">
           <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
           <span>◌</span>
         </div>
         <p class="time-label">TIME MACHINE</p>
-        <h2>Be right back.</h2>
-        <p class="time-whisper">+6 MONTHS · +1 YEAR · +5 YEARS</p>
+        <h2>Your future isn't fixed.</h2>
+        <p class="time-intro">Explore a scenario built from what exists in your NETIZENS World now. It is a projection, not a prediction.</p>
+        <div class="horizon-row" role="group" aria-label="Future horizon">
+          <button class="horizon active" data-horizon="6m">+6 MONTHS</button>
+          <button class="horizon" data-horizon="1y">+1 YEAR</button>
+          <button class="horizon" data-horizon="5y">+5 YEARS</button>
+        </div>
+        <div id="futureScenario" class="future-scenario" aria-live="polite"></div>
       </div>
     </dialog>
   </section>
 
+  <script src="./world-state.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
