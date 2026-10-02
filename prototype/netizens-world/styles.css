@@ -102,3 +102,20 @@ button,textarea{font:inherit}button{color:inherit}button:focus-visible,textarea:
 .future-metrics strong,.future-metrics span{display:block}.future-metrics strong{font-size:1.7rem}.future-metrics span{font-size:.72rem;color:#929daf;margin-top:5px}
 .future-moments{border-top:1px solid #2c3443;padding-top:12px;color:#bec6d4}.future-moments p{margin:9px 0;line-height:1.45}
 @media(max-width:700px){.future-metrics{grid-template-columns:1fr 1fr}.route-actions{grid-template-columns:1fr}.plan-composer>div{flex-direction:column}.saved-plan{display:block}.saved-plan span{text-align:left;margin-top:4px}}
+
+.form-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-list button{border:1px solid #30384a;border-radius:14px;padding:11px;background:#141a25;color:#b9c2d1;cursor:pointer}
+.form-list button.active{border-color:#7b6cff;background:#29244b;color:white;box-shadow:0 0 20px rgba(123,108,255,.14)}
+.citizen-avatar[data-form="likeness"]{border-radius:42% 42% 32px 32px;background:
+  radial-gradient(circle at 50% 32%,#efc19c 0 22%,transparent 23%),
+  linear-gradient(160deg,color-mix(in srgb,var(--mode) 45%,#34465f),#111722 72%)}
+.citizen-avatar[data-form="stylized"]{border-radius:70px 70px 36px 36px}
+.citizen-avatar[data-form="fictional"]{border-radius:34px;background:
+  radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--mode) 65%,white) 0 18%,transparent 19%),
+  conic-gradient(from 220deg at 50% 55%,#0b1119,var(--mode),#1b1244,#0b1119);
+  clip-path:polygon(50% 0,88% 18%,100% 64%,74% 100%,26% 100%,0 64%,12% 18%)}
+.citizen-avatar[data-form="privacy"]{border-radius:50%;background:
+  radial-gradient(circle at 50% 36%,#151b26 0 24%,transparent 25%),
+  radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--mode) 34%,#070a10),#080b10 68%);
+  border:1px solid color-mix(in srgb,var(--mode) 55%,#273142)}
+.citizen-avatar[data-form="privacy"] span{background:#0d121b;color:#dce6f5;border-color:#252e3e}
