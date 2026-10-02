@@ -109,5 +109,15 @@
     return normalized;
   }
 
-  window.NetizensPerception={configure,status,sourceRefs,normalizeRoute,submit};
+  function configureFromWindow(){
+    const injected=window.NETIZENS_PERCEPTION_CONFIG;
+    if(!injected || typeof injected!=="object") return status();
+    return configure({
+      endpoint:injected.endpoint,
+      accessToken:injected.accessToken
+    });
+  }
+
+  window.NetizensPerception={configure,configureFromWindow,status,sourceRefs,normalizeRoute,submit};
+  configureFromWindow();
 })();
