@@ -35,6 +35,7 @@
         level:1,
         artifacts:["FOUNDER"],
         mode:"commons",
+        form:"stylized",
         markSeed:seed()
       },
       world:{
@@ -104,6 +105,11 @@
     return save();
   }
   function setMode(id){ state.citizen.mode=id; return save(); }
+  function setForm(form){
+    const allowed=["likeness","stylized","fictional","privacy"];
+    if(allowed.includes(form)) state.citizen.form=form;
+    return save();
+  }
   function setCitizen(input){
     if(input && typeof input==="object"){
       if(input.name) state.citizen.name=String(input.name).slice(0,40);
@@ -190,6 +196,6 @@
 
   window.NetizensStore={
     snapshot,save,reset,seed,hash,awardXP,addArtifact,visitPlace,setMode,setCitizen,
-    toggleList,createPlan,vote,saveRoute,futureScenario
+    toggleList,createPlan,vote,saveRoute,futureScenario,setForm
   };
 })();
