@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07090d" />
+  <title>NETIZENS World — V1 Prototype</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <section id="surfaceApp" class="surface-app" aria-label="NETIZENS app surface">
+    <header class="surface-topbar">
+      <div class="brand-lockup">
+        <span class="brand-mark">N</span>
+        <div><strong>NETIZENS</strong><small>APP</small></div>
+      </div>
+      <div class="surface-actions">
+        <button>Search</button><button>Messages</button><button>Notifications</button><button>Profile</button>
+      </div>
+    </header>
+    <main class="surface-main">
+      <div>
+        <p class="kicker">THE PRACTICAL LAYER</p>
+        <h1>Your social tools stay simple.</h1>
+        <p>Messages, notifications, search, profile and account controls live here. The immersive network is somewhere else.</p>
+        <button id="enterWorld" class="primary-cta">ENTER WORLD <span>→</span></button>
+      </div>
+      <aside class="surface-card">
+        <p class="kicker">PERCEPTION</p>
+        <h2>What do you want to do?</h2>
+        <p>Perception can route an objective into the World without making the entire app behave like a game.</p>
+        <div class="mini-prompt">“Find people to make a short film.”</div>
+        <div class="mini-route"><span>Crews</span><span>Local</span><span>Projects</span></div>
+      </aside>
+    </main>
+  </section>
+
+  <section id="worldApp" class="world-app hidden" aria-label="NETIZENS World">
+    <header class="world-topbar">
+      <button class="world-brand" id="worldHome" aria-label="World home">
+        <span class="brand-mark world-mark">N</span>
+        <span>NETIZENS <b>WORLD</b></span>
+      </button>
+      <nav id="depthTrail" class="depth-trail" aria-label="You are here">
+        <button data-depth-index="0">WORLD</button>
+      </nav>
+      <div class="world-actions">
+        <button id="openPerception" class="perception-pill">✦ PERCEPTION</button>
+        <button id="openCitizen" class="citizen-pill"><span id="avatarMini">K</span><span>Citizen 001</span></button>
+        <button id="exitWorld" class="exit-world">EXIT WORLD</button>
+      </div>
+    </header>
+
+    <main id="worldMain" tabindex="-1">
+      <section id="worldMap" class="world-map view active">
+        <div class="world-sky" aria-hidden="true">
+          <span class="orb orb-a"></span><span class="orb orb-b"></span><span class="orb orb-c"></span>
+        </div>
+
+        <div class="world-copy">
+          <p class="kicker">ONE NETWORK · MANY PLACES</p>
+          <h1>Go somewhere.</h1>
+          <p>Every place has its own culture, rules and purpose. Your identity travels with you. The places connect only when it helps.</p>
+        </div>
+
+        <div id="placeWorld" class="place-world" aria-label="NETIZENS places">
+          <button class="island island-commons" data-place="commons">
+            <span class="island-icon">◎</span><strong>COMMONS</strong><small>Public conversation</small>
+          </button>
+          <button class="island island-crews" data-place="crews">
+            <span class="island-icon">⚑</span><strong>CREWS</strong><small>Find your people</small>
+          </button>
+          <button class="island island-local" data-place="local">
+            <span class="island-icon">⌖</span><strong>LOCAL</strong><small>Your area. Real life.</small>
+          </button>
+          <button class="island island-projects" data-place="projects">
+            <span class="island-icon">◇</span><strong>PROJECTS</strong><small>Build together</small>
+          </button>
+          <button class="island island-ask" data-place="ask">
+            <span class="island-icon">?</span><strong>ASK</strong><small>Get real answers</small>
+          </button>
+          <button class="island island-exchange" data-place="exchange">
+            <span class="island-icon">⇄</span><strong>EXCHANGE</strong><small>Skills + help</small>
+          </button>
+          <button class="island island-circles" data-place="circles">
+            <span class="island-icon">◉</span><strong>CIRCLES</strong><small>Private spaces</small>
+          </button>
+          <button class="island island-events" data-place="events">
+            <span class="island-icon">✦</span><strong>EVENTS</strong><small>Things happening</small>
+          </button>
+          <button class="island island-plans" data-place="plans">
+            <span class="island-icon">↗</span><strong>PLANS</strong><small>Anybody want to...?</small>
+          </button>
+          <button class="island island-yesno" data-place="yesno">
+            <span class="island-icon">◐</span><strong>YES OR NO</strong><small>Quick decisions</small>
+          </button>
+        </div>
+
+        <div class="world-footer">
+          <span>SAME YOU.</span><span>DIFFERENT PLACES.</span><span>A BIGGER WORLD.</span>
+        </div>
+      </section>
+
+      <section id="placeView" class="place-view view" aria-live="polite"></section>
+    </main>
+
+    <aside id="citizenPanel" class="side-panel" aria-hidden="true">
+      <button class="panel-close" data-close-panel="citizenPanel">×</button>
+      <p class="kicker">YOUR CITIZEN</p>
+      <div class="citizen-avatar" id="citizenAvatar"><span>K</span></div>
+      <h2>Citizen 001</h2>
+      <p class="muted">One identity. Many place modes.</p>
+      <div class="citizen-mark-wrap">
+        <div id="citizenMark" class="citizen-mark" aria-label="Unique Citizen Mark">
+          <span></span><i></i><b></b>
+        </div>
+        <div><strong>Citizen Mark</strong><small>Your unique world symbol</small></div>
+      </div>
+      <div class="level-row"><span>LEVEL 03</span><span>420 XP</span></div>
+      <div class="progress"><i style="width:42%"></i></div>
+      <h3>Artifacts</h3>
+      <div class="artifact-grid">
+        <span>FOUNDER</span><span>HELPER</span><span>EXPLORER</span><span>FIRST EVENT</span>
+      </div>
+      <h3>Place Modes</h3>
+      <div class="mode-list">
+        <button data-preview-mode="commons">Commons</button>
+        <button data-preview-mode="local">Local</button>
+        <button data-preview-mode="projects">Projects</button>
+        <button data-preview-mode="events">Events</button>
+      </div>
+    </aside>
+
+    <aside id="perceptionPanel" class="side-panel perception-panel" aria-hidden="true">
+      <button class="panel-close" data-close-panel="perceptionPanel">×</button>
+      <p class="kicker">PERCEPTION</p>
+      <h2>What do you want to do?</h2>
+      <p class="muted">Describe the objective. Perception will map the places that need to work together.</p>
+      <textarea id="intentInput" rows="5" placeholder="I want to start a local film club..."></textarea>
+      <button id="routeIntent" class="primary-cta full">MAP MY ROUTE</button>
+      <div id="routeResult" class="route-result">
+        <p>No route yet.</p>
+      </div>
+    </aside>
+
+    <dialog id="timeMachineDialog" class="time-dialog">
+      <div class="time-machine">
+        <button id="closeTimeMachine" class="panel-close time-close">×</button>
+        <div class="time-halo" aria-hidden="true">
+          <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
+          <span>◌</span>
+        </div>
+        <p class="time-label">TIME MACHINE</p>
+        <h2>Be right back.</h2>
+        <p class="time-whisper">+6 MONTHS · +1 YEAR · +5 YEARS</p>
+      </div>
+    </dialog>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>
