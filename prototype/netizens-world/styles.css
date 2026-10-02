@@ -70,3 +70,35 @@ button,textarea{font:inherit}button{color:inherit}button:focus-visible,textarea:
 @media(max-width:900px){.world-topbar{height:auto;min-height:68px;flex-wrap:wrap;padding-block:10px}.depth-trail{order:3;width:100%;flex-basis:100%}.perception-pill{font-size:0}.perception-pill::after{content:"✦";font-size:1rem}.exit-world{font-size:.66rem}.world-copy h1{font-size:3.5rem}.place-world{min-height:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;background:#0b0f16}.place-world::before{display:none}.island{position:relative!important;inset:auto!important;width:auto;min-height:135px}.world-footer{flex-wrap:wrap}.place-hero{grid-template-columns:1fr}.place-symbol{display:none}.vote{min-width:130px}.surface-main h1{font-size:3.6rem}}
 @media(max-width:470px){.place-world{grid-template-columns:1fr}.world-actions{gap:4px}.exit-world{padding:8px 9px}.citizen-pill{padding:6px}.place-view{padding-inline:14px}.place-hero{padding:25px}.surface-main{padding-top:60px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* V2 persistent-world interactions */
+.nested-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.nested-actions button{margin-top:0!important}
+.plan-composer{margin-top:14px;border:1px solid #30384a;border-radius:18px;padding:15px;background:#0e141e}
+.plan-composer label{display:block;font-size:.68rem;font-weight:900;letter-spacing:.14em;color:#a9b4c7;margin-bottom:9px}
+.plan-composer>div{display:flex;gap:8px}
+.plan-composer input{flex:1;min-width:0;border:1px solid #384357;background:#0a0f17;color:white;border-radius:12px;padding:11px 12px}
+.plan-composer button{border:0;border-radius:12px;padding:10px 13px;background:#6f58ff;font-weight:900;cursor:pointer}
+.saved-plans{margin-top:10px}
+.saved-plan{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid #252d3a}
+.saved-plan strong,.saved-plan span{display:block}.saved-plan span{font-size:.76rem;color:var(--muted);text-align:right}
+.small-copy{font-size:.82rem}
+.route-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.secondary-action{background:#111722!important;border-color:#364159!important}
+.place-action:disabled{opacity:.55;cursor:default}
+.time-machine-live{overflow:auto;padding:56px 22px}
+.compact-halo{width:min(32vw,260px)}
+.time-machine-live h2{font-size:clamp(2.6rem,7vw,6rem)}
+.time-intro{max-width:700px;margin:8px auto 18px;color:#aeb8c9;line-height:1.55}
+.horizon-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0 18px}
+.horizon{border:1px solid #394157;background:#111622;color:#adb6c7;border-radius:999px;padding:10px 14px;font-size:.72rem;font-weight:900;letter-spacing:.08em;cursor:pointer}
+.horizon.active{background:#2e2a58;border-color:#8a78ff;color:white;box-shadow:0 0 24px rgba(138,120,255,.18)}
+.future-scenario{width:min(860px,100%);margin:0 auto 40px;border:1px solid #30394d;border-radius:26px;padding:22px;background:rgba(11,15,23,.78);text-align:left}
+.future-heading span,.future-heading strong,.future-heading small{display:block}
+.future-heading span{font-size:.7rem;letter-spacing:.16em;font-weight:900;color:#a8a0ff}
+.future-heading strong{font-size:clamp(1.4rem,3vw,2.3rem);margin-top:5px}
+.future-heading small{color:#7f899b;margin-top:5px}
+.future-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:18px 0}
+.future-metrics>div{border:1px solid #2e3749;border-radius:16px;padding:14px;background:#101620}
+.future-metrics strong,.future-metrics span{display:block}.future-metrics strong{font-size:1.7rem}.future-metrics span{font-size:.72rem;color:#929daf;margin-top:5px}
+.future-moments{border-top:1px solid #2c3443;padding-top:12px;color:#bec6d4}.future-moments p{margin:9px 0;line-height:1.45}
+@media(max-width:700px){.future-metrics{grid-template-columns:1fr 1fr}.route-actions{grid-template-columns:1fr}.plan-composer>div{flex-direction:column}.saved-plan{display:block}.saved-plan span{text-align:left;margin-top:4px}}
