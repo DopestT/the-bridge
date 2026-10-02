@@ -1,0 +1,34 @@
+name: NETIZENS World QA
+
+on:
+  pull_request:
+    paths:
+      - "prototype/netizens-world/**"
+      - ".github/workflows/netizens-world.yml"
+  push:
+    branches: [main]
+    paths:
+      - "prototype/netizens-world/**"
+      - ".github/workflows/netizens-world.yml"
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Syntax check
+        run: |
+          node --check prototype/netizens-world/world-state.js
+          node --check prototype/netizens-world/app.js
+      - name: Persistent world state tests
+        run: node prototype/netizens-world/qa.mjs
+      - name: Required shell checks
+        run: |
+          grep -q 'id="enterWorld"' prototype/netizens-world/index.html
+          grep -q 'id="timeMachineDialog"' prototype/netizens-world/index.html
+          grep -q 'id="futureScenario"' prototype/netizens-world/index.html
+          grep -q 'world-state.js' prototype/netizens-world/index.html
