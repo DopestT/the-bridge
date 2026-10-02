@@ -1,67 +1,42 @@
-# NETIZENS World V1
+# NETIZENS World V2
 
-This prototype separates **NETIZENS the practical social app** from **NETIZENS World**, the immersive layer beneath it.
-
-## Product rule
+NETIZENS is split into two layers:
 
 > A social app on the surface. A world underneath.
 
-The normal app remains fast and familiar for messaging, notifications, profile, search and account controls. **Enter World** moves the user into a distinct explorable network.
+The normal app handles everyday utility. Enter World opens the immersive network.
 
-## What this prototype builds
+## V2
 
-- Separate App and World layers with an explicit **Enter World / Exit World** transition.
-- A navigable World containing:
-  - Commons
-  - Crews
-  - Local
-  - Projects
-  - Ask
-  - Exchange
-  - Circles
-  - Events
-  - Plans
-  - Yes or No
-- Distinct place identities, colors, descriptions and interaction framing.
-- Persistent Citizen identity across places.
-- Citizen panel with:
-  - Core avatar
-  - place-mode previews
-  - unique deterministic Citizen Mark
-  - level / XP
-  - earned artifacts
-- Inception-style depth trail:
-  - World → Place → Crew / Project / Plan
-  - users can move deeper or back up without losing identity context.
-- Perception prototype:
-  - accepts a natural-language objective
-  - maps it to relevant places
-  - preserves the permission-first concept before execution
-- Yes or No:
-  - vote first
-  - reveal split second
-- Time Machine:
-  - exists only inside World
-  - not in navigation
-  - relocates to one eligible place per local day per device
-  - disappears after discovery that day
-  - currently opens only **TIME MACHINE — Be right back.**
-  - future horizons are teased as +6 months, +1 year and +5 years.
-- Responsive layouts and reduced-motion support.
-- Browser analytics hooks through the `netizens:analytics` custom event.
+V2 adds persistent browser-local World state, Citizen XP and artifacts, four avatar forms, place modes, a deterministic Citizen Mark, persistent place visits, Crews, Projects, Event interest, Plans, Yes or No votes, and saved Perception routes.
 
-## Why World is separate
+The World contains Commons, Crews, Local, Projects, Ask, Exchange, Circles, Events, Plans, and Yes or No. These places remain separate by purpose and connect only when an approved objective needs more than one place.
 
-The immersive concept should never make routine tasks harder. A user can live mostly in the standard app if they want. World is for exploration, identity, communities, deeper places, projects, plans and future concepts.
+The Inception-style depth trail supports World to Place to nested Crew, Project, or Plan.
 
-Perception spans both layers: it can receive an objective from the practical app and route the user into the right World places.
+Time Machine is now an interactive scenario explorer after discovery with +6 months, +1 year, and +5 years views. Every generated future is labeled as a scenario rather than a prediction.
 
-## Local run
+GitHub QA checks JavaScript syntax, World state behavior, and required shell elements.
 
-Open `prototype/netizens-world/index.html` directly in a browser, or serve the repository with any static HTTP server.
+## Product rules
 
-## V1 limitations
+- Separate by purpose. Connect by intent.
+- One Citizen identity can appear differently in different places.
+- Perception proposes cross-place routes before actions are carried out.
+- Time Machine scenarios are exploratory, not factual forecasts.
 
-This is an interactive front-end prototype. It does not yet provide authentication, a persistent backend, real users, messaging, permissions storage, production reputation, geospatial search, moderation services, or real Perception execution.
+## Still to build for production
 
-The next implementation phase should connect World objects to a durable backend model while preserving the separation between the utility app and immersive World.
+The current prototype does not yet include production authentication, server-side durable state, real user messaging, moderation services, geospatial discovery, live Perception execution, notifications, production reputation, media upload, or real-time collaboration.
+
+The next phase is the durable World backend contract covering identity, places, memberships, plans, projects, events, permissions, reputation, Perception objectives, and append-only action and verification history.
+
+## Run
+
+Serve the repository with any static HTTP server and open:
+
+`prototype/netizens-world/index.html`
+
+Run state QA with:
+
+`node prototype/netizens-world/qa.mjs`
