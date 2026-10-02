@@ -11,7 +11,7 @@ const placeData = {
   yesno:{name:"Yes or No",symbol:"◐",color:"#63e89b",bg:"#173d35",tag:"QUICK DECISIONS",desc:"One question. Two choices. Vote first, then see the room.",items:[],chips:["Now","Local","Friends","World"]}
 };
 
-const state = { depth:[{type:"world",label:"WORLD"}], currentPlace:null };
+const state = { depth:[{type:"world",label:"WORLD"}], currentPlace:null, routeOrigin:null };
 const surface = document.getElementById("surfaceApp");
 const world = document.getElementById("worldApp");
 const mapView = document.getElementById("worldMap");
@@ -24,7 +24,7 @@ const timeDialog = document.getElementById("timeMachineDialog");
 function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
 
 function showWorld(){
-  surface.classList.add("hidden"); world.classList.remove("hidden"); showMap(); emit("world_enter");
+  surface.classList.add("hidden"); world.classList.remove("hidden"); emit("world_enter"); showMap();
 }
 function exitWorld(){
   world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels(); emit("world_exit");
@@ -47,6 +47,7 @@ function pushDepth(label,type){
   emit("depth_enter",{label:label});
 }
 function popDepthTo(index){
+  if(index===state.depth.length-1) return;
   if(index===0) return showMap();
   state.depth=state.depth.slice(0,index+1); renderDepth();
   var placeItem=state.depth.find(function(x){return x.type==="place";});
@@ -94,7 +95,9 @@ function openPlace(id,preserveDepth){
 }
 
 function openTimeMachine(){
-  localStorage.setItem("netizens_tm_found",getTodayKey()); timeDialog.showModal(); emit("time_machine_open",{from:state.currentPlace});
+  localStorage.setItem("netizens_tm_found",getTodayKey());
+  var door=document.getElementById("timeDoor"); if(door) door.remove();
+  timeDialog.showModal(); emit("time_machine_open",{from:state.currentPlace});
 }
 function vote(choice){
   var r=document.getElementById("voteResult"); if(!r)return;
@@ -114,6 +117,7 @@ function routeIntent(){
   var raw=document.getElementById("intentInput").value.trim();
   var q=raw.toLowerCase(); var route=[];
   function add(id){if(route.indexOf(id)<0)route.push(id);}
+  if(state.routeOrigin && placeData[state.routeOrigin]) add(state.routeOrigin);
   if(/local|near|nearby|neighborhood|city|around here|moved/.test(q)) add("local");
   if(/friend|people|crew|club|group|team|basketball|film|gaming|hiking/.test(q)) add("crews");
   if(/build|make|create|start|project|app|business|film/.test(q)) add("projects");
@@ -134,9 +138,9 @@ document.addEventListener("click",function(e){
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }
   var voteBtn=e.target.closest("[data-vote]"); if(voteBtn)return vote(voteBtn.dataset.vote);
   if(e.target.closest("#timeDoor"))return openTimeMachine();
-  var close=e.target.closest("[data-close-panel]"); if(close){document.getElementById(close.dataset.closePanel).classList.remove("open");return;}
+  var close=e.target.closest("[data-close-panel]"); if(close){var panel=document.getElementById(close.dataset.closePanel);panel.classList.remove("open");panel.setAttribute("aria-hidden","true");return;}
   var mode=e.target.closest("[data-preview-mode]"); if(mode)return previewMode(mode.dataset.previewMode);
-  var from=e.target.closest("[data-perception-from]"); if(from){openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me do something useful from "+placeData[from.dataset.perceptionFrom].name+".";return;}
+  var from=e.target.closest("[data-perception-from]"); if(from){state.routeOrigin=from.dataset.perceptionFrom;openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me do something useful from "+placeData[from.dataset.perceptionFrom].name+".";return;}
   var route=e.target.closest("[data-open-route]"); if(route){closePanels();return openPlace(route.dataset.openRoute);}
 });
 
@@ -144,10 +148,11 @@ document.getElementById("enterWorld").addEventListener("click",showWorld);
 document.getElementById("exitWorld").addEventListener("click",exitWorld);
 document.getElementById("worldHome").addEventListener("click",showMap);
 document.getElementById("openCitizen").addEventListener("click",function(){openPanel(citizenPanel);});
-document.getElementById("openPerception").addEventListener("click",function(){openPanel(perceptionPanel);});
+document.getElementById("openPerception").addEventListener("click",function(){state.routeOrigin=null;openPanel(perceptionPanel);});
 document.getElementById("routeIntent").addEventListener("click",routeIntent);
-document.getElementById("closeTimeMachine").addEventListener("click",function(){timeDialog.close();emit("time_machine_close");});
+document.getElementById("closeTimeMachine").addEventListener("click",function(){timeDialog.close();});
 timeDialog.addEventListener("click",function(e){if(e.target===timeDialog)timeDialog.close();});
+timeDialog.addEventListener("close",function(){emit("time_machine_close");});
 
 var mark=document.getElementById("citizenMark"); mark.style.setProperty("--turn",(hash(seed())%90)+"deg");
 emit("surface_view");
