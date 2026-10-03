@@ -75,7 +75,7 @@ function showTimeDoor(id){ return localStorage.getItem("netizens_tm_found")!==ge
 
 function renderEntityCards(placeId){
   if(!store.listEntities) return "";
-  var entities=store.listEntities(placeId,null);
+  var entities=store.listEntities(placeId,null).filter(function(entity){return !(placeId==="crews" && entity.metadata && entity.metadata.kind==="college_group");});
   if(!entities.length) return "<div class='entity-empty'>Nothing has taken shape here yet.</div>";
   return "<div class='entity-grid'>"+entities.map(function(entity){
     var membership=store.getEntityMembership ? store.getEntityMembership(entity.id) : null;
