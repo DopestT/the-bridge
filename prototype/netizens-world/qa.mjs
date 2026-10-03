@@ -3,6 +3,7 @@ import vm from "node:vm";
 import assert from "node:assert/strict";
 
 const source=fs.readFileSync(new URL("./world-state.js",import.meta.url),"utf8");
+const appSource=fs.readFileSync(new URL("./app.js",import.meta.url),"utf8");
 const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
 const perceptionSource=fs.readFileSync(new URL("./perception-client.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);
@@ -24,6 +25,14 @@ vm.runInContext(source,context,{filename:"world-state.js"});
 const store=window.NetizensStore;
 assert.ok(store,"NetizensStore should be exposed");
 assert.equal(store.snapshot().version,3);
+
+const collegeGroups=store.listEntities("crews",null).filter(entity=>entity.metadata&&entity.metadata.kind==="college_group");
+assert.ok(collegeGroups.length>=5,"college pilot should seed at least five campus groups");
+assert.ok(collegeGroups.some(entity=>entity.title==="University of Maryland"),"college pilot should include University of Maryland");
+assert.ok(collegeGroups.every(entity=>entity.metadata.pilot===true),"college groups should be explicitly marked as pilot data");
+assert.ok(appSource.includes("COLLEGE GROUPS · PILOT"),"Crews UI should expose the college groups pilot");
+assert.ok(appSource.includes("college_group_view"),"college group views should emit usage analytics");
+assert.ok(appSource.includes("college_group_membership"),"college group membership changes should emit usage analytics");
 
 const initialXp=store.snapshot().citizen.xp;
 store.visitPlace("commons");

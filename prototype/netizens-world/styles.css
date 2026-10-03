@@ -139,6 +139,21 @@ button,textarea{font:inherit}button{color:inherit}button:focus-visible,textarea:
 .perception-node small{color:#7f899a;text-transform:uppercase;letter-spacing:.06em}
 .permission-note{border-left:2px solid #6959b8;padding-left:12px;color:#9ea8b8;font-size:.8rem;line-height:1.5;margin-top:15px}
 
+/* College Groups pilot */
+.college-pilot{margin-bottom:18px;border:1px solid #4a382f;border-radius:22px;padding:18px;background:linear-gradient(145deg,#1b1512,#10131a)}
+.college-pilot-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:14px}
+.college-pilot-head h3{margin:.25rem 0 .35rem;font-size:1.25rem}
+.college-pilot-head p{margin:0;max-width:760px;line-height:1.45}
+.pilot-badge{flex:0 0 auto;border:1px solid #6b4935;border-radius:999px;padding:7px 10px;color:#ffb680;font-size:.65rem;font-weight:900;letter-spacing:.12em}
+.college-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.college-card{min-height:132px;border:1px solid #3d342f;border-radius:18px;padding:15px;background:linear-gradient(145deg,#181716,#101319);text-align:left;cursor:pointer}
+.college-card:hover{border-color:#8a5a3c;transform:translateY(-1px)}
+.college-state{display:block;color:#ffad73;font-size:.62rem;font-weight:900;letter-spacing:.12em}
+.college-card strong{display:block;margin-top:11px;font-size:1rem}
+.college-card p{margin:6px 0 12px;color:#98a2b2;font-size:.82rem;line-height:1.35}
+.college-card small{color:#c6a58f;font-size:.68rem;font-weight:850;letter-spacing:.06em}
+@media(max-width:700px){.college-grid{grid-template-columns:1fr}.college-pilot-head{display:block}.pilot-badge{display:inline-block;margin-top:12px}}
+
 /* V3 World entities */
 .entity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .entity-card{min-height:150px;border:1px solid #30394a;border-radius:20px;padding:16px;background:linear-gradient(145deg,#151b25,#0e131b);text-align:left;cursor:pointer;transition:.18s ease}
