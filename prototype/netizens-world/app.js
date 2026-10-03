@@ -217,6 +217,7 @@ function openPlace(id,preserveDepth){
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
   placeView.innerHTML="<section class='place-hero'><div><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p>"+escapeHtml(p.desc)+"</p></div><div class='place-symbol'>"+p.symbol+"</div></section>"+content+door;
   emit("place_view",{place:id,time_machine_surface:showTimeDoor(id)});
+  if(id==="crews") emit("college_groups_pilot_impression",{pilot:"dmv",seeded_groups:5});
 }
 
 function openTimeMachine(){
@@ -253,7 +254,7 @@ function computeWorldRoute(text){
   function add(id){if(placeData[id] && route.indexOf(id)<0) route.push(id);}
   if(state.routeOrigin && placeData[state.routeOrigin]) add(state.routeOrigin);
   if(/local|near|nearby|neighborhood|city|around here|moved|location/.test(q)) add("local");
-  if(/friend|people|crew|club|group|team|basketball|film|gaming|hiking|community/.test(q)) add("crews");
+  if(/friend|people|crew|club|group|team|basketball|film|gaming|hiking|community|college|campus|student|university/.test(q)) add("crews");
   if(/build|make|create|start|project|app|business|produce|film/.test(q)) add("projects");
   if(/tonight|saturday|sunday|event|concert|meetup|game|schedule|host/.test(q)) add("events");
   if(/want to|anybody|someone to|dinner|restaurant|museum|watch|plan/.test(q)) add("plans");
