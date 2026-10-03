@@ -1,6 +1,6 @@
 const placeData = {
   commons:{name:"Commons",symbol:"◎",color:"#8a68ff",bg:"#271f55",tag:"PUBLIC CONVERSATION",desc:"The open square. Follow conversations, not an outrage treadmill.",items:["What is everyone talking about?","City skylines never get old.","A public square with memory and context."],chips:["For You","Following","Topics","World"]},
-  crews:{name:"Crews",symbol:"⚑",color:"#ff9d5c",bg:"#4b2b21",tag:"YOUR PEOPLE",desc:"Smaller groups built around interests, identity and doing things together.",items:["Trail Seekers · 1.8K members","Film & Creators · 2.4K members","Game Night Crew · 892 members"],chips:["Hobbies","Sports","Art","Tech"]},
+  crews:{name:"Crews",symbol:"⚑",color:"#ff9d5c",bg:"#4b2b21",tag:"YOUR PEOPLE",desc:"Smaller groups built around interests, identity, campuses and doing things together.",items:["Trail Seekers · 1.8K members","Film & Creators · 2.4K members","Game Night Crew · 892 members"],chips:["College Groups","Hobbies","Sports","Art","Tech"]},
   local:{name:"Local",symbol:"⌖",color:"#49d7ff",bg:"#123f51",tag:"AROUND YOU",desc:"Nearby people, events, useful local knowledge and spontaneous plans.",items:["Sunset Yoga in the Park · tomorrow","Pickup basketball · tonight","Who knows a good bike shop?"],chips:["People","Events","Businesses","Crews"]},
   projects:{name:"Projects",symbol:"◇",color:"#59e79b",bg:"#173d31",tag:"BUILD TOGETHER",desc:"Turn conversation into work with collaborators, milestones and visible progress.",items:["Community Garden · 70%","Indie Film Series · 40%","Neighborhood Cleanup · 20%"],chips:["Active","Explore","Your Projects"]},
   ask:{name:"Ask",symbol:"?",color:"#f3d568",bg:"#4b3d19",tag:"REAL ANSWERS",desc:"Questions routed toward people who know, with useful context and follow-up.",items:["Best way to start a local film club?","Affordable video editing setup?","How do I find my first developer?"],chips:["Tech","Health","Money","Life"]},
@@ -89,6 +89,25 @@ function renderEntityCards(placeId){
   }).join("")+"</div>";
 }
 
+function renderCollegeGroupsPilot(){
+  if(!store.listEntities) return "";
+  var groups=store.listEntities("crews",null).filter(function(entity){
+    return entity.metadata && entity.metadata.kind==="college_group";
+  });
+  if(!groups.length) return "";
+  return "<section class='college-pilot'>"
+    +"<div class='college-pilot-head'><div><p class='kicker'>COLLEGE GROUPS · PILOT</p><h3>Start on campus. Test real usage.</h3><p class='muted'>Seeded campus spaces for students to connect around campus life, issues, projects, events, and civic participation. These cards do not claim current political activity or membership.</p></div><span class='pilot-badge'>DMV TEST</span></div>"
+    +"<div class='college-grid'>"+groups.map(function(entity){
+      return "<button class='college-card' data-open-entity='"+escapeHtml(entity.id)+"'>"
+        +"<span class='college-state'>PILOT GROUP</span>"
+        +"<strong>"+escapeHtml(entity.title)+"</strong>"
+        +"<p>"+escapeHtml((entity.metadata&&entity.metadata.campus)||entity.title)+"</p>"
+        +"<small>OPEN CAMPUS GROUP →</small>"
+        +"</button>";
+    }).join("")+"</div>"
+    +"</section>";
+}
+
 function entityActionMarkup(entity){
   var membership=store.getEntityMembership ? store.getEntityMembership(entity.id) : null;
   var active=membership && !["left","removed"].includes(membership.status);
@@ -166,6 +185,7 @@ function openEntity(id,preserveDepth){
     +"</div>";
 
   emit("entity_view",{entity_id:entity.id,place:entity.placeId,entity_type:entity.entityType});
+  if(entity.metadata && entity.metadata.kind==="college_group") emit("college_group_view",{entity_id:entity.id,campus:entity.metadata.campus||entity.title,region:entity.metadata.region||null});
 }
 
 function openPlace(id,preserveDepth){
@@ -187,10 +207,11 @@ function openPlace(id,preserveDepth){
   } else {
     var activities=p.items.map(function(x,i){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>"+(i+2)+" people active now · context travels with you</span></div>";}).join("");
     var entities=renderEntityCards(id);
+    var collegePilot=id==="crews"?renderCollegeGroupsPilot():"";
     var composer=id==="plans"
       ? "<div class='plan-composer'><label for='planTitle'>START A PLAN</label><div><input id='planTitle' maxlength='100' placeholder='Anybody want to...'><button data-create-plan>CREATE</button></div></div>"
       : "";
-    content="<div class='place-grid'><section class='panel'><h3>ENTERABLE LAYERS</h3>"+entities+composer+"<h3 class='ambient-heading'>HAPPENING AROUND HERE</h3>"+activities+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
+    content="<div class='place-grid'><section class='panel'><h3>ENTERABLE LAYERS</h3>"+collegePilot+entities+composer+"<h3 class='ambient-heading'>HAPPENING AROUND HERE</h3>"+activities+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
   }
 
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
@@ -391,7 +412,7 @@ document.addEventListener("click",function(e){
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }
   var openEntityBtn=e.target.closest("[data-open-entity]"); if(openEntityBtn)return openEntity(openEntityBtn.dataset.openEntity);
-  var membershipBtn=e.target.closest("[data-entity-membership]"); if(membershipBtn){var current=store.getEntityMembership(membershipBtn.dataset.entityMembership);var next=current && !["left","removed"].includes(current.status) ? "left" : (membershipBtn.dataset.activeStatus||"active");store.setEntityMembership(membershipBtn.dataset.entityMembership,next,next==="following"?"follower":next==="interested"?"attendee":"member");renderCitizen();return openEntity(membershipBtn.dataset.entityMembership,true);}
+  var membershipBtn=e.target.closest("[data-entity-membership]"); if(membershipBtn){var current=store.getEntityMembership(membershipBtn.dataset.entityMembership);var next=current && !["left","removed"].includes(current.status) ? "left" : (membershipBtn.dataset.activeStatus||"active");var membershipEntity=store.getEntity(membershipBtn.dataset.entityMembership);store.setEntityMembership(membershipBtn.dataset.entityMembership,next,next==="following"?"follower":next==="interested"?"attendee":"member");if(membershipEntity && membershipEntity.metadata && membershipEntity.metadata.kind==="college_group")emit("college_group_membership",{entity_id:membershipEntity.id,campus:membershipEntity.metadata.campus||membershipEntity.title,status:next});renderCitizen();return openEntity(membershipBtn.dataset.entityMembership,true);}
   var promoteBtn=e.target.closest("[data-promote-plan]"); if(promoteBtn){var eventEntity=store.promotePlanToEvent(promoteBtn.dataset.promotePlan);renderCitizen();if(eventEntity&&eventEntity.id)return openEntity(eventEntity.id);return;}
   var transformBtn=e.target.closest("[data-transform-entity]"); if(transformBtn){var transformed=store.transformEntity(transformBtn.dataset.transformEntity,transformBtn.dataset.targetPlace,{linkType:"became_project",entityType:"project"});renderCitizen();if(transformed&&transformed.id)return openEntity(transformed.id);return;}
   var entityPerception=e.target.closest("[data-perception-entity]"); if(entityPerception){var sourceEntity=store.getEntity(entityPerception.dataset.perceptionEntity);if(sourceEntity){state.currentEntityId=sourceEntity.id;state.routeOrigin=sourceEntity.placeId;renderPerceptionStatus();openPanel(perceptionPanel);document.getElementById("intentInput").value="Help me move "+sourceEntity.title+" forward."; }return;}
