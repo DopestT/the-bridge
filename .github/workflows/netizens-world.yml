@@ -30,6 +30,8 @@ jobs:
           node --check prototype/netizens-world/perception-client.js
       - name: Persistent world state tests
         run: node prototype/netizens-world/qa.mjs
+      - name: Participation adapter tests
+        run: node prototype/netizens-world/participation-adapter-qa.mjs
       - name: Backend contract tests
         run: node prototype/netizens-world/backend/contract-qa.mjs
       - name: Production database contract tests
