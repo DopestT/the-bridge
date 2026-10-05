@@ -7,8 +7,17 @@
   let transport=null;
 
   function clone(value){ return JSON.parse(JSON.stringify(value)); }
+  function fallbackUuid(){
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(char){
+      const value=Math.floor(Math.random()*16);
+      const nibble=char==="x" ? value : ((value&3)|8);
+      return nibble.toString(16);
+    });
+  }
   function uid(){
-    return (globalThis.crypto && crypto.randomUUID)?crypto.randomUUID():"op_"+Math.random().toString(36).slice(2)+Date.now().toString(36);
+    return globalThis.crypto && typeof globalThis.crypto.randomUUID==="function"
+      ? globalThis.crypto.randomUUID()
+      : fallbackUuid();
   }
   function readQueue(){
     try{
