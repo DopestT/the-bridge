@@ -49,6 +49,11 @@ assert.equal(firstFlush.pending,1,"failed transport should leave the same logica
 const firstAttempt=attempts.find(op=>op.kind==="discussion.create");
 assert.ok(firstAttempt,"transport should receive discussion.create");
 assert.equal(firstAttempt.mutationId,firstAttempt.id,"transport mutationId should equal the durable queue operation id");
+assert.match(
+  firstAttempt.mutationId,
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  "queue mutation IDs must remain valid UUIDs even when crypto.randomUUID is unavailable"
+);
 
 const queueAfterFailure=JSON.parse(memory.get("netizens_sync_queue_v1")||"[]");
 assert.equal(queueAfterFailure.length,1,"retry should not enqueue a replacement operation");
