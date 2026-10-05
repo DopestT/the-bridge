@@ -205,10 +205,6 @@ assert.ok(
   "discussion insert policy must delegate parent validation to the helper"
 );
 assert.ok(
-  !hardening.includes("from public.entity_discussion_items p"),
-  "hardening policy must not self-query entity_discussion_items and recurse through RLS"
-);
-assert.ok(
   hardening.includes("moderation_state='visible'") && hardening.includes("deleted_at is null"),
   "ordinary discussion reads must not expose hidden, removed, or soft-deleted bodies"
 );
@@ -216,6 +212,17 @@ assert.ok(
   hardening.includes("drop policy if exists \"authenticated discussion select\"")
     && hardening.includes("drop policy if exists \"authenticated genuine discussion insert\""),
   "hardening migration must replace both unsafe policies"
+);
+
+const insertPolicy=hardening.match(/create policy "authenticated genuine discussion insert"[\s\S]*?with check\s*\([\s\S]*?\n\);/);
+assert.ok(insertPolicy,"hardening migration must recreate the discussion INSERT policy");
+assert.ok(
+  !insertPolicy[0].includes("from public.entity_discussion_items p"),
+  "discussion INSERT policy must not self-query entity_discussion_items and recurse through RLS"
+);
+assert.ok(
+  hardening.includes("from public.entity_discussion_items p"),
+  "private parent validator must perform the bounded parent lookup"
 );
 
 console.log("NETIZENS production Supabase contract QA passed");
