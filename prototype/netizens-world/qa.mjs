@@ -24,7 +24,7 @@ vm.runInContext(source,context,{filename:"world-state.js"});
 
 const store=window.NetizensStore;
 assert.ok(store,"NetizensStore should be exposed");
-assert.equal(store.snapshot().version,3);
+assert.equal(store.snapshot().version,4,"World state should advance additively to V4 participation state");
 
 const collegeGroups=store.listEntities("crews",null).filter(entity=>entity.metadata&&entity.metadata.kind==="college_group");
 assert.ok(collegeGroups.length>=5,"college pilot should seed at least five campus groups");
@@ -33,6 +33,54 @@ assert.ok(collegeGroups.every(entity=>entity.metadata.pilot===true),"college gro
 assert.ok(appSource.includes("COLLEGE GROUPS · PILOT"),"Crews UI should expose the college groups pilot");
 assert.ok(appSource.includes("college_group_view"),"college group views should emit usage analytics");
 assert.ok(appSource.includes("college_group_membership"),"college group membership changes should emit usage analytics");
+
+for(const method of ["createDiscussionItem","listDiscussion","markDiscussionItemModerated","listNotifications","markNotificationRead"]){
+  assert.equal(typeof store[method],"function",`${method} should be a shared participation API`);
+}
+
+const collegeGroup=collegeGroups.find(entity=>entity.title==="University of Maryland");
+const discussionXpBefore=store.snapshot().citizen.xp;
+const seededPost=store.createDiscussionItem({
+  entityId:collegeGroup.id,
+  body:"Seeded orientation prompt",
+  provenance:"seeded"
+});
+assert.ok(seededPost,"seeded discussion should be representable for demo/bootstrap content");
+assert.equal(store.snapshot().citizen.xp,discussionXpBefore,"seeded discussion must not inflate genuine participation XP");
+
+const rootPost=store.createDiscussionItem({
+  entityId:collegeGroup.id,
+  body:"Anyone want to organize a campus screening?"
+});
+assert.equal(rootPost.entityId,collegeGroup.id);
+assert.equal(rootPost.provenance,"genuine");
+assert.equal(rootPost.parentId,null);
+assert.ok(store.snapshot().citizen.xp>discussionXpBefore,"genuine participation may contribute to reputation/XP");
+
+const reply=store.createDiscussionItem({
+  entityId:collegeGroup.id,
+  parentId:rootPost.id,
+  body:"I can help with the venue."
+});
+assert.equal(reply.parentId,rootPost.id);
+const thread=store.listDiscussion(collegeGroup.id);
+assert.ok(thread.some(item=>item.id===rootPost.id),"root discussion item should be listed");
+assert.ok(thread.some(item=>item.id===reply.id),"reply should be listed");
+assert.ok(thread.findIndex(item=>item.id===rootPost.id)<thread.findIndex(item=>item.id===reply.id),"discussion should render parent before reply");
+
+store.markDiscussionItemModerated(rootPost.id,"hidden");
+const moderatedThread=store.listDiscussion(collegeGroup.id);
+assert.equal(moderatedThread.find(item=>item.id===rootPost.id).moderationState,"hidden","moderation state should persist on the parent");
+assert.ok(moderatedThread.some(item=>item.id===reply.id),"reply should remain structurally safe when its parent is moderated");
+assert.ok(Array.isArray(store.listNotifications()),"notifications should be a user-owned list");
+
+const membershipXpBefore=store.snapshot().citizen.xp;
+store.setEntityMembership(collegeGroup.id,"active","member","seeded");
+assert.equal(store.getEntityMembership(collegeGroup.id).provenance,"seeded","membership should preserve provenance");
+assert.equal(store.snapshot().citizen.xp,membershipXpBefore,"seeded membership must not inflate genuine participation XP");
+store.setEntityMembership(collegeGroup.id,"active","member","genuine");
+assert.equal(store.getEntityMembership(collegeGroup.id).provenance,"genuine");
+assert.ok(store.snapshot().citizen.xp>membershipXpBefore,"genuine membership may contribute to participation XP");
 
 const initialXp=store.snapshot().citizen.xp;
 store.visitPlace("commons");
@@ -146,6 +194,53 @@ assert.equal(live.routeId,"route-1");
 assert.equal(live.sourceContextAccepted,1);
 assert.equal(live.nodes[0].permissionLevel,"P1");
 
+const legacyV3State={
+  version:3,
+  createdAt:"2026-09-01T00:00:00Z",
+  updatedAt:"2026-09-01T00:00:00Z",
+  citizen:{id:"citizen_v3",name:"V3 Citizen",initial:"V",xp:220,level:1,artifacts:["FOUNDER"],mode:"crews",form:"stylized",markSeed:"v3-seed"},
+  world:{
+    visitedPlaces:{},
+    joinedCrews:[],
+    followedProjects:[],
+    interestedEvents:[],
+    plans:[],
+    yesNoVotes:{},
+    savedRoutes:[],
+    perceptionBindings:[],
+    entities:{
+      seed_college_umd:{
+        id:"seed_college_umd",placeId:"crews",entityType:"crew",parentEntityId:null,creatorId:"citizen_v3",
+        title:"University of Maryland",summary:"Legacy V3 college pilot",visibility:"public",status:"active",
+        metadata:{kind:"college_group",campus:"University of Maryland, College Park",region:"DMV",pilot:true,seeded:true},
+        createdAt:"2026-09-01T00:00:00Z",updatedAt:"2026-09-01T00:00:00Z"
+      }
+    },
+    entityOrder:["seed_college_umd"],
+    entityMemberships:{},
+    entityLinks:[],
+    timeline:[]
+  }
+};
+const v3Memory=new Map([
+  ["netizens_world_seed","v3-seed"],
+  ["netizens_world_state_v3",JSON.stringify(legacyV3State)]
+]);
+const v3Storage={
+  getItem(key){return v3Memory.has(key)?v3Memory.get(key):null;},
+  setItem(key,value){v3Memory.set(key,String(value));},
+  removeItem(key){v3Memory.delete(key);}
+};
+const v3Window={events:[],dispatchEvent(event){this.events.push(event);},addEventListener(){}};
+const v3Context=vm.createContext({window:v3Window,localStorage:v3Storage,CustomEvent,console,Math,Date,JSON,Array,String,Number,Object});
+vm.runInContext(source,v3Context,{filename:"world-state-v3-migration.js"});
+const migratedV3=v3Window.NetizensStore.snapshot();
+assert.equal(migratedV3.version,4,"V3 state should migrate to V4");
+assert.equal(v3Window.NetizensStore.getEntity("seed_college_umd").metadata.kind,"college_group","V3 College entity identity should survive migration");
+assert.ok(v3Memory.has("netizens_world_state_v3"),"V3 migration should not destroy the legacy source state");
+assert.ok(Array.isArray(migratedV3.world.discussionItems),"V4 migration should add discussion state");
+assert.ok(Array.isArray(migratedV3.world.notifications),"V4 migration should add notification state");
+
 const legacyState={
   version:2,
   createdAt:"2026-01-01T00:00:00Z",
@@ -176,9 +271,9 @@ const legacyWindow={events:[],dispatchEvent(event){this.events.push(event);},add
 const legacyContext=vm.createContext({window:legacyWindow,localStorage:legacyStorage,CustomEvent,console,Math,Date,JSON,Array,String,Number,Object});
 vm.runInContext(source,legacyContext,{filename:"world-state-migration.js"});
 const migrated=legacyWindow.NetizensStore.snapshot();
-assert.equal(migrated.version,3,"V2 state should migrate to V3");
+assert.equal(migrated.version,4,"V2 state should migrate through to V4");
 assert.equal(migrated.citizen.name,"Legacy Citizen");
 assert.equal(legacyWindow.NetizensStore.getEntity("plan_legacy").placeId,"plans","legacy Plans should become World entities");
-assert.ok(legacyMemory.has("netizens_world_state_v2"),"migration should not destroy the legacy state before the V3 state is saved");
+assert.ok(legacyMemory.has("netizens_world_state_v2"),"migration should not destroy the legacy state before the V4 state is saved");
 
-console.log("NETIZENS World V3 state + entity graph + adapter + Perception client QA passed");
+console.log("NETIZENS World V4 participation + entity graph + adapter + Perception client QA passed");

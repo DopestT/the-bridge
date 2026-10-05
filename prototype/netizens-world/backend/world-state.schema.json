@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "NETIZENS World Client State V3",
+  "title": "NETIZENS World Client State V4",
   "type": "object",
   "required": ["version", "citizen", "world"],
   "properties": {
-    "version": { "const": 3 },
+    "version": { "const": 4 },
     "createdAt": { "type": "string" },
     "updatedAt": { "type": "string" },
     "citizen": {
@@ -34,6 +34,8 @@
         "entityOrder",
         "entityMemberships",
         "entityLinks",
+        "discussionItems",
+        "notifications",
         "timeline"
       ],
       "properties": {
@@ -67,12 +69,62 @@
           }
         },
         "entityOrder": { "type": "array", "items": { "type": "string" } },
-        "entityMemberships": { "type": "object" },
+        "entityMemberships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["entityId", "citizenId", "role", "status", "provenance", "updatedAt"],
+            "properties": {
+              "entityId": { "type": "string" },
+              "citizenId": { "type": "string" },
+              "role": { "type": "string" },
+              "status": { "enum": ["invited", "requested", "active", "muted", "left", "removed", "interested", "following"] },
+              "provenance": { "enum": ["genuine", "seeded", "demo"] },
+              "updatedAt": { "type": "string" }
+            }
+          }
+        },
         "entityLinks": {
           "type": "array",
           "items": {
             "type": "object",
             "required": ["id", "fromEntityId", "toEntityId", "linkType", "createdAt"]
+          }
+        },
+        "discussionItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "entityId", "authorId", "parentId", "body", "provenance", "moderationState", "createdAt", "updatedAt"],
+            "properties": {
+              "id": { "type": "string" },
+              "entityId": { "type": "string" },
+              "authorId": { "type": ["string", "null"] },
+              "parentId": { "type": ["string", "null"] },
+              "body": { "type": "string", "maxLength": 5000 },
+              "provenance": { "enum": ["genuine", "seeded", "demo"] },
+              "moderationState": { "enum": ["visible", "hidden", "removed"] },
+              "createdAt": { "type": "string" },
+              "updatedAt": { "type": "string" },
+              "deletedAt": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "citizenId", "type", "payload", "readAt", "createdAt"],
+            "properties": {
+              "id": { "type": "string" },
+              "citizenId": { "type": "string" },
+              "type": { "type": "string" },
+              "actorId": { "type": ["string", "null"] },
+              "entityId": { "type": ["string", "null"] },
+              "payload": { "type": "object" },
+              "readAt": { "type": ["string", "null"] },
+              "createdAt": { "type": "string" }
+            }
           }
         },
         "timeline": { "type": "array", "items": { "type": "object" } }

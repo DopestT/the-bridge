@@ -29,12 +29,14 @@ assert.ok(sql.includes("perception_objective_id"),"Perception bridge should pers
 assert.ok(sql.includes("perception_route_id"),"Perception bridge should persist canonical route IDs");
 
 assert.equal(stateSchema.type,"object");
-assert.equal(stateSchema.properties.version.const,3);
+assert.equal(stateSchema.properties.version.const,4);
 assert.ok(stateSchema.required.includes("citizen"));
 assert.ok(stateSchema.required.includes("world"));
-for(const field of ["entities","entityOrder","entityMemberships","entityLinks","perceptionBindings"]){
-  assert.ok(stateSchema.properties.world.required.includes(field),"V3 client state missing required field: "+field);
+for(const field of ["entities","entityOrder","entityMemberships","entityLinks","discussionItems","notifications","perceptionBindings"]){
+  assert.ok(stateSchema.properties.world.required.includes(field),"V4 client state missing required field: "+field);
 }
+assert.deepEqual(stateSchema.properties.world.properties.entityMemberships.additionalProperties.properties.provenance.enum,["genuine","seeded","demo"]);
+assert.deepEqual(stateSchema.properties.world.properties.discussionItems.items.properties.provenance.enum,["genuine","seeded","demo"]);
 assert.deepEqual(stateSchema.properties.citizen.properties.form.enum,["likeness","stylized","fictional","privacy"]);
 
 console.log("NETIZENS backend contract QA passed");

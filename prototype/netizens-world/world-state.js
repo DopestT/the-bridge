@@ -1,10 +1,13 @@
 (function(){
   "use strict";
 
-  const KEY="netizens_world_state_v3";
-  const LEGACY_KEY="netizens_world_state_v2";
-  const SCHEMA_VERSION=3;
+  const KEY="netizens_world_state_v4";
+  const LEGACY_V3_KEY="netizens_world_state_v3";
+  const LEGACY_V2_KEY="netizens_world_state_v2";
+  const SCHEMA_VERSION=4;
   const PLACE_IDS=["commons","crews","local","projects","ask","exchange","circles","events","plans","yesno"];
+  const PROVENANCE=["genuine","seeded","demo"];
+  const MODERATION_STATES=["visible","hidden","removed"];
 
   function now(){ return new Date().toISOString(); }
   function clone(value){ return JSON.parse(JSON.stringify(value)); }
@@ -34,6 +37,7 @@
   }
   function validPlace(id){ return PLACE_IDS.includes(id); }
   function calcLevel(xp){ return Math.max(1,Math.floor(Number(xp||0)/500)+1); }
+  function validProvenance(value){ return PROVENANCE.includes(value) ? value : "genuine"; }
 
   function defaultWorld(){
     return {
@@ -49,6 +53,8 @@
       entityOrder:[],
       entityMemberships:{},
       entityLinks:[],
+      discussionItems:[],
+      notifications:[],
       timeline:[]
     };
   }
@@ -91,6 +97,38 @@
       metadata:value.metadata && typeof value.metadata==="object" && !Array.isArray(value.metadata) ? clone(value.metadata) : {},
       createdAt,
       updatedAt:clean(value.updatedAt,80)||createdAt
+    };
+  }
+
+  function discussionRecord(input,citizenId){
+    const value=input && typeof input==="object" ? input : {};
+    const createdAt=clean(value.createdAt,80)||now();
+    return {
+      id:clean(value.id,180)||uid("discussion"),
+      entityId:clean(value.entityId,180),
+      authorId:clean(value.authorId,180)||citizenId||null,
+      parentId:clean(value.parentId,180)||null,
+      body:clean(value.body,5000),
+      provenance:validProvenance(value.provenance),
+      moderationState:MODERATION_STATES.includes(value.moderationState) ? value.moderationState : "visible",
+      createdAt,
+      updatedAt:clean(value.updatedAt,80)||createdAt,
+      deletedAt:clean(value.deletedAt,80)||null
+    };
+  }
+
+  function notificationRecord(input,citizenId){
+    const value=input && typeof input==="object" ? input : {};
+    const createdAt=clean(value.createdAt,80)||now();
+    return {
+      id:clean(value.id,180)||uid("notification"),
+      citizenId:clean(value.citizenId,180)||citizenId||null,
+      type:clean(value.type||value.notificationType,120)||"activity",
+      actorId:clean(value.actorId,180)||null,
+      entityId:clean(value.entityId,180)||null,
+      payload:value.payload && typeof value.payload==="object" && !Array.isArray(value.payload) ? clone(value.payload) : {},
+      readAt:clean(value.readAt,80)||null,
+      createdAt
     };
   }
 
@@ -149,6 +187,8 @@
     if(!Array.isArray(state.world.entityOrder)) state.world.entityOrder=[];
     if(!state.world.entityMemberships || typeof state.world.entityMemberships!=="object" || Array.isArray(state.world.entityMemberships)) state.world.entityMemberships={};
     if(!Array.isArray(state.world.entityLinks)) state.world.entityLinks=[];
+    if(!Array.isArray(state.world.discussionItems)) state.world.discussionItems=[];
+    if(!Array.isArray(state.world.notifications)) state.world.notifications=[];
 
     const normalizedEntities={};
     for(const [id,value] of Object.entries(state.world.entities)){
@@ -157,6 +197,27 @@
     }
     state.world.entities=normalizedEntities;
     state.world.entityOrder=state.world.entityOrder.filter((id,index,list)=>Boolean(state.world.entities[id])&&list.indexOf(id)===index);
+
+    const normalizedMemberships={};
+    for(const [entityId,value] of Object.entries(state.world.entityMemberships)){
+      if(!value || typeof value!=="object" || !state.world.entities[entityId]) continue;
+      normalizedMemberships[entityId]=Object.assign({},value,{
+        entityId,
+        citizenId:clean(value.citizenId,180)||state.citizen.id,
+        role:clean(value.role,80)||"member",
+        status:clean(value.status,80)||"active",
+        provenance:validProvenance(value.provenance),
+        updatedAt:clean(value.updatedAt,80)||now()
+      });
+    }
+    state.world.entityMemberships=normalizedMemberships;
+
+    state.world.discussionItems=state.world.discussionItems
+      .map(item=>discussionRecord(item,state.citizen.id))
+      .filter(item=>Boolean(item.entityId && state.world.entities[item.entityId]));
+    state.world.notifications=state.world.notifications
+      .map(item=>notificationRecord(item,state.citizen.id))
+      .filter(item=>item.citizenId===state.citizen.id);
 
     migrateLegacyPlans(state);
     seedEntities(state);
@@ -169,8 +230,10 @@
     try{
       const current=localStorage.getItem(KEY);
       if(current) return normalize(JSON.parse(current));
-      const legacy=localStorage.getItem(LEGACY_KEY);
-      if(legacy) return normalize(JSON.parse(legacy));
+      const legacyV3=localStorage.getItem(LEGACY_V3_KEY);
+      if(legacyV3) return normalize(JSON.parse(legacyV3));
+      const legacyV2=localStorage.getItem(LEGACY_V2_KEY);
+      if(legacyV2) return normalize(JSON.parse(legacyV2));
     }catch(_){}
     return normalize(null);
   }
@@ -297,26 +360,111 @@
     return clone(entity);
   }
 
-  function setEntityMembership(entityId,status,role){
+  function setEntityMembership(entityId,status,role,provenance){
     if(!state.world.entities[entityId]) return snapshot();
     const allowed=["invited","requested","active","muted","left","removed","interested","following"];
     const nextStatus=allowed.includes(status) ? status : "active";
+    const nextProvenance=validProvenance(provenance);
     state.world.entityMemberships[entityId]={
       entityId,
       citizenId:state.citizen.id,
       role:clean(role,80)||"member",
       status:nextStatus,
+      provenance:nextProvenance,
       updatedAt:now()
     };
-    timeline("entity_membership",{entityId,status:nextStatus,role:state.world.entityMemberships[entityId].role});
-    state.citizen.xp+=nextStatus==="active" ? 20 : 5;
-    state.citizen.level=calcLevel(state.citizen.xp);
+    timeline("entity_membership",{entityId,status:nextStatus,role:state.world.entityMemberships[entityId].role,provenance:nextProvenance});
+    if(nextProvenance==="genuine"){
+      state.citizen.xp+=nextStatus==="active" ? 20 : 5;
+      state.citizen.level=calcLevel(state.citizen.xp);
+    }
     return save();
   }
 
   function getEntityMembership(entityId){
     const membership=state.world.entityMemberships[entityId];
     return membership ? clone(membership) : null;
+  }
+
+  function createDiscussionItem(input){
+    const value=input && typeof input==="object" ? input : {};
+    const entityId=clean(value.entityId,180);
+    const body=clean(value.body,5000);
+    if(!entityId || !state.world.entities[entityId] || !body) return null;
+
+    const parentId=clean(value.parentId,180)||null;
+    if(parentId){
+      const parent=state.world.discussionItems.find(item=>item.id===parentId);
+      if(!parent || parent.entityId!==entityId) return null;
+    }
+
+    const item=discussionRecord({
+      entityId,
+      authorId:state.citizen.id,
+      parentId,
+      body,
+      provenance:validProvenance(value.provenance),
+      moderationState:"visible"
+    },state.citizen.id);
+    state.world.discussionItems.push(item);
+    timeline("discussion_created",{id:item.id,entityId,parentId:item.parentId,provenance:item.provenance});
+    if(item.provenance==="genuine"){
+      state.citizen.xp+=parentId ? 6 : 10;
+      state.citizen.level=calcLevel(state.citizen.xp);
+    }
+    save();
+    return clone(item);
+  }
+
+  function listDiscussion(entityId){
+    const id=clean(entityId,180);
+    const items=state.world.discussionItems.filter(item=>item.entityId===id);
+    const byParent=new Map();
+    const byId=new Map(items.map(item=>[item.id,item]));
+    for(const item of items){
+      const parent= item.parentId && byId.has(item.parentId) ? item.parentId : null;
+      if(!byParent.has(parent)) byParent.set(parent,[]);
+      byParent.get(parent).push(item);
+    }
+    for(const list of byParent.values()) list.sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt))||String(a.id).localeCompare(String(b.id)));
+    const ordered=[];
+    const seen=new Set();
+    function visit(item){
+      if(!item || seen.has(item.id)) return;
+      seen.add(item.id);
+      ordered.push(item);
+      for(const child of byParent.get(item.id)||[]) visit(child);
+    }
+    for(const root of byParent.get(null)||[]) visit(root);
+    for(const item of items) visit(item);
+    return ordered.map(clone);
+  }
+
+  function markDiscussionItemModerated(id,moderationState){
+    const item=state.world.discussionItems.find(candidate=>candidate.id===id);
+    if(!item || !MODERATION_STATES.includes(moderationState)) return null;
+    item.moderationState=moderationState;
+    item.updatedAt=now();
+    if(moderationState==="removed") item.deletedAt=now();
+    timeline("discussion_moderated",{id:item.id,entityId:item.entityId,moderationState});
+    save();
+    return clone(item);
+  }
+
+  function listNotifications(){
+    return state.world.notifications
+      .filter(item=>item.citizenId===state.citizen.id)
+      .slice()
+      .sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))
+      .map(clone);
+  }
+
+  function markNotificationRead(id){
+    const item=state.world.notifications.find(candidate=>candidate.id===id && candidate.citizenId===state.citizen.id);
+    if(!item) return null;
+    if(!item.readAt) item.readAt=now();
+    save();
+    return clone(item);
   }
 
   function linkEntities(fromEntityId,toEntityId,linkType){
@@ -391,8 +539,8 @@
     );
     plan.status="converted";
     plan.updatedAt=now();
-    state.world.entityMemberships[event.id]={entityId:event.id,citizenId:state.citizen.id,role:"host",status:"active",updatedAt:now()};
-    state.world.entityMemberships[circle.id]={entityId:circle.id,citizenId:state.citizen.id,role:"organizer",status:"active",updatedAt:now()};
+    state.world.entityMemberships[event.id]={entityId:event.id,citizenId:state.citizen.id,role:"host",status:"active",provenance:"genuine",updatedAt:now()};
+    state.world.entityMemberships[circle.id]={entityId:circle.id,citizenId:state.citizen.id,role:"organizer",status:"active",provenance:"genuine",updatedAt:now()};
     timeline("plan_promoted",{planId:plan.id,eventId:event.id,circleId:circle.id});
     if(!state.citizen.artifacts.includes("CONVERTER")) state.citizen.artifacts.push("CONVERTER");
     state.citizen.xp+=100;
@@ -480,7 +628,7 @@
     const events=listEntities("events").length;
     const entities=Object.keys(state.world.entities).length;
     const links=state.world.entityLinks.length;
-    const memberships=Object.values(state.world.entityMemberships).filter(item=>item&&["active","interested","following"].includes(item.status)).length;
+    const memberships=Object.values(state.world.entityMemberships).filter(item=>item&&item.provenance==="genuine"&&["active","interested","following"].includes(item.status)).length;
     const routes=state.world.savedRoutes.length+state.world.perceptionBindings.length;
     const base=hash(state.citizen.markSeed+"|"+horizon+"|"+visited+"|"+entities+"|"+links+"|"+routes);
     const growth=Math.max(1,Math.round((visited+entities+links+memberships+routes+1)*h.factor*.55));
@@ -510,7 +658,9 @@
   }
 
   function reset(){
-    localStorage.removeItem(LEGACY_KEY);
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(LEGACY_V3_KEY);
+    localStorage.removeItem(LEGACY_V2_KEY);
     state=normalize(null);
     save();
     return snapshot();
@@ -520,6 +670,7 @@
     snapshot,save,reset,seed,hash,awardXP,addArtifact,visitPlace,setMode,setForm,setCitizen,
     toggleList,createPlan,vote,saveRoute,savePerceptionBinding,futureScenario,
     createEntity,getEntity,listEntities,updateEntity,setEntityMembership,getEntityMembership,
+    createDiscussionItem,listDiscussion,markDiscussionItemModerated,listNotifications,markNotificationRead,
     linkEntities,linksForEntity,promotePlanToEvent,transformEntity
   };
 })();
