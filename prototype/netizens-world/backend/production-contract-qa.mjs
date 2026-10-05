@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 const foundationPath=new URL("../../../supabase/migrations/20261002223500_netizens_world_foundation.sql",import.meta.url);
 const participationPath=new URL("../../../supabase/migrations/20261005010500_netizens_participation_layer.sql",import.meta.url);
+const hardeningPath=new URL("../../../supabase/migrations/20261005185000_netizens_participation_rls_hardening.sql",import.meta.url);
 const migration=fs.readFileSync(foundationPath,"utf8").toLowerCase();
 
 const tables=[
@@ -179,6 +180,42 @@ assert.ok(
 assert.ok(
   participation.includes("create index entity_discussion_items_parent_idx"),
   "reply traversal needs a parent index"
+);
+
+assert.ok(fs.existsSync(hardeningPath),"participation RLS hardening must be an additive migration");
+const hardening=fs.readFileSync(hardeningPath,"utf8").toLowerCase();
+assert.ok(
+  hardening.includes("create or replace function private.valid_discussion_parent"),
+  "reply validation must move into a private non-recursive helper"
+);
+assert.ok(
+  hardening.includes("security definer") && hardening.includes("set search_path = ''"),
+  "parent validation helper must execute with a fixed search path outside client RLS recursion"
+);
+assert.ok(
+  hardening.includes("revoke all on function private.valid_discussion_parent(uuid,uuid) from public"),
+  "parent validation helper must not be callable by PUBLIC"
+);
+assert.ok(
+  hardening.includes("grant execute on function private.valid_discussion_parent(uuid,uuid) to authenticated"),
+  "authenticated policy evaluation needs explicit helper execution privilege"
+);
+assert.ok(
+  hardening.includes("private.valid_discussion_parent(parent_id,entity_id)"),
+  "discussion insert policy must delegate parent validation to the helper"
+);
+assert.ok(
+  !hardening.includes("from public.entity_discussion_items p"),
+  "hardening policy must not self-query entity_discussion_items and recurse through RLS"
+);
+assert.ok(
+  hardening.includes("moderation_state='visible'") && hardening.includes("deleted_at is null"),
+  "ordinary discussion reads must not expose hidden, removed, or soft-deleted bodies"
+);
+assert.ok(
+  hardening.includes("drop policy if exists \"authenticated discussion select\"")
+    && hardening.includes("drop policy if exists \"authenticated genuine discussion insert\""),
+  "hardening migration must replace both unsafe policies"
 );
 
 console.log("NETIZENS production Supabase contract QA passed");
