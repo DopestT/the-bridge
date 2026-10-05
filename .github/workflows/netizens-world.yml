@@ -28,6 +28,7 @@ jobs:
           node --check prototype/netizens-world/app.js
           node --check prototype/netizens-world/data-adapter.js
           node --check prototype/netizens-world/perception-client.js
+          node --check prototype/netizens-world/participation-ui.js
       - name: Persistent world state tests
         run: node prototype/netizens-world/qa.mjs
       - name: Participation adapter tests
@@ -44,3 +45,6 @@ jobs:
           grep -q 'id="timeMachineDialog"' prototype/netizens-world/index.html
           grep -q 'id="futureScenario"' prototype/netizens-world/index.html
           grep -q 'world-state.js' prototype/netizens-world/index.html
+          grep -q 'participation-ui.js' prototype/netizens-world/index.html
+          grep -q 'participation.css' prototype/netizens-world/index.html
+          grep -q 'id="notificationPanel"' prototype/netizens-world/index.html
