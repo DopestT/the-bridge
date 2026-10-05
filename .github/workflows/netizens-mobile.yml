@@ -1,0 +1,41 @@
+name: NETIZENS Mobile CI
+
+on:
+  push:
+    branches:
+      - feature/netizens-mobile-app
+    paths:
+      - 'apps/netizens-mobile/**'
+      - '.github/workflows/netizens-mobile.yml'
+      - 'supabase/**'
+      - 'prototype/netizens-world/backend/**'
+  pull_request:
+    paths:
+      - 'apps/netizens-mobile/**'
+      - '.github/workflows/netizens-mobile.yml'
+      - 'supabase/**'
+      - 'prototype/netizens-world/backend/**'
+
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.1'
+          cache: npm
+          cache-dependency-path: apps/netizens-mobile/package-lock.json
+      - name: Bootstrap deterministic lock
+        working-directory: apps/netizens-mobile
+        run: npm install --package-lock-only --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netizens-mobile-package-lock
+          path: apps/netizens-mobile/package-lock.json
+      - name: Install mobile dependencies
+        working-directory: apps/netizens-mobile
+        run: npm ci
+      - name: RED boot contract
+        working-directory: apps/netizens-mobile
+        run: npm test -- --runInBand src/app/boot.test.ts

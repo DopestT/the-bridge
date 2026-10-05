@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "NETIZENS",
+    "slug": "netizens-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}
