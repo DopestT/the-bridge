@@ -181,4 +181,21 @@ assert.ok(
   "reply traversal needs a parent index"
 );
 
+assert.ok(
+  participation.includes("create or replace function private.valid_discussion_parent"),
+  "reply validation must use a private helper instead of recursively querying the RLS-protected discussion table from its own policy"
+);
+assert.ok(
+  participation.includes("private.valid_discussion_parent(parent_id,entity_id)"),
+  "discussion inserts must delegate parent validation to the non-recursive helper"
+);
+assert.ok(
+  participation.includes("moderation_state='visible'") && participation.includes("deleted_at is null"),
+  "ordinary discussion reads must not expose moderated or soft-deleted bodies"
+);
+assert.ok(
+  !participation.includes("select 1\n      from public.entity_discussion_items p"),
+  "discussion INSERT policy must not self-query entity_discussion_items and recurse through RLS"
+);
+
 console.log("NETIZENS production Supabase contract QA passed");
