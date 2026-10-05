@@ -56,7 +56,8 @@
     for(const op of queue){
       try{
         op.attempts=(op.attempts||0)+1;
-        const result=await transport(clone(op));
+        const outbound=Object.assign({},clone(op),{mutationId:op.id});
+        const result=await transport(outbound);
         if(result && result.ok===false) remaining.push(op);
         else flushed+=1;
       }catch(_){
@@ -92,8 +93,17 @@
     getEntity:(id)=>local.getEntity(id),
     listEntities:(placeId,parentEntityId)=>local.listEntities(placeId,parentEntityId),
     updateEntity:(id,patch)=>mutate("entity.update",{id:id,patch:patch},()=>local.updateEntity(id,patch)),
-    setEntityMembership:(entityId,status,role)=>mutate("entity.membership",{entityId:entityId,status:status,role:role},()=>local.setEntityMembership(entityId,status,role)),
+    setEntityMembership:(entityId,status,role,provenance="genuine")=>mutate(
+      "entity.membership",
+      {entityId:entityId,status:status,role:role,provenance:provenance},
+      ()=>local.setEntityMembership(entityId,status,role,provenance)
+    ),
     getEntityMembership:(entityId)=>local.getEntityMembership(entityId),
+    createDiscussionItem:(input)=>mutate("discussion.create",{input:input||{}},()=>local.createDiscussionItem(input||{})),
+    listDiscussion:(entityId)=>local.listDiscussion(entityId),
+    markDiscussionItemModerated:(id,state)=>mutate("discussion.moderate",{id:id,state:state},()=>local.markDiscussionItemModerated(id,state)),
+    listNotifications:()=>local.listNotifications(),
+    markNotificationRead:(id)=>mutate("notification.read",{id:id},()=>local.markNotificationRead(id)),
     linkEntities:(fromEntityId,toEntityId,linkType)=>mutate("entity.link",{fromEntityId:fromEntityId,toEntityId:toEntityId,linkType:linkType},()=>local.linkEntities(fromEntityId,toEntityId,linkType)),
     linksForEntity:(entityId)=>local.linksForEntity(entityId),
     promotePlanToEvent:(entityId)=>mutate("plan.promote",{entityId:entityId},()=>local.promotePlanToEvent(entityId)),
