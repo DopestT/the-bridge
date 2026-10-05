@@ -1,0 +1,73 @@
+name: NETIZENS Mobile CI
+
+on:
+  push:
+    branches:
+      - feature/netizens-mobile-app
+    paths:
+      - 'apps/netizens-mobile/**'
+      - '.github/workflows/netizens-mobile.yml'
+      - 'supabase/**'
+      - 'prototype/netizens-world/**'
+  pull_request:
+    paths:
+      - 'apps/netizens-mobile/**'
+      - '.github/workflows/netizens-mobile.yml'
+      - 'supabase/**'
+      - 'prototype/netizens-world/**'
+
+concurrency:
+  group: netizens-mobile-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.1'
+      - name: Bootstrap deterministic lock
+        working-directory: apps/netizens-mobile
+        run: npm install --package-lock-only --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netizens-mobile-package-lock
+          path: apps/netizens-mobile/package-lock.json
+      - name: Install mobile dependencies
+        working-directory: apps/netizens-mobile
+        run: npm ci
+      - name: Mobile typecheck
+        working-directory: apps/netizens-mobile
+        run: npm run typecheck
+      - name: Mobile lint
+        working-directory: apps/netizens-mobile
+        run: npm run lint
+      - name: Mobile tests
+        working-directory: apps/netizens-mobile
+        run: npm run test:ci
+      - name: Existing NETIZENS syntax checks
+        run: |
+          node --check prototype/netizens-world/world-state.js
+          node --check prototype/netizens-world/app.js
+          node --check prototype/netizens-world/data-adapter.js
+          node --check prototype/netizens-world/perception-client.js
+          node --check prototype/netizens-world/participation-ui.js
+      - name: Existing NETIZENS World QA
+        run: |
+          node prototype/netizens-world/qa.mjs
+          node prototype/netizens-world/participation-adapter-qa.mjs
+          node prototype/netizens-world/participation-ui-qa.mjs
+          node prototype/netizens-world/backend/contract-qa.mjs
+          node prototype/netizens-world/backend/production-contract-qa.mjs
+      - name: Existing NETIZENS shell checks
+        run: |
+          grep -q 'id="enterWorld"' prototype/netizens-world/index.html
+          grep -q 'id="timeMachineDialog"' prototype/netizens-world/index.html
+          grep -q 'id="futureScenario"' prototype/netizens-world/index.html
+          grep -q 'world-state.js' prototype/netizens-world/index.html
+          grep -q 'participation-ui.js' prototype/netizens-world/index.html
+          grep -q 'participation.css' prototype/netizens-world/index.html
+          grep -q 'id="notificationPanel"' prototype/netizens-world/index.html
