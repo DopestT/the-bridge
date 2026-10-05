@@ -16,6 +16,10 @@ on:
       - 'supabase/**'
       - 'prototype/netizens-world/**'
 
+concurrency:
+  group: netizens-mobile-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   mobile:
     runs-on: ubuntu-latest
