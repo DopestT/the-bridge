@@ -1,58 +1,132 @@
-import { SessionController } from './session-controller';
-import type { SessionStore, StoredSession } from './types';
+import { SessionController } from "./session-controller";
+import type { SessionStore, StoredSession } from "./types";
 
-function memoryStore(initial: StoredSession | null = null): SessionStore & { current(): StoredSession | null } {
+function memoryStore(
+  initial: StoredSession | null = null,
+): SessionStore & { current(): StoredSession | null } {
   let value = initial;
   return {
-    async read() { return value; },
-    async write(next) { value = next; },
-    async clear() { value = null; },
-    current() { return value; },
+    async read() {
+      return value;
+    },
+    async write(next) {
+      value = next;
+    },
+    async clear() {
+      value = null;
+    },
+    current() {
+      return value;
+    },
   };
 }
 
 const NOW = 2_000_000;
 const valid: StoredSession = {
-  accessToken: 'a',
-  refreshToken: 'r',
+  accessToken: "a",
+  refreshToken: "r",
   expiresAt: NOW + 60_000,
-  userId: 'u1',
+  userId: "u1",
   isAnonymous: false,
 };
 
-describe('SessionController', () => {
-  test('restores a permanent Citizen and allows protected writes', async () => {
+describe("SessionController", () => {
+  test("restores a permanent Citizen and allows protected writes", async () => {
     const store = memoryStore(valid);
-    const controller = new SessionController(store, { refresh: async () => null }, () => NOW);
-    await expect(controller.restore()).resolves.toBe('authenticated');
-    expect(controller.requireWriteSession().accessToken).toBe('a');
+    const controller = new SessionController(
+      store,
+      { refresh: async () => null },
+      () => NOW,
+    );
+    await expect(controller.restore()).resolves.toBe("authenticated");
+    expect(controller.requireWriteSession().accessToken).toBe("a");
   });
 
-  test('rejects anonymous auth users from NETIZENS World', async () => {
+  test("rejects anonymous auth users from NETIZENS World", async () => {
     const store = memoryStore({ ...valid, isAnonymous: true });
-    const controller = new SessionController(store, { refresh: async () => null }, () => NOW);
-    await expect(controller.restore()).resolves.toBe('anonymous');
+    const controller = new SessionController(
+      store,
+      { refresh: async () => null },
+      () => NOW,
+    );
+    await expect(controller.restore()).resolves.toBe("anonymous");
     expect(store.current()).toBeNull();
-    expect(() => controller.requireWriteSession()).toThrow('authenticated permanent Citizen');
+    expect(() => controller.requireWriteSession()).toThrow(
+      "authenticated permanent Citizen",
+    );
   });
 
-  test('keeps cached reads available while expired writes wait for refresh', async () => {
+  test("keeps cached reads available while expired writes wait for refresh", async () => {
     const store = memoryStore({ ...valid, expiresAt: NOW - 1 });
-    const refreshed = { ...valid, accessToken: 'fresh' };
-    const controller = new SessionController(store, { refresh: async () => refreshed }, () => NOW);
-    await expect(controller.restore()).resolves.toBe('expired');
+    const refreshed = { ...valid, accessToken: "fresh" };
+    const controller = new SessionController(
+      store,
+      { refresh: async () => refreshed },
+      () => NOW,
+    );
+    await expect(controller.restore()).resolves.toBe("expired");
     expect(controller.canUseCachedReads()).toBe(true);
-    expect(() => controller.requireWriteSession()).toThrow('authenticated permanent Citizen');
-    await expect(controller.refresh()).resolves.toBe('authenticated');
-    expect(controller.requireWriteSession().accessToken).toBe('fresh');
+    expect(() => controller.requireWriteSession()).toThrow(
+      "authenticated permanent Citizen",
+    );
+    await expect(controller.refresh()).resolves.toBe("authenticated");
+    expect(controller.requireWriteSession().accessToken).toBe("fresh");
   });
 
-  test('logout clears sensitive session material', async () => {
+  test("logout clears sensitive session material", async () => {
     const store = memoryStore(valid);
-    const controller = new SessionController(store, { refresh: async () => null }, () => NOW);
+    const controller = new SessionController(
+      store,
+      { refresh: async () => null },
+      () => NOW,
+    );
     await controller.restore();
     await controller.logout();
     expect(store.current()).toBeNull();
-    expect(controller.state).toBe('unknown');
+    expect(controller.state).toBe("unknown");
   });
+});
+
+it("does not restore a session when a background refresh resolves after logout", async () => {
+  let saved: StoredSession | null = {
+    accessToken: "old",
+    refreshToken: "refresh",
+    expiresAt: 999999,
+    userId: "old-user",
+    isAnonymous: false,
+  };
+  let finish!: (value: StoredSession) => void;
+  const store = {
+    read: async () => saved,
+    write: async (s: StoredSession) => {
+      saved = s;
+    },
+    clear: async () => {
+      saved = null;
+    },
+  };
+  const controller = new SessionController(
+    store,
+    {
+      refresh: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    },
+    () => 1,
+  );
+  await controller.restore();
+  const pending = controller.refresh();
+  await controller.logout();
+  finish({
+    accessToken: "new",
+    refreshToken: "refresh",
+    expiresAt: 999999,
+    userId: "old-user",
+    isAnonymous: false,
+  });
+  await pending;
+  expect(saved).toBeNull();
+  expect(controller.state).toBe("unknown");
+  expect(() => controller.requireWriteSession()).toThrow();
 });

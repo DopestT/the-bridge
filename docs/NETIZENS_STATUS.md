@@ -1,5 +1,22 @@
 # NETIZENS Current Status
 
+**Latest engineering update: 2026-10-12**
+
+The `feature/netizens-mobile-completion` branch advances the native app with account-scoped SQLite projections/outbox, bounded authenticated backend transport, cached public World/Place/Entity navigation, join/post/reply, canonical notification reads, private message reads/sends, optional Local location, and sign-in/sign-out integration. Branch implementation is not a claim of production deployment or private-beta readiness.
+
+Local verification includes TypeScript, lint, Jest component/session tests, actual SQLite/transport behavior tests, the five existing browser/backend QA suites, and iOS/Android Metro/Hermes bundle export. Bundle export is not a signed device build.
+
+**Release remains blocked:**
+- The connected Supabase project named `the-bridge` is `INACTIVE`. Its migration read timed out on October 12. Its identity as the dedicated NETIZENS production database is not independently confirmed; no migrations or project lifecycle changes were attempted.
+- Confirmed app IDs, EAS/signing configuration, TestFlight/Play builds and physical-device testing are absent from this checkout.
+- Push token registration/delivery, complete block/report UI, persistent College funnel analytics and measured device performance remain unfinished/unverified.
+- `apps/netizens-mobile/PRIVATE_BETA_GATE.md` records the remaining evidence required. Issue #16 must stay open until the real-phone milestone is demonstrated.
+
+The October 8 record below remains historical context for the previously merged baseline. Its “work still required” section is superseded only by verified branch/merge evidence above.
+
+---
+
+
 **Status date:** 2026-10-08  
 **Canonical repo:** `DopestT/the-bridge`  
 **Verified main baseline:** `201615737200dc9fffbf04efb85f98b7664f0a10`  
