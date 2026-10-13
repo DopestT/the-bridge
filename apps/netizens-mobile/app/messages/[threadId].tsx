@@ -1,7 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
-import { Text, View } from 'react-native';
-
-export default function ThreadRoute() {
-  const { threadId } = useLocalSearchParams<{ threadId: string }>();
-  return <View><Text>Thread: {threadId}</Text></View>;
+import { useLocalSearchParams } from "expo-router";
+import { ThreadScreen } from "../../src/features/messages/ThreadScreen";
+export default function Route() {
+  const params = useLocalSearchParams<{ threadId: string }>();
+  return <ThreadScreen threadId={params.threadId ?? ""} />;
 }

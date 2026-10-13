@@ -1,7 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
-import { Text, View } from 'react-native';
-
-export default function EntityRoute() {
-  const { entityId } = useLocalSearchParams<{ entityId: string }>();
-  return <View><Text>Entity: {entityId}</Text></View>;
+import { useLocalSearchParams } from "expo-router";
+import { EntityScreen } from "../../src/features/world/EntityScreen";
+export default function Route() {
+  const params = useLocalSearchParams<{ entityId: string }>();
+  return <EntityScreen entityId={params.entityId ?? ""} />;
 }
