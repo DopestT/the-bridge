@@ -1,18 +1,45 @@
 # NETIZENS Current Status
 
-**Latest engineering update: 2026-10-12**
+**Latest verified update: 2026-10-13 (America/New_York)**
 
-The `feature/netizens-mobile-completion` branch advances the native app with account-scoped SQLite projections/outbox, bounded authenticated backend transport, cached public World/Place/Entity navigation, join/post/reply, canonical notification reads, private message reads/sends, optional Local location, and sign-in/sign-out integration. Branch implementation is not a claim of production deployment or private-beta readiness.
+## Merged implementation
 
-Local verification includes TypeScript, lint, Jest component/session tests, actual SQLite/transport behavior tests, the five existing browser/backend QA suites, and iOS/Android Metro/Hermes bundle export. Bundle export is not a signed device build.
+PR [#18](https://github.com/DopestT/the-bridge/pull/18) merged on October 12 at 23:40 ET (October 13 at 03:40 UTC). The verified implementation baseline is `f66d1bdd24ed46f85be6a6a52b1c8f98009cbbc3`.
 
-**Release remains blocked:**
-- The connected Supabase project named `the-bridge` is `INACTIVE`. Its migration read timed out on October 12. Its identity as the dedicated NETIZENS production database is not independently confirmed; no migrations or project lifecycle changes were attempted.
-- Confirmed app IDs, EAS/signing configuration, TestFlight/Play builds and physical-device testing are absent from this checkout.
-- Push token registration/delivery, complete block/report UI, persistent College funnel analytics and measured device performance remain unfinished/unverified.
-- `apps/netizens-mobile/PRIVATE_BETA_GATE.md` records the remaining evidence required. Issue #16 must stay open until the real-phone milestone is demonstrated.
+Account-scoped SQLite projections/outbox, authenticated bounded transport, cached World/Place/Entity navigation, native join/post/reply, canonical notification reads, private message reads/sends, optional Local location and session recovery are now merged, not merely on a feature branch.
 
-The October 8 record below remains historical context for the previously merged baseline. Its “work still required” section is superseded only by verified branch/merge evidence above.
+Mobile CI [run #24](https://github.com/DopestT/the-bridge/actions/runs/38342807379) passed on the merge commit. PR-head [run #23](https://github.com/DopestT/the-bridge/actions/runs/38319159335) also passed. These checks cover typecheck, lint, Jest, SQLite/transport integration, existing browser/backend QA and iOS/Android bundle export. They do not certify signed builds, live RLS, push delivery or physical devices.
+
+## Backend observations
+
+Read-only connected-project inspection on October 13 returned:
+
+| Check | Observed result |
+| --- | --- |
+| Project | `the-bridge`, ref `udygizxcwqoxifqlyfkq` |
+| Lifecycle | `ACTIVE_HEALTHY` |
+| Recorded migrations | Empty list |
+| Public-schema tables | Empty list |
+| Dedicated NETIZENS identity | Not independently established |
+
+The October 12 inactive status and migration timeout are historical. Availability has recovered, but the connected project does not currently expose the required public NETIZENS schema. Empty public-schema results do not describe other schemas. No lifecycle changes or migrations were performed in this verification pass.
+
+## Remaining acceptance gates
+
+1. Confirm the dedicated NETIZENS project mapping; never use the Perception database. Compare and apply the three repository migrations only to the confirmed target, then verify actual grants, RLS and permanent Citizen profiles.
+2. Confirm LWV iOS/Android app identifiers, EAS ownership and signing; validate resolved configuration and create signed builds.
+3. Prove login → World → Place → Entity → join → post → reply against the live backend on both platforms.
+4. Complete and verify push registration/delivery, native block/report controls, and persistent College analytics.
+5. Prove process-death/offline recovery, duplicate suppression, session recovery, logout/account isolation and private messaging boundaries.
+6. Record device performance and physical-device E2E for the final build on both platforms.
+
+Implementation and acceptance must remain separate. Issue [#16](https://github.com/DopestT/the-bridge/issues/16) was closed immediately after the merge without new device evidence and must remain open until acceptance is demonstrated. Do not use an automatic closing reference in implementation PRs for this milestone.
+
+The executable sequence and evidence checklist are in [NETIZENS_REAL_PHONE_RUNBOOK.md](NETIZENS_REAL_PHONE_RUNBOOK.md). The release requirements remain in [PRIVATE_BETA_GATE.md](../apps/netizens-mobile/PRIVATE_BETA_GATE.md). No production deployment, signed-device build, real-user retention or private-beta clearance is established by this update.
+
+## Historical record
+
+The October 8 record below describes the earlier baseline. Its mobile “work still required” list is historical; use the merged implementation and remaining acceptance gates above for current planning.
 
 ---
 

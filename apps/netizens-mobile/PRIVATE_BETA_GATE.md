@@ -2,6 +2,12 @@
 
 Not cleared. Code checks are not physical-device certification.
 
+PR #18 is merged at `f66d1bdd24ed46f85be6a6a52b1c8f98009cbbc3`; post-merge Mobile CI run #24 passed. This establishes the implementation baseline only. See [the real-phone runbook](../../docs/NETIZENS_REAL_PHONE_RUNBOOK.md) for the dependency order and evidence matrix.
+
+Latest backend observation (October 13, 2026): connected `the-bridge` is ACTIVE_HEALTHY, but migration history and public tables are empty. Confirm its identity as the dedicated NETIZENS target before applying migrations. The earlier inactive status/timeout no longer describes the latest inspection.
+
+Issue #16 must remain open until its physical-device acceptance evidence is recorded. Implementation PRs should reference it without automatic closing keywords.
+
 Required evidence:
 - Dedicated NETIZENS Supabase project identity and all migrations applied (never the Perception project).
 - Confirmed LWV Apple/Google app identifiers, EAS project and signing credentials.
