@@ -14,6 +14,38 @@ on:
       - ".github/workflows/netizens-world.yml"
 
 jobs:
+  database-privileges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local-test-only
+          POSTGRES_DB: netizens_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: local-test-only
+      PGDATABASE: netizens_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reproduce Supabase role defaults in disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/bootstrap.sql
+      - name: Apply repository migrations in order
+        run: |
+          for migration in supabase/migrations/*.sql; do
+            psql -v ON_ERROR_STOP=1 -1 -f "$migration"
+          done
+      - name: Verify effective privileges and authenticated behavior
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/effective-privileges.sql
   qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5
