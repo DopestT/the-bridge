@@ -207,6 +207,59 @@ export class NetizensRepository {
       return existing;
     }
   }
+  async blockCitizen(blockedId: string): Promise<void> {
+    const blockerId = this.session().userId;
+    if (!blockedId || blockedId === blockerId)
+      throw new ApiError("validation", "Choose another Citizen to block");
+    try {
+      await this.request(
+        "citizen_blocks",
+        {},
+        "POST",
+        { blocker_id: blockerId, blocked_id: blockedId },
+      );
+    } catch (e) {
+      if (!(e instanceof ApiError) || e.code !== "23505") throw e;
+      const existing = await this.request<Record<string, unknown>>(
+        "citizen_blocks",
+        {
+          select: "blocker_id,blocked_id",
+          blocker_id: `eq.${blockerId}`,
+          blocked_id: `eq.${blockedId}`,
+          limit: "1",
+        },
+      );
+      if (!existing[0]) throw e;
+    }
+  }
+  async reportMessage(
+    messageId: string,
+    category: string,
+    details = "",
+  ): Promise<Record<string, unknown>> {
+    const reporterId = this.session().userId;
+    const cleanCategory = category.trim();
+    const cleanDetails = details.trim();
+    if (!messageId || !cleanCategory)
+      throw new ApiError("validation", "Choose a message and report category");
+    if (cleanDetails.length > 4000)
+      throw new ApiError("validation", "Report details must be 4000 characters or fewer");
+    const row = (
+      await this.request<Record<string, unknown>>(
+        "reports",
+        {},
+        "POST",
+        {
+          reporter_id: reporterId,
+          target_message_id: messageId,
+          category: cleanCategory,
+          details: cleanDetails || null,
+        },
+      )
+    )[0];
+    if (!row) throw new ApiError("server", "Report was not acknowledged");
+    return row;
+  }
   async membership(entityId: string) {
     return (
       (
