@@ -5,17 +5,31 @@ import { AppShell } from "../../components/AppShell";
 import { styles } from "../../components/mobile-styles";
 import type { Message, Thread } from "../../api/netizens-repository";
 import type { PendingAction } from "../../sync/types";
+
+const reportCategories = [
+  { label: "Harassment", value: "harassment" },
+  { label: "Spam", value: "spam" },
+  { label: "Threats", value: "threats" },
+  { label: "Other", value: "other" },
+] as const;
+
 export function ThreadScreen({ threadId }: { threadId: string }) {
   return <ThreadContent key={threadId} threadId={threadId} />;
 }
+
 function ThreadContent({ threadId }: { threadId: string }) {
   const r = useRuntime();
   const [thread, setThread] = useState<Thread | null>(null),
     [rows, setRows] = useState<Message[]>([]),
     [body, setBody] = useState(""),
     [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
     [pending, setPending] = useState<PendingAction[]>([]),
-    [busy, setBusy] = useState(false);
+    [blockedSenders, setBlockedSenders] = useState<string[]>([]),
+    [reportingMessageId, setReportingMessageId] = useState<string | null>(null),
+    [busy, setBusy] = useState(false),
+    [safetyBusy, setSafetyBusy] = useState(false);
+
   useEffect(() => {
     let live = true;
     void r.repository
@@ -47,6 +61,7 @@ function ThreadContent({ threadId }: { threadId: string }) {
       live = false;
     };
   }, [threadId, r.repository, r.outbox, r.revision]);
+
   async function send() {
     setBusy(true);
     try {
@@ -61,13 +76,90 @@ function ThreadContent({ threadId }: { threadId: string }) {
       setBusy(false);
     }
   }
+
+  async function blockSender(senderId: string) {
+    setSafetyBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await r.repository.blockCitizen(senderId);
+      setBlockedSenders((current) =>
+        current.includes(senderId) ? current : [...current, senderId],
+      );
+      setReportingMessageId(null);
+      setNotice("Citizen blocked. Their messages are hidden here.");
+    } catch {
+      setError("Could not block this Citizen. Try again when connected.");
+    } finally {
+      setSafetyBusy(false);
+    }
+  }
+
+  async function reportMessage(messageId: string, category: string) {
+    setSafetyBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await r.repository.reportMessage(messageId, category, "");
+      setReportingMessageId(null);
+      setNotice("Report submitted.");
+    } catch {
+      setError("Could not submit this report. Try again when connected.");
+    } finally {
+      setSafetyBusy(false);
+    }
+  }
+
+  const visibleRows = rows.filter(
+    (message) =>
+      !blockedSenders.includes(message.sender_id) &&
+      !pending.some((action) => action.mutationId === message.id),
+  );
+
   return (
     <AppShell title={thread?.title ?? "Private conversation"}>
-      <Text style={styles.text}>{error}</Text>
+      {error ? <Text style={styles.text}>{error}</Text> : null}
+      {notice ? <Text style={styles.text}>{notice}</Text> : null}
       <FlatList
-        data={rows.filter((m) => !pending.some((p) => p.mutationId === m.id))}
-        keyExtractor={(m) => m.id}
-        renderItem={({ item }) => <Text style={styles.text}>{item.body}</Text>}
+        data={visibleRows}
+        keyExtractor={(message) => message.id}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Text style={styles.text}>{item.body}</Text>
+            {item.sender_id !== r.userId ? (
+              <View>
+                <Button
+                  title="Block sender"
+                  disabled={safetyBusy}
+                  onPress={() => void blockSender(item.sender_id)}
+                />
+                <Button
+                  title="Report message"
+                  disabled={safetyBusy}
+                  onPress={() =>
+                    setReportingMessageId((current) =>
+                      current === item.id ? null : item.id,
+                    )
+                  }
+                />
+                {reportingMessageId === item.id ? (
+                  <View>
+                    {reportCategories.map((category) => (
+                      <Button
+                        key={category.value}
+                        title={category.label}
+                        disabled={safetyBusy}
+                        onPress={() =>
+                          void reportMessage(item.id, category.value)
+                        }
+                      />
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        )}
       />
       {thread ? (
         <>
