@@ -12,6 +12,7 @@ import { createSupabaseClient } from "../api/supabase";
 import { NetizensRepository } from "../api/netizens-repository";
 import { CitizenProfiles, type Citizen, type ProfileInput } from "../api/citizen-profile";
 import { AccountDeletion } from "../features/profile/AccountDeletion";
+import { isAccountErased, markAccountErased } from "../auth/account-erasure";
 import { deleteOwnAccount } from "../auth/account-deletion";
 import { CitizenProfileForm } from "../features/profile/CitizenProfileForm";
 import { readPublicEnv } from "../config/env";
@@ -73,7 +74,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
           const { data, error } = await client.auth.refreshSession({
             refresh_token: s.refreshToken,
           });
-          if (!active) throw new Error("Session closed");
+          if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
           if (error || !data.session) return null;
           return stored(data.session);
         },
@@ -91,11 +92,11 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       }
       if (!saved || saved.isAnonymous) return;
       const db = await openNetizensDatabase();
-      if (!active) return;
+      if (!active || isAccountErased(saved!.userId)) return;
       const projections = new ProjectionStore(db, saved.userId);
       const outbox = new Outbox(db, saved.userId, Date.now, randomUUID);
       const currentAuth = () => {
-        if (!active) throw new Error("Session closed");
+        if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
         return controller.requireWriteSession();
       };
       const profiles = new CitizenProfiles(env, currentAuth);
@@ -103,7 +104,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       let profileVersion = 0, profileSaving = false, resuming = false;
       try {
         citizen = await profiles.read();
-        if (!active) return;
+        if (!active || isAccountErased(saved!.userId)) return;
         if (citizen) await projections.put("citizens", saved.userId, citizen);
         else await projections.remove("citizens", saved.userId);
         setProfileReady(true);
@@ -111,7 +112,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         // A previously completed identity may render cached public data offline.
         // Every remote operation still needs a valid session and server RLS.
         const cached = await projections.get<Citizen>("citizens", saved.userId);
-        if (!active) return;
+        if (!active || isAccountErased(saved!.userId)) return;
         citizen = cached?.body.id === saved.userId && cached.body.status === "active"
           && cached.body.onboarding_completed_at ? cached.body : null;
         setProfileReady(!!citizen);
@@ -129,10 +130,10 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         profileVersion++;
         try {
           const updated = await profiles.save(input);
-          if (!active) throw new Error("Session closed");
+          if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
           citizen = updated;
           await projections.put("citizens", saved!.userId, updated);
-          if (!active) throw new Error("Session closed");
+          if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
           setRuntime(r => r ? { ...r, citizen: updated } : null);
           setError("");
           return updated;
@@ -180,10 +181,14 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         try {
           await deleteOwnAccount(env, { userId: saved!.userId, email: accountEmail, password: currentPassword, confirmation },
             createSupabaseClient().auth, fetch, () => active);
-          try {
-            if (active) await logout();
-            else { await reconciler.whenIdle(); await projections.clearAccount(); }
-          } finally { await secureSessionStore.eraseAccount(saved!.userId); }
+          markAccountErased(saved!.userId);
+          controller.retire();
+          try { await secureSessionStore.eraseAccount(saved!.userId); }
+          finally { await reconciler.whenIdle(); await projections.clearAccount(); }
+          if (active) { active = false; cleanup(); setRuntime(null); setReady(false); setEmail(""); setPassword(""); }
+          // Retire any replacement runtime as well; a different account keeps its
+          // own credentials and data and is restored from the shared store.
+          setEpoch(e => e + 1);
         } finally { deleting = false; }
       };
       setRuntime({
@@ -204,16 +209,16 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         try {
           try { await controller.refresh(); }
           catch { /* writes remain paused on expired session */ }
-          if (!active) return;
+          if (!active || isAccountErased(saved!.userId)) return;
           if (!profileSaving) {
             const version = profileVersion;
             try {
               const updated = await profiles.read();
-              if (!active || profileSaving || version !== profileVersion) return;
+              if (!active || isAccountErased(saved!.userId) || profileSaving || version !== profileVersion) return;
               citizen = updated;
               if (updated) await projections.put("citizens", saved!.userId, updated);
               else await projections.remove("citizens", saved!.userId);
-              if (!active || profileSaving || version !== profileVersion) return;
+              if (!active || isAccountErased(saved!.userId) || profileSaving || version !== profileVersion) return;
               setRuntime(r => r ? { ...r, citizen: updated } : null);
               setProfileReady(true);
             } catch { /* Cached public reads survive a connection failure. */ }

@@ -1,3 +1,4 @@
+import { isAccountErased } from "../auth/account-erasure.ts";
 import type { LocalDatabase } from "../storage/schema.ts";
 import type {
   ErrorClass,
@@ -46,6 +47,7 @@ export class Outbox {
     payload: Record<string, unknown>,
     mutationId = this.randomId(),
   ): Promise<OutboxItem> {
+    if (isAccountErased(this.owner)) throw new Error("Account erased");
     if (!uuid.test(mutationId)) throw new Error("Mutation ID must be a UUID");
     const encoded = JSON.stringify(payload);
     if (encoded.length > 32768) throw new Error("Payload too large");
@@ -57,6 +59,10 @@ export class Outbox {
       encoded,
       this.now(),
     );
+    if (isAccountErased(this.owner)) {
+      await this.db.runAsync("DELETE FROM outbox WHERE owner=?", this.owner);
+      throw new Error("Account erased");
+    }
     const row = await this.db.getFirstAsync<Row>(
       "SELECT * FROM outbox WHERE owner=? AND mutation_id=?",
       this.owner,

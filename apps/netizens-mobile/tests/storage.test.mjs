@@ -182,3 +182,39 @@ test("unconfirmed private sends retain their UUID across process recreation", as
   await new ProjectionStore(db, "alice").clearAccount();
   assert.deepEqual(await q.list("threadId", id2), []);
 });
+
+test('late SQLite projection writes cannot restore an erased account', async () => {
+  const { markAccountErased } = await import('../src/auth/account-erasure.ts');
+  const db = database(); await migrate(db);
+  const other = new ProjectionStore(db, 'erasure-other');
+  await other.put('citizens', 'other', { keep: true });
+  let release;
+  const barrier = new Promise(resolve => { release = resolve; });
+  const delayed = { ...db, runAsync: async (sql, ...params) => {
+    if (sql.startsWith('INSERT INTO projections')) await barrier;
+    return db.runAsync(sql, ...params);
+  } };
+  const store = new ProjectionStore(delayed, 'erasure-projection');
+  const write = store.put('citizens', 'owner', { erased: true });
+  markAccountErased(store.owner); await store.clearAccount(); release();
+  await assert.rejects(write, /Account erased/);
+  assert.equal(await store.get('citizens', 'owner'), null);
+  assert.equal(db.raw.prepare('SELECT count(*) AS n FROM projections WHERE owner=?').get(store.owner).n, 0);
+  assert.deepEqual((await other.get('citizens', 'other')).body, { keep: true });
+});
+test('an in-flight queued write is removed after account erasure', async () => {
+  const { markAccountErased } = await import('../src/auth/account-erasure.ts');
+  const db = database(); await migrate(db);
+  let release;
+  const barrier = new Promise(resolve => { release = resolve; });
+  const delayed = { ...db, runAsync: async (sql, ...params) => {
+    if (sql.startsWith('INSERT INTO outbox')) await barrier;
+    return db.runAsync(sql, ...params);
+  } };
+  const queue = new Outbox(delayed, 'erasure-outbox');
+  const write = queue.enqueue('message.send', { threadId: id2, body: 'must erase' }, id);
+  markAccountErased(queue.owner); await new ProjectionStore(db, queue.owner).clearAccount(); release();
+  await assert.rejects(write, /Account erased/);
+  assert.equal(db.raw.prepare('SELECT count(*) AS n FROM outbox WHERE owner=?').get(queue.owner).n, 0);
+  await assert.rejects(queue.enqueue('message.send', { threadId: id2, body: 'late retry' }, id2), /Account erased/);
+});

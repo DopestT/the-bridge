@@ -9,6 +9,8 @@ const mockStore = { read: jest.fn(), write: jest.fn(), clear: jest.fn(), eraseAc
 const mockProjections = { get: jest.fn(), put: jest.fn(), remove: jest.fn(), clearAccount: jest.fn() };
 const mockSync = jest.fn();
 const mockDeleteAccount = jest.fn();
+const mockErased = new Set<string>();
+jest.mock('../auth/account-erasure', () => ({ isAccountErased: (id: string) => mockErased.has(id), markAccountErased: (id: string) => mockErased.add(id) }));
 jest.mock('../auth/account-deletion', () => ({ deleteOwnAccount: (...args: unknown[]) => mockDeleteAccount(...args) }));
 const mockAuth = { refreshSession: jest.fn(), signInWithPassword: jest.fn(), signUp: jest.fn() };
 let mockResume: ((state: 'active') => void) | undefined;
@@ -30,6 +32,8 @@ jest.mock('../sync/reconciler', () => ({ Reconciler: jest.fn().mockImplementatio
 beforeEach(() => {
   jest.restoreAllMocks();
   jest.clearAllMocks();
+  mockErased.clear();
+  mockStore.eraseAccount.mockImplementation(async () => { mockStore.read.mockResolvedValue(null); });
   jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
     mockResume = handler; return { remove: jest.fn() };
   });
@@ -160,7 +164,7 @@ it('purges local credentials and account data only after canonical deletion conf
   await screen.findByText('Test account deletion');
   fireEvent.press(screen.getByText('Test account deletion'));
   await waitFor(() => expect(mockProjections.clearAccount).toHaveBeenCalledTimes(1));
-  expect(mockDeleteAccount).toHaveBeenCalledTimes(1); expect(mockStore.clear).toHaveBeenCalledTimes(1);
+  expect(mockDeleteAccount).toHaveBeenCalledTimes(1); expect(mockStore.eraseAccount).toHaveBeenCalledWith('owner');
   await screen.findByText('Sign in');
 });
 it('does not erase local state or show deletion success if canonical deletion fails', async () => {
@@ -190,4 +194,25 @@ it('confirmed deletion after retrying account verification still purges only the
   await waitFor(() => expect(mockProjections.clearAccount).toHaveBeenCalledTimes(1));
   expect(mockStore.eraseAccount).toHaveBeenCalledWith('owner');
   expect(mockStore.clear).not.toHaveBeenCalled();
+});
+
+it('a delayed successful replacement profile cannot restore an erased identity', async () => {
+  mockProfiles.read.mockRejectedValueOnce(new Error('offline'));
+  let completeProfile!: (value: unknown) => void, confirm!: () => void;
+  mockProfiles.read.mockImplementationOnce(() => new Promise(resolve => { completeProfile = resolve; }));
+  mockDeleteAccount.mockImplementation(() => new Promise<void>(resolve => { confirm = resolve; }));
+  open(); await screen.findByText('Retry account verification');
+  fireEvent.press(screen.getByText('Delete account'));
+  fireEvent.changeText(screen.getByLabelText('Account email'), 'citizen@example.test');
+  fireEvent.changeText(screen.getByLabelText('Current password'), 'password');
+  fireEvent.changeText(screen.getByLabelText('Confirm permanent deletion'), 'DELETE');
+  fireEvent.press(screen.getByText('Permanently delete account'));
+  await waitFor(() => expect(mockDeleteAccount).toHaveBeenCalledTimes(1));
+  fireEvent.press(screen.getByText('Retry account verification'));
+  await waitFor(() => expect(mockProfiles.read).toHaveBeenCalledTimes(2));
+  await act(async () => confirm());
+  await waitFor(() => expect(mockStore.eraseAccount).toHaveBeenCalledWith('owner'));
+  await act(async () => completeProfile(mockCitizen));
+  expect(mockProjections.put).not.toHaveBeenCalled();
+  expect(screen.queryByText('Protected World')).toBeNull();
 });

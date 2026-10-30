@@ -1,3 +1,4 @@
+import { isAccountErased } from "../auth/account-erasure.ts";
 import type { LocalDatabase } from "./schema.ts";
 export type ProjectionState = "canonical" | "pending" | "rejected";
 export type Collection =
@@ -24,6 +25,7 @@ export class ProjectionStore {
     body: unknown,
     state: ProjectionState = "canonical",
   ) {
+    if (isAccountErased(this.owner)) throw new Error("Account erased");
     await this.db.runAsync(
       "INSERT INTO projections(owner,collection,id,body,state,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(owner,collection,id) DO UPDATE SET body=excluded.body,state=excluded.state,updated_at=excluded.updated_at",
       this.owner,
@@ -33,11 +35,13 @@ export class ProjectionStore {
       state,
       Date.now(),
     );
+    if (isAccountErased(this.owner)) { await this.clearAccount(); throw new Error("Account erased"); }
   }
   async get<T>(
     collection: Collection,
     id: string,
   ): Promise<{ body: T; state: ProjectionState } | null> {
+    if (isAccountErased(this.owner)) return null;
     const row = await this.db.getFirstAsync<{
       body: string;
       state: ProjectionState;
@@ -47,6 +51,7 @@ export class ProjectionStore {
       collection,
       id,
     );
+    if (isAccountErased(this.owner)) return null;
     return row ? { body: JSON.parse(row.body) as T, state: row.state } : null;
   }
   async remove(collection: Collection, id: string) {
