@@ -4,9 +4,9 @@ Status: **not cleared**. Merged baseline: PR #20, `0e5fb06`; October 29 completi
 
 ## 1. Confirm and prepare the backend
 
-On October 29, 2026, the existing dedicated `the-bridge` project (`udygizxcwqoxifqlyfkq`) was restored and verified ACTIVE_HEALTHY. Its four installed migrations are the three foundation/participation files plus effective privileges, recorded in the hosted history as `20261019075407_netizens_effective_privileges`. The repository privilege file has an earlier timestamp; do not replay it. There are 21 public RLS tables, 10 Places, and zero Auth users/Citizens/World Entities. Never target the Perception database.
+On October 29, 2026, the existing dedicated `the-bridge` project (`udygizxcwqoxifqlyfkq`) was restored and verified ACTIVE_HEALTHY. Its five installed migrations are the three foundation/participation files plus effective privileges (`20261019075407`) and onboarding/safety (`20261030034537`). The repository privilege file has an earlier timestamp; do not replay it. There are 21 public RLS tables, 10 Places, and zero Auth users/Citizens/World Entities. Never target the Perception database.
 
-Compare hosted history with repository migrations before deploying the new additive `20261030031920_netizens_citizen_onboarding_safety.sql`. This migration is locally verified, not a hosted-deployment claim. Confirm target identity against the final build environment, review the migration and its regression fixtures, and preserve actual user data.
+The reviewed `20261030031920_netizens_citizen_onboarding_safety.sql` is installed as hosted version `20261030034537`. Match names and reviewed SQL as well as timestamps; do not reapply it. Catalog readback and anonymous HTTP denial probes passed. Confirm target identity against the final build environment, review the migration and its regression fixtures, and preserve actual user data.
 
 Apply only missing migrations after reviewing target state. Verify the resulting tables, grants, RLS and security/performance advisors. Static SQL contract QA does not prove database application. Prepare two permanent test Citizens with valid profiles and a controlled Place/Entity; distinguish all test activity from genuine pilot metrics and reputation.
 

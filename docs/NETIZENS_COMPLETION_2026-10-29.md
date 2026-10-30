@@ -12,7 +12,7 @@ The implementation milestone remains issue #16: a permanent Citizen completes th
 
 | Area | Behavior | Evidence and limits |
 | --- | --- | --- |
-| Citizen profile | Own persisted identity, validated handle/name, avatar-form/home-Place preferences; reputation and server state never editable | Profile/UI/API tests; RPC fixtures on disposable PostgreSQL. Hosted migration pending |
+| Citizen profile | Own persisted identity, validated handle/name, avatar-form/home-Place preferences; reputation and server state never editable | Profile/UI/API tests; RPC fixtures on disposable PostgreSQL. Hosted version `20261030034537` installed; anonymous denial probes and protected-field catalogs verified |
 | Onboarding | Existing generated profiles require explicit completion; a failed lookup is not mistaken for a missing profile; account-scoped completed identity permits cached public reads offline | Runtime tests including foreign-account cache rejection, restricted-account gate and logout purge |
 | Signup | Creates permanent Auth account; missing session gives an email-confirmation notice without entering World | Mocked SDK integration tests only. Actual email configuration/delivery unverified |
 | Account safety | Current Auth/Citizen status governs policies despite stale JWT; restricted accounts cannot reinitialize or reactivate themselves | SQL tests deny suspended/deleted identities and preserve seed/XP/level |
@@ -35,9 +35,9 @@ Raw logs are outside the checkout under `/private/tmp/netizens-*`; release evide
 
 ## Current external state and unresolved work
 
-Existing Supabase project `udygizxcwqoxifqlyfkq` was restored, then verified ACTIVE_HEALTHY. Its four installed migration versions are unchanged; the new migration is not deployed. Aggregate read found zero Auth users/Citizens/World Entities, 10 Places and 21 public RLS tables.
+Existing Supabase project `udygizxcwqoxifqlyfkq` was restored, then verified ACTIVE_HEALTHY. Its original four migration versions are preserved; onboarding/safety is installed as `20261030034537`. Catalog readback confirms the new column/policy/RPC, denied anon execution/read access, no authenticated TRUNCATE grants, and protected status/XP/completion fields. Anonymous HTTP probes return 401 with PostgreSQL code 42501. Auth settings return 200 with email signup enabled; no real email or two-account login is claimed. Aggregate read found zero Auth users/Citizens/World Entities, 10 Places and 21 public RLS tables.
 
-Two existing Expo projects remain unresolved: `@big27/netizens-mobile` and `@big271/netizens-mobile`. Owner selection is pending. No project creation/transfer/deletion, guessed bundle/package identifiers, signing change or paid build is authorized by that ambiguity. Five release inputs remain unconfigured in this checkout: the two app identifiers, EAS project, backend URL and publishable key. Never use a privileged key in the client.
+Two existing Expo projects remain unresolved: `@big27/netizens-mobile` and `@big271/netizens-mobile`. Owner selection is pending. No project creation/transfer/deletion, guessed bundle/package identifiers, signing change or paid build is authorized by that ambiguity. The existing backend URL and active publishable key are configured in the ignored local environment file. The two app identifiers and selected existing EAS project remain unconfigured. The resolved release check now reports exactly these three missing values. Never use a privileged key in the client.
 
 The local computer has Command Line Tools, but no usable Xcode simulator, Android SDK/emulator, Maestro or attached-device build path. Actual signed installation, push arrival, deep links and device performance need external evidence.
 
@@ -52,8 +52,8 @@ New profile constraints use `NOT VALID` so upgrades preserve previously allowed 
 ## Next execution
 
 1. Fresh whole-branch review; resolve important findings and rerun affected checks.
-2. Push reviewed branch/PR without closing #16; verify clean CI, including real PostgreSQL fixtures.
-3. Deploy additive schema only to confirmed NETIZENS after review; inspect effective grants/advisors and HTTP behavior.
+2. Draft PR #21 is published at `6e30ba7`; Mobile CI and World QA (including real PostgreSQL 17 fixtures) passed. Keep #16 open.
+3. The additive schema is deployed on confirmed NETIZENS; live grants and anonymous denial probes passed. Authenticated vote/profile SECURITY DEFINER advisor warnings are expected reviewed entry points, not a claim of full security clearance. Two service-owned RLS tables intentionally have no client policies.
 4. Implement remaining core contracts, integrate and test them without claiming provider delivery.
 5. Reconcile Expo/signing inputs; use consented test Citizens and labeled controlled Entities; capture both-platform physical-device evidence from the final artifact.
 

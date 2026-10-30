@@ -6,15 +6,15 @@
 
 `codex/netizens-completion-20261029` adds a real Citizen profile/completion flow, account creation with explicit email-confirmation handling, bounded title search, nested World/Place/Entity navigation, contextual access to existing Circle conversations, and native Yes or No voting through the existing vote-first RPC. A denied request never becomes a success state. Results are advisory community polls, not official elections.
 
-The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It has not been applied to the hosted database. Code in this branch is not yet merged or deployed.
+The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It is installed on the hosted backend as `20261030034537_netizens_citizen_onboarding_safety`. Code in this branch is not yet merged or deployed.
 
 Observed checks on this branch: typecheck and lint passed; 54 Jest tests and 32 storage/transport tests passed; all five existing World/backend QA commands passed; iOS and Android Hermes bundles exported. Fresh disposable PostgreSQL 16 passed effective privileges, Citizen onboarding, Citizen safety and vote-first fixtures, plus legacy upgrade compatibility. These checks do not establish signed builds, real Auth email flows, device behavior, push delivery or release clearance.
 
 ## Backend verified now
 
-The existing dedicated project `the-bridge` (`udygizxcwqoxifqlyfkq`) was inactive and was restored; a fresh read returned ACTIVE_HEALTHY. No replacement project was created. Hosted migration history contains the three foundation/participation migrations and `20261019075407_netizens_effective_privileges`. Do not replay the repository privilege migration merely because its file timestamp differs.
+The existing dedicated project `the-bridge` (`udygizxcwqoxifqlyfkq`) was inactive and was restored; a fresh read returned ACTIVE_HEALTHY. No replacement project was created. Hosted migration history contains the three foundation/participation migrations, `20261019075407_netizens_effective_privileges`, and `20261030034537_netizens_citizen_onboarding_safety`. Do not replay the repository privilege migration merely because its file timestamp differs.
 
-Fresh aggregate inspection: 21 public tables have RLS, 10 Places exist, and there are zero Auth users, Citizens and World Entities. No people, activity or test accounts were fabricated. The new onboarding/safety migration is local pending review and deployment verification.
+Fresh aggregate inspection: 21 public tables have RLS, 10 Places exist, and there are zero Auth users, Citizens and World Entities. No people, activity or test accounts were fabricated. The reviewed onboarding/safety migration is now installed as hosted version `20261030034537`; catalog readback confirms the completion column, self-profile status policy, protected fields and least-privilege grants. Anonymous RPC/read HTTP probes return 401/42501. Public Auth settings respond successfully, but real signup/email/login remains unverified.
 
 ## Locked product architecture
 
@@ -28,8 +28,8 @@ Fresh aggregate inspection: 21 public tables have RLS, 10 Places exist, and ther
 
 ## Remaining acceptance gates
 
-1. Review and deploy the additive migration to the confirmed backend; verify live grants, advisors and two-account HTTP/Auth acceptance. Prepare consented permanent test Citizens and controlled, explicitly labeled test Entities.
-2. Resolve ownership between the two existing Expo projects, confirm LWV iOS/Android identifiers and signing, and configure actual public backend variables. Do not create another project or guess identifiers.
+1. Complete two-account HTTP/Auth acceptance against the installed migration. Live catalogs and anonymous denial probes are verified; security advisors still flag the intentionally exposed authenticated vote/profile SECURITY DEFINER RPCs and two service-only RLS tables without client policies. Prepare consented permanent test Citizens and controlled, explicitly labeled test Entities.
+2. Resolve ownership between the two existing Expo projects, confirm LWV iOS/Android identifiers and signing, and configure signing. The existing project URL and active publishable key are configured locally in the ignored environment file; neither is a privileged server key. Do not create another project or guess identifiers.
 3. Complete authenticated push token registration/delivery, response routing and token revocation; the existing permission adapter alone is insufficient.
 4. Persist the College funnel and capture real device performance measurements. Local area selection still does not filter canonical discovery.
 5. Prove login → World → Place → Entity → join → post → reply, notifications/deep links, block/report enforcement, process-death/offline recovery, retry suppression, logout/account isolation and private-thread boundaries on physical iOS and Android.
