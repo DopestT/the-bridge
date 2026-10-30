@@ -40,6 +40,7 @@ update public.citizens set status='suspended' where id='00000000-0000-4000-8000-
 set local role authenticated;
 set local request.jwt.claims='{"sub":"00000000-0000-4000-8000-000000000001","is_anonymous":false}';
 select pg_temp.assert_true(not private.current_user_is_permanent(),'stale JWT loses suspended Citizen access');
+select pg_temp.assert_true((select status='suspended' from public.citizens where id=auth.uid()),'restricted Citizen can read own account status without World access');
 select pg_temp.assert_true((select count(*)=0 from public.places),'suspended Citizen cannot read protected World');
 select pg_temp.expect_denied('insert into public.entity_discussion_items(entity_id,author_id,body,client_mutation_id) values (''10000000-0000-4000-8000-000000000001'',auth.uid(),''Cannot post'',''40000000-0000-4000-8000-000000000001'')');
 update public.citizens set display_name='Suspended edit' where id=auth.uid();

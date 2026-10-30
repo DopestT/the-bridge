@@ -100,6 +100,14 @@ export class SessionController {
     return true;
   }
 
+  // Retire an unmounted runtime without clearing credentials that a replacement
+  // runtime may already own. In-flight refreshes must not persist their result.
+  retire(): void {
+    this.generation++;
+    this.session = null;
+    this.state = "unknown";
+  }
+
   async logout(): Promise<void> {
     this.generation++;
     this.session = null;

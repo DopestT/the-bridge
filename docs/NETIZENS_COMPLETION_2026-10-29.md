@@ -25,10 +25,10 @@ The implementation milestone remains issue #16: a permanent Citizen completes th
 ## Checks observed
 
 - Typecheck and ESLint passed.
-- 52 Jest tests and 32 Node storage/transport tests passed, zero skips.
+- 54 Jest tests and 32 Node storage/transport tests passed, zero skips.
 - All five existing World/participation/backend QA commands passed.
 - iOS and Android Hermes exports completed; these are unsigned JavaScript bundles.
-- Fresh disposable PostgreSQL 16 applied all migrations and passed effective privileges, Citizen safety and onboarding scripts. Invalid direct profile edits also fail at database constraints. Fixtures roll back and never target production.
+- Fresh disposable PostgreSQL 16 applied all migrations and passed effective privileges, Citizen safety, onboarding and vote-first scripts, plus legacy upgrade compatibility. Invalid direct profile edits also fail at database constraints. Fixtures roll back and never target production.
 - Red states were observed before the relevant implementations: profile placeholder, missing search/nested routing/vote flows, stale-session/block SQL failures, missing completion marker, and invalid direct profile edits.
 
 Raw logs are outside the checkout under `/private/tmp/netizens-*`; release evidence should retain sanitized copies together with the final source SHA. No private credentials or message bodies belong in evidence.
@@ -42,6 +42,12 @@ Two existing Expo projects remain unresolved: `@big27/netizens-mobile` and `@big
 The local computer has Command Line Tools, but no usable Xcode simulator, Android SDK/emulator, Maestro or attached-device build path. Actual signed installation, push arrival, deep links and device performance need external evidence.
 
 Source still requires authenticated push registration/delivery/revocation, persisted College analytics, genuine Local area filtering, and a scoped first-conversation creation contract. Do not weaken service-controlled thread grants or fabricate content to fill empty screens. Editorial/interview/voting initiative operations still require the owner's actual scope/content and approved provenance.
+
+## Independent review and migration compatibility
+
+One independent review identified restricted-account status visibility, historical-profile migration compatibility, an older refresh overwriting completed onboarding, and retired-session credential refreshes. Added reproductions failed on the original code and pass after the fixes. Restricted Citizens may read only their own account profile while World/mutation permissions remain denied. Profile refreshes are deduplicated and invalidated by saves; retired controllers cannot persist late refresh results.
+
+New profile constraints use `NOT VALID` so upgrades preserve previously allowed legacy values. They still reject invalid new writes. Explicit onboarding repairs chosen editable fields without resetting seed, reputation or status. The CI database job inserts historical values before the new migration and verifies preservation and explicit repair afterward. Validation of all historical rows can be performed after reconciliation; the migration never silently rewrites a person's identity.
 
 ## Next execution
 

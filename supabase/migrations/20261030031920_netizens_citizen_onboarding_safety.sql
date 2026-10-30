@@ -4,11 +4,24 @@ revoke update (onboarding_completed_at) on public.citizens from public, anon, au
 -- Direct allowed-column updates must obey the same identity boundaries as the
 -- completion RPC. The original trigger's generated handle uses 40 characters.
 alter table public.citizens add constraint citizens_handle_format
-  check (handle ~ '^[a-z0-9][a-z0-9_-]{2,39}$');
+  check (handle ~ '^[a-z0-9][a-z0-9_-]{2,39}$') not valid;
 alter table public.citizens add constraint citizens_display_name_length
-  check (char_length(btrim(display_name)) between 1 and 60);
+  check (char_length(btrim(display_name)) between 1 and 60) not valid;
 alter table public.citizens add constraint citizens_avatar_mode_place
-  foreign key (avatar_mode) references public.places(id);
+  foreign key (avatar_mode) references public.places(id) not valid;
+
+-- Restricted Citizens still need their own account status to understand a
+-- denial. This does not grant World reads or permit profile/social mutations.
+create function private.current_user_has_permanent_auth()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select (select auth.uid()) is not null
+    and coalesce((((select auth.jwt())->>'is_anonymous')::boolean),false)=false
+    and exists (select 1 from auth.users u where u.id=(select auth.uid()) and coalesce(u.is_anonymous,false)=false);
+$$;
+revoke all on function private.current_user_has_permanent_auth() from public,anon,authenticated;
+grant execute on function private.current_user_has_permanent_auth() to authenticated;
+create policy citizens_select_own_account on public.citizens for select to authenticated
+using (id=(select auth.uid()) and private.current_user_has_permanent_auth());
 
 -- Consult current server records as well as the signed JWT. Account restrictions
 -- take effect without waiting for a previously issued token to expire.

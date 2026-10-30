@@ -59,7 +59,8 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
     [epoch, setEpoch] = useState(0);
   useEffect(() => {
     let active = true,
-      cleanup = () => {};
+      cleanup = () => {},
+      retire = () => {};
     async function boot() {
       setProfileReady(false);
       const client = createSupabaseClient();
@@ -69,10 +70,12 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
           const { data, error } = await client.auth.refreshSession({
             refresh_token: s.refreshToken,
           });
+          if (!active) throw new Error("Session closed");
           if (error || !data.session) return null;
           return stored(data.session);
         },
       });
+      retire = () => controller.retire();
       await controller.restore();
       let saved = await secureSessionStore.read();
       if (controller.state === "expired") {
@@ -94,6 +97,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       };
       const profiles = new CitizenProfiles(env, currentAuth);
       let citizen: Citizen | null = null;
+      let profileVersion = 0, profileSaving = false, resuming = false;
       try {
         citizen = await profiles.read();
         if (!active) return;
@@ -117,14 +121,19 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         return session;
       };
       const saveProfile = async (input: ProfileInput) => {
-        const updated = await profiles.save(input);
-        if (!active) throw new Error("Session closed");
-        citizen = updated;
-        await projections.put("citizens", saved!.userId, updated);
-        if (!active) throw new Error("Session closed");
-        setRuntime(r => r ? { ...r, citizen: updated } : null);
-        setError("");
-        return updated;
+        if (profileSaving) throw new Error("A profile save is already in progress.");
+        profileSaving = true;
+        profileVersion++;
+        try {
+          const updated = await profiles.save(input);
+          if (!active) throw new Error("Session closed");
+          citizen = updated;
+          await projections.put("citizens", saved!.userId, updated);
+          if (!active) throw new Error("Session closed");
+          setRuntime(r => r ? { ...r, citizen: updated } : null);
+          setError("");
+          return updated;
+        } finally { profileSaving = false; }
       };
       const repository = new NetizensRepository(
         env.supabaseUrl,
@@ -172,24 +181,27 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         saveProfile,
       });
       const resume = async () => {
+        if (resuming || !active) return;
+        resuming = true;
         try {
-          await controller.refresh();
-        } catch {
-          /* writes remain paused on expired session */
-        }
-        if (active) {
-          try {
-            const updated = await profiles.read();
-            if (!active) return;
-            citizen = updated;
-            if (updated) await projections.put("citizens", saved!.userId, updated);
-            else await projections.remove("citizens", saved!.userId);
-            if (!active) return;
-            setRuntime(r => r ? { ...r, citizen: updated } : null);
-            setProfileReady(true);
-          } catch { /* Cached public reads survive a connection failure. */ }
-          await sync();
-        }
+          try { await controller.refresh(); }
+          catch { /* writes remain paused on expired session */ }
+          if (!active) return;
+          if (!profileSaving) {
+            const version = profileVersion;
+            try {
+              const updated = await profiles.read();
+              if (!active || profileSaving || version !== profileVersion) return;
+              citizen = updated;
+              if (updated) await projections.put("citizens", saved!.userId, updated);
+              else await projections.remove("citizens", saved!.userId);
+              if (!active || profileSaving || version !== profileVersion) return;
+              setRuntime(r => r ? { ...r, citizen: updated } : null);
+              setProfileReady(true);
+            } catch { /* Cached public reads survive a connection failure. */ }
+          }
+          if (active && citizen?.status === "active" && citizen.onboarding_completed_at) await sync();
+        } finally { resuming = false; }
       };
       const timer = setInterval(() => void resume(), 30000);
       const subscription = AppState.addEventListener("change", (state) => {
@@ -213,10 +225,12 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       });
     return () => {
       active = false;
+      retire();
       cleanup();
     };
   }, [epoch]);
   async function signIn() {
+    if (busy) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -261,7 +275,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
   if (runtime) {
     if (!profileReady) return <AppShell title="Citizen account">
       <Text style={styles.text} accessibilityRole="alert">{error || "Reconnect to verify your Citizen account."}</Text>
-      <Button title="Retry account verification" onPress={() => { setRuntime(null); setEpoch(e => e + 1); }} />
+      <Button title="Retry account verification" onPress={() => { setReady(false); setRuntime(null); setEpoch(e => e + 1); }} />
       <Button title="Sign out" onPress={() => void runtime.logout()} />
     </AppShell>;
     if (runtime.citizen && runtime.citizen.status !== "active") return <AppShell title="Citizen account">

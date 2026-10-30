@@ -8,7 +8,7 @@
 
 The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It has not been applied to the hosted database. Code in this branch is not yet merged or deployed.
 
-Observed checks on this branch: typecheck and lint passed; 52 Jest tests and 32 storage/transport tests passed; all five existing World/backend QA commands passed; iOS and Android Hermes bundles exported. Fresh disposable PostgreSQL 16 passed effective privileges, Citizen onboarding and Citizen safety fixtures. These checks do not establish signed builds, real Auth email flows, device behavior, push delivery or release clearance.
+Observed checks on this branch: typecheck and lint passed; 54 Jest tests and 32 storage/transport tests passed; all five existing World/backend QA commands passed; iOS and Android Hermes bundles exported. Fresh disposable PostgreSQL 16 passed effective privileges, Citizen onboarding, Citizen safety and vote-first fixtures, plus legacy upgrade compatibility. These checks do not establish signed builds, real Auth email flows, device behavior, push delivery or release clearance.
 
 ## Backend verified now
 
