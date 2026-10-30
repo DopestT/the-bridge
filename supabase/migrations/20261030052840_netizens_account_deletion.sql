@@ -27,14 +27,31 @@ alter table public.reports drop constraint reports_target_message_id_fkey;
 alter table public.reports add constraint reports_target_message_id_fkey
   foreign key(target_message_id) references public.messages(id) on delete cascade;
 
+-- Evidence follows the actual FK cascade, including concurrent writes.
+alter table public.moderation_actions drop constraint moderation_actions_target_citizen_id_fkey;
+alter table public.moderation_actions add constraint moderation_actions_target_citizen_id_fkey
+  foreign key(target_citizen_id) references public.citizens(id) on delete cascade;
+alter table public.moderation_actions drop constraint moderation_actions_target_entity_id_fkey;
+alter table public.moderation_actions add constraint moderation_actions_target_entity_id_fkey
+  foreign key(target_entity_id) references public.world_entities(id) on delete cascade;
+alter table public.moderation_actions drop constraint moderation_actions_target_message_id_fkey;
+alter table public.moderation_actions add constraint moderation_actions_target_message_id_fkey
+  foreign key(target_message_id) references public.messages(id) on delete cascade;
+alter table public.world_audit_events drop constraint world_audit_events_actor_citizen_id_fkey;
+alter table public.world_audit_events add constraint world_audit_events_actor_citizen_id_fkey
+  foreign key(actor_citizen_id) references public.citizens(id) on delete cascade;
+alter table public.world_audit_events drop constraint world_audit_events_entity_id_fkey;
+alter table public.world_audit_events add constraint world_audit_events_entity_id_fkey
+  foreign key(entity_id) references public.world_entities(id) on delete cascade;
+alter table public.notifications drop constraint notifications_actor_id_fkey;
+alter table public.notifications add constraint notifications_actor_id_fkey
+  foreign key(actor_id) references public.citizens(id) on delete cascade;
+
 create function public.delete_own_account(p_confirmation text)
 returns boolean language plpgsql security definer set search_path='' as $$
 declare
   actor uuid := (select auth.uid());
   claims jsonb := (select auth.jwt());
-  owned_entities uuid[];
-  owned_threads uuid[];
-  removed_messages uuid[];
 begin
   if p_confirmation is distinct from 'DELETE' then
     raise exception 'Confirm permanent account deletion' using errcode='22023';
@@ -52,20 +69,6 @@ begin
   perform 1 from auth.users u where u.id=actor and coalesce(u.is_anonymous,false)=false for update;
   if not found then raise exception 'Account deletion unavailable' using errcode='42501'; end if;
 
-  with recursive affected(id) as (
-    select e.id from public.world_entities e where e.creator_id=actor
-    union
-    select e.id from public.world_entities e join affected parent on e.parent_entity_id=parent.id
-  ) select coalesce(array_agg(id),'{}'::uuid[]) into owned_entities from affected;
-  select coalesce(array_agg(t.id),'{}'::uuid[]) into owned_threads from public.conversation_threads t
-    where t.created_by=actor or t.entity_id=any(owned_entities);
-  select coalesce(array_agg(m.id),'{}'::uuid[]) into removed_messages from public.messages m
-    where m.sender_id=actor or m.thread_id=any(owned_threads);
-  -- Remove related free-form service evidence rather than retaining erased identity/content.
-  delete from public.moderation_actions m where m.target_citizen_id=actor
-    or m.target_entity_id=any(owned_entities) or m.target_message_id=any(removed_messages);
-  delete from public.world_audit_events a where a.actor_citizen_id=actor or a.entity_id=any(owned_entities);
-  delete from public.notifications n where n.actor_id=actor;
   -- Existing ownership FKs remove profile, spaces, conversations, posts, messages,
   -- memberships, invitations and Auth sessions in this same transaction.
   delete from auth.users where id=actor;

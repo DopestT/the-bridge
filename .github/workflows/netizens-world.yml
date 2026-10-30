@@ -60,7 +60,9 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/tests/conversation-requests.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/account-deletion.sql
       - name: Verify concurrent conversation consent and replay
-        run: bash supabase/tests/conversation-concurrency.sh
+        run: |
+          bash supabase/tests/conversation-concurrency.sh
+          bash supabase/tests/account-deletion-concurrency.sh
   qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5

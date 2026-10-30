@@ -9,8 +9,20 @@ const KEYS = {
   isAnonymous: 'netizens.session.isAnonymous',
 } as const;
 
-export const secureSessionStore: SessionStore = {
-  async read(): Promise<StoredSession | null> {
+// Serialize this shared store across replacement runtime controllers.
+let storageQueue: Promise<unknown> = Promise.resolve();
+const erasedAccounts = new Set<string>();
+function serialize<T>(work: () => Promise<T>): Promise<T> {
+  const operation = storageQueue.then(work, work);
+  storageQueue = operation.catch(() => undefined);
+  return operation;
+}
+async function clearKeys() {
+  await Promise.all(Object.values(KEYS).map(key => SecureStore.deleteItemAsync(key)));
+}
+export const secureSessionStore: SessionStore & { eraseAccount(userId: string): Promise<void> } = {
+  read(): Promise<StoredSession | null> {
+    return serialize(async () => {
     const [accessToken, refreshToken, expiresAt, userId, isAnonymous] = await Promise.all([
       SecureStore.getItemAsync(KEYS.accessToken),
       SecureStore.getItemAsync(KEYS.refreshToken),
@@ -19,7 +31,7 @@ export const secureSessionStore: SessionStore = {
       SecureStore.getItemAsync(KEYS.isAnonymous),
     ]);
 
-    if (!accessToken || !refreshToken || !expiresAt || !userId || isAnonymous === null) return null;
+    if (!accessToken || !refreshToken || !expiresAt || !userId || erasedAccounts.has(userId) || isAnonymous === null) return null;
     const expiresAtNumber = Number(expiresAt);
     if (!Number.isFinite(expiresAtNumber)) return null;
 
@@ -30,9 +42,12 @@ export const secureSessionStore: SessionStore = {
       userId,
       isAnonymous: isAnonymous === '1',
     };
+    });
   },
 
-  async write(session: StoredSession): Promise<void> {
+  write(session: StoredSession): Promise<void> {
+    return serialize(async () => {
+    if (erasedAccounts.has(session.userId)) throw new Error("Deleted account credentials cannot be restored");
     await Promise.all([
       SecureStore.setItemAsync(KEYS.accessToken, session.accessToken),
       SecureStore.setItemAsync(KEYS.refreshToken, session.refreshToken),
@@ -40,9 +55,14 @@ export const secureSessionStore: SessionStore = {
       SecureStore.setItemAsync(KEYS.userId, session.userId),
       SecureStore.setItemAsync(KEYS.isAnonymous, session.isAnonymous ? '1' : '0'),
     ]);
+    });
   },
 
-  async clear(): Promise<void> {
-    await Promise.all(Object.values(KEYS).map((key) => SecureStore.deleteItemAsync(key)));
+  clear(): Promise<void> { return serialize(clearKeys); },
+  eraseAccount(userId: string): Promise<void> {
+    erasedAccounts.add(userId);
+    return serialize(async () => {
+      if (await SecureStore.getItemAsync(KEYS.userId) === userId) await clearKeys();
+    });
   },
 };

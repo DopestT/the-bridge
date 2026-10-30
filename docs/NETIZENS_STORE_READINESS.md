@@ -36,10 +36,13 @@ No live user's deletion is executed during implementation. Disposable PostgreSQL
 
 ## Unknowns that must stay visible
 
-The user supplied `legacyworkaventures.com`; live DNS/HTTPS checks on October 30 could not resolve that exact spelling. Domain confirmation is pending. Actual publisher/operator identity and contact address, public policy/deletion URLs, moderation staffing, store-account access, Apple enrollment, physical devices, transactional email delivery and final privacy disclosures are unverified. No address, policy approval, reviewer credential, device result or benchmark should be invented to complete this matrix.
+The user corrected the supplied domain to `legacyworksventures.com`; DNS resolves and verified HTTPS returned 200 on October 30. The homepage exposes no public support email or policy links in its anchor elements. No ownership/DNS change was made. Actual publisher/operator identity and contact address, public policy/deletion URLs, moderation staffing, store-account access, Apple enrollment, physical devices, transactional email delivery and final privacy disclosures are unverified. No address, policy approval, reviewer credential, device result or benchmark should be invented to complete this matrix.
 
 Primary policy references checked October 30, 2026: [Apple account deletion](https://developer.apple.com/support/offering-account-deletion-in-your-app/), [Apple review guidelines](https://developer.apple.com/app-store/review/guidelines/), [Google account deletion](https://support.google.com/googleplay/android-developer/answer/13327111).
 
 ## October 30 implementation evidence
 
 Account deletion source now includes explicit confirmation, isolated password reauthentication, same-account verification, a scoped server RPC requiring a live Auth session and recent password AMR, canonical removal, and local credential/cache/outbox purge after acknowledgement. Role fixtures cover target-report cascades, audit cleanup, restricted/incomplete accounts, stale password/revoked session denial and unrelated-user preservation. Client tests cover wrong-account credentials, unconfirmed/network results, retirement and purge ordering. Local full Jest: 75 passed; storage/transport: 36 passed; lint/typecheck passed. Hosted rollout and final device acceptance remain unverified until separately recorded.
+
+
+Independent review identified a runtime-retirement purge race and a concurrent evidence-retention race. Both were reproduced: the earlier SQL leaves concurrent free-text evidence; the revised FK cascades remove actual descendants/evidence, including writes committed while deletion is paused. A deferred-response runtime test confirms retired-account cleanup, while shared serialized secure storage rejects late writes for an erased identity and preserves a different account's credentials. No live erasure has been executed.

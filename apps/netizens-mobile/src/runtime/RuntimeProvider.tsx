@@ -180,7 +180,10 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         try {
           await deleteOwnAccount(env, { userId: saved!.userId, email: accountEmail, password: currentPassword, confirmation },
             createSupabaseClient().auth, fetch, () => active);
-          if (active) await logout();
+          try {
+            if (active) await logout();
+            else { await reconciler.whenIdle(); await projections.clearAccount(); }
+          } finally { await secureSessionStore.eraseAccount(saved!.userId); }
         } finally { deleting = false; }
       };
       setRuntime({

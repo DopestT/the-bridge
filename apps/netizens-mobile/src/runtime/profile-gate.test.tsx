@@ -5,7 +5,7 @@ import { RuntimeProvider, useRuntime } from './RuntimeProvider';
 const mockSession = { userId: 'owner', accessToken: 'test', refreshToken: 'test-refresh', isAnonymous: false, expiresAt: Date.now() + 3600000 };
 const mockCitizen = { id: 'owner', handle: 'river', display_name: 'River', avatar_form: 'privacy', avatar_mode: 'commons', status: 'active', xp: 0, level: 1, onboarding_completed_at: '2026-10-29T12:00:00Z' };
 const mockProfiles = { read: jest.fn(), save: jest.fn() };
-const mockStore = { read: jest.fn(), write: jest.fn(), clear: jest.fn() };
+const mockStore = { read: jest.fn(), write: jest.fn(), clear: jest.fn(), eraseAccount: jest.fn() };
 const mockProjections = { get: jest.fn(), put: jest.fn(), remove: jest.fn(), clearAccount: jest.fn() };
 const mockSync = jest.fn();
 const mockDeleteAccount = jest.fn();
@@ -19,7 +19,7 @@ jest.mock('../api/citizen-profile', () => ({
 jest.mock('../api/supabase', () => ({ createSupabaseClient: () => ({ auth: mockAuth }) }));
 jest.mock('../config/env', () => ({ readPublicEnv: () => ({ supabaseUrl: 'https://example.test', supabasePublishableKey: 'public' }) }));
 jest.mock('../auth/secure-session', () => ({ secureSessionStore: {
-  read: () => mockStore.read(), write: (value: unknown) => mockStore.write(value), clear: () => mockStore.clear(),
+  read: () => mockStore.read(), write: (value: unknown) => mockStore.write(value), clear: () => mockStore.clear(), eraseAccount: (id: string) => mockStore.eraseAccount(id),
 } }));
 jest.mock('../storage/database', () => ({ openNetizensDatabase: async () => ({}) }));
 jest.mock('../storage/projections', () => ({ ProjectionStore: jest.fn().mockImplementation(() => mockProjections) }));
@@ -171,4 +171,23 @@ it('does not erase local state or show deletion success if canonical deletion fa
   await waitFor(() => expect(mockDeleteAccount).toHaveBeenCalledTimes(1));
   expect(mockStore.clear).not.toHaveBeenCalled(); expect(mockProjections.clearAccount).not.toHaveBeenCalled();
   expect(screen.getByText('Test account deletion')).toBeTruthy();
+});
+
+it('confirmed deletion after retrying account verification still purges only the retired account', async () => {
+  mockProfiles.read.mockRejectedValue(new Error('offline'));
+  let confirm!: () => void;
+  mockDeleteAccount.mockImplementation(() => new Promise<void>(resolve => { confirm = resolve; }));
+  open(); await screen.findByText('Retry account verification');
+  fireEvent.press(screen.getByText('Delete account'));
+  fireEvent.changeText(screen.getByLabelText('Account email'), 'citizen@example.test');
+  fireEvent.changeText(screen.getByLabelText('Current password'), 'password');
+  fireEvent.changeText(screen.getByLabelText('Confirm permanent deletion'), 'DELETE');
+  fireEvent.press(screen.getByText('Permanently delete account'));
+  await waitFor(() => expect(mockDeleteAccount).toHaveBeenCalledTimes(1));
+  fireEvent.press(screen.getByText('Retry account verification'));
+  await waitFor(() => expect(mockProfiles.read).toHaveBeenCalledTimes(2));
+  await act(async () => confirm());
+  await waitFor(() => expect(mockProjections.clearAccount).toHaveBeenCalledTimes(1));
+  expect(mockStore.eraseAccount).toHaveBeenCalledWith('owner');
+  expect(mockStore.clear).not.toHaveBeenCalled();
 });
