@@ -26,12 +26,21 @@ export type Notice = {
   read_at: string | null;
 };
 export type Thread = { id: string; title: string | null; kind: string };
+export type ConversationRequest = {
+  id: string; requester_id: string; recipient_id: string; status: string; expires_at: string;
+  requester: { handle: string; display_name: string } | null;
+  recipient: { handle: string; display_name: string } | null;
+};
+export type ConversationOutcome = {
+  request_id: string | null; status: 'pending' | 'accepted' | 'declined' | 'cancelled'; thread_id: string | null;
+};
 export type Message = {
   id: string;
   thread_id: string;
   sender_id: string;
   body: string;
 };
+export type VoteResult = { yes_count: number; no_count: number; user_choice: 'yes' | 'no' };
 export class ApiError extends Error {
   kind: ErrorClass;
   code: string;
@@ -117,10 +126,43 @@ export class NetizensRepository {
     return this.request<Entity>("world_entities", {
       select: "*",
       place_id: `eq.${place}`,
+      parent_entity_id: "is.null",
       order: "created_at.desc,id",
       limit: "50",
       offset: String(Math.max(0, offset)),
     });
+  }
+  children(parentId: string, offset = 0) {
+    return this.request<Entity>("world_entities", {
+      select: "*", parent_entity_id: `eq.${parentId}`,
+      order: "created_at.desc,id", limit: "50", offset: String(Math.max(0, Math.floor(offset))),
+    });
+  }
+  async searchEntities(text: string) {
+    const title = text.trim();
+    if (title.length < 2 || title.length > 80 || /[%_*\\]/.test(title))
+      throw new ApiError("validation", "Enter 2–80 title characters without wildcard symbols.");
+    return this.request<Entity>("world_entities", {
+      select: "id,place_id,title,summary,visibility,parent_entity_id,metadata",
+      title: `ilike.%${title}%`, order: "created_at.desc,id", limit: "50",
+    });
+  }
+  async threadForEntity(entityId: string) {
+    return (await this.request<Thread>("conversation_threads", {
+      select: "id,title,kind", entity_id: `eq.${entityId}`, kind: "eq.entity", limit: "1",
+    }))[0] ?? null;
+  }
+  async castVote(entityId: string, choice: 'yes' | 'no'): Promise<VoteResult> {
+    if (!['yes', 'no'].includes(choice)) throw new ApiError('validation', 'Choose Yes or No.');
+    const rows = await this.request<VoteResult>('rpc/cast_yes_no_vote', {}, 'POST', {
+      p_entity_id: entityId, p_choice: choice,
+    });
+    const result = rows[0];
+    if (rows.length !== 1 || result.user_choice !== choice
+      || !Number.isSafeInteger(result.yes_count) || result.yes_count < 0
+      || !Number.isSafeInteger(result.no_count) || result.no_count < 0)
+      throw new ApiError('server', 'Vote confirmation unavailable.');
+    return result;
   }
   async entity(id: string) {
     return (
@@ -154,6 +196,35 @@ export class NetizensRepository {
       order: "updated_at.desc,id",
       limit: "50",
     });
+  }
+  conversationRequests() {
+    return this.request<ConversationRequest>('conversation_requests', {
+      select: 'id,requester_id,recipient_id,status,expires_at,requester:citizens!conversation_requests_requester_id_fkey(handle,display_name),recipient:citizens!conversation_requests_recipient_id_fkey(handle,display_name)',
+      status: 'eq.pending', expires_at: `gt.${new Date().toISOString()}`,
+      order: 'created_at.desc,id', limit: '50',
+    });
+  }
+  private confirmedConversation(rows: ConversationOutcome[], expected: readonly string[]) {
+    const row = rows[0];
+    if (rows.length !== 1 || !row || !expected.includes(row.status)
+      || (row.status === 'accepted' ? !row.thread_id : !row.request_id || row.thread_id !== null))
+      throw new ApiError('server', 'Conversation update was not confirmed');
+    return row;
+  }
+  async requestConversation(handle: string) {
+    const normalized = handle.trim().replace(/^@/, '').toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_-]{2,39}$/.test(normalized))
+      throw new ApiError('validation', 'Enter an exact Citizen handle of 3–40 characters.');
+    return this.confirmedConversation(await this.request<ConversationOutcome>('rpc/request_conversation', {}, 'POST', {
+      p_recipient_handle: normalized,
+    }), ['pending', 'accepted']);
+  }
+  async respondConversationRequest(id: string, action: 'accept' | 'decline' | 'cancel') {
+    if (!id || !['accept', 'decline', 'cancel'].includes(action))
+      throw new ApiError('validation', 'Choose a valid invitation action.');
+    return this.confirmedConversation(await this.request<ConversationOutcome>('rpc/respond_conversation_request', {}, 'POST', {
+      p_request_id: id, p_action: action,
+    }), [action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'cancelled']);
   }
   async thread(id: string) {
     return (

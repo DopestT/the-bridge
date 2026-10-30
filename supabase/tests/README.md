@@ -9,6 +9,13 @@ runs `effective-privileges.sql`. The test checks effective column/table/function
 privileges and actual authenticated writes, profile creation, join/post/reply,
 private-message isolation and anonymous-user exclusion. Fixtures roll back.
 
+It also runs `citizen-onboarding.sql` and `citizen-safety.sql` for the additive
+completion/safety migration. These verify self-only completion, actual permanent
+Auth state, migrated/converted accounts, handle conflicts, constrained direct
+profile updates, preservation of server-owned fields, immediate account
+restrictions and persistent block enforcement. The generated default handle may
+use 40 characters; newly chosen handles through the completion UI/RPC use 3–30.
+
 This test does not certify Supabase HTTP/Auth configuration, signed builds, push,
 or physical-device acceptance. Those still require the real-phone runbook.
 

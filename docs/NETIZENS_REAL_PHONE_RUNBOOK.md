@@ -1,16 +1,12 @@
 # NETIZENS real-phone acceptance runbook
 
-Status: **not cleared**. Implementation baseline: PR #18, merge `f66d1bdd24ed46f85be6a6a52b1c8f98009cbbc3`. This runbook records the next executable work, not completed device results.
+Status: **not cleared**. Merged baseline: PR #20, `0e5fb06`; October 29 completion branch remains separate. This runbook records the next executable work, not completed device results.
 
 ## 1. Confirm and prepare the backend
 
-The connected `the-bridge` project (`udygizxcwqoxifqlyfkq`) was ACTIVE_HEALTHY on October 13, 2026. Migration history and public-table inspection both returned empty lists. Confirm that this project is the dedicated NETIZENS target by matching the deployment environment and owner-approved project mapping before applying SQL. Repository names alone do not establish database ownership. Never target the Perception database.
+On October 29, 2026, the existing dedicated `the-bridge` project (`udygizxcwqoxifqlyfkq`) was restored and verified ACTIVE_HEALTHY. Its five installed migrations are the three foundation/participation files plus effective privileges (`20261019075407`) and onboarding/safety (`20261030034537`). The repository privilege file has an earlier timestamp; do not replay it. There are 21 public RLS tables, 10 Places, and zero Auth users/Citizens/World Entities. Never target the Perception database.
 
-On the confirmed target, compare migration history with these repository files, in order:
-
-1. `supabase/migrations/20261002223500_netizens_world_foundation.sql`
-2. `supabase/migrations/20261005010500_netizens_participation_layer.sql`
-3. `supabase/migrations/20261005185000_netizens_participation_rls_hardening.sql`
+The reviewed `20261030031920_netizens_citizen_onboarding_safety.sql` is installed as hosted version `20261030034537`. Match names and reviewed SQL as well as timestamps; do not reapply it. Catalog readback and anonymous HTTP denial probes passed. Confirm target identity against the final build environment, review the migration and its regression fixtures, and preserve actual user data.
 
 Apply only missing migrations after reviewing target state. Verify the resulting tables, grants, RLS and security/performance advisors. Static SQL contract QA does not prove database application. Prepare two permanent test Citizens with valid profiles and a controlled Place/Entity; distinguish all test activity from genuine pilot metrics and reputation.
 
@@ -18,7 +14,7 @@ Exit evidence: confirmed project mapping, migration versions, schema/grant check
 
 ## 2. Validate and build the app
 
-This work can proceed alongside backend preparation. Use confirmed LWV identifiers and the existing EAS project. Configure `NETIZENS_IOS_BUNDLE_ID`, `NETIZENS_ANDROID_PACKAGE`, `NETIZENS_EAS_PROJECT_ID`, `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` through the build environment. Keep privileged database and signing credentials out of public variables and evidence files.
+This work can proceed alongside backend preparation. Use the user-delegated `com.big271.netizens` identifiers (iOS and Android) and the user-selected existing `@big271/netizens-mobile` project (`5f86b3a0-9d3b-4982-a05c-2aa6c4b3f0da`), now fixed in app.config.ts. Configure `NETIZENS_IOS_BUNDLE_ID`, `NETIZENS_ANDROID_PACKAGE`, `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` through the build environment. Keep privileged database and signing credentials out of public variables and evidence files.
 
 From `apps/netizens-mobile/`, using Node 24 for the SQLite test harness:
 

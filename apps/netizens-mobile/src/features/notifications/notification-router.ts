@@ -8,5 +8,6 @@ export function routeNotification(
     return { kind: "thread", threadId: payload.thread_id };
   if (typeof payload.entity_id === "string" && uuid.test(payload.entity_id))
     return { kind: "entity", entityId: payload.entity_id };
+  if (payload.notification_type === 'conversation_request') return { kind: 'messages' };
   return null;
 }

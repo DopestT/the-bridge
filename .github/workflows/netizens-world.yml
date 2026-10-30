@@ -42,10 +42,27 @@ jobs:
       - name: Apply repository migrations in order
         run: |
           for migration in supabase/migrations/*.sql; do
+            if [[ "$migration" == *netizens_citizen_onboarding_safety.sql ]]; then
+              psql -v ON_ERROR_STOP=1 -f supabase/tests/legacy-profile-before.sql
+            fi
             psql -v ON_ERROR_STOP=1 -1 -f "$migration"
+            if [[ "$migration" == *netizens_citizen_onboarding_safety.sql ]]; then
+              psql -v ON_ERROR_STOP=1 -f supabase/tests/legacy-profile-after.sql
+            fi
           done
       - name: Verify effective privileges and authenticated behavior
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/effective-privileges.sql
+      - name: Verify Citizen onboarding and account restrictions
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/citizen-onboarding.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/citizen-safety.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/yes-no-voting.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/conversation-requests.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/account-deletion.sql
+      - name: Verify concurrent conversation consent and replay
+        run: |
+          bash supabase/tests/conversation-concurrency.sh
+          bash supabase/tests/account-deletion-concurrency.sh
   qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5

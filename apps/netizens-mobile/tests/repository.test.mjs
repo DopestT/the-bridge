@@ -230,3 +230,100 @@ test("safety duplicate block succeeds only after canonical readback", async () =
   await repo.blockCitizen(other);
   assert.equal(request, 2);
 });
+test("Place roots and nested entity reads keep their structural parent boundary", async () => {
+  const urls = [];
+  const repo = new NetizensRepository("https://example.test", "public", session, async (url) => {
+    urls.push(new URL(url));
+    return new Response("[]");
+  });
+  await repo.entities("crews", 50);
+  await repo.children(entity, 0);
+  assert.equal(urls[0].searchParams.get("parent_entity_id"), "is.null");
+  assert.equal(urls[0].searchParams.get("offset"), "50");
+  assert.equal(urls[1].searchParams.get("parent_entity_id"), `eq.${entity}`);
+  assert.equal(urls[1].searchParams.get("limit"), "50");
+});
+
+test("search is authenticated, bounded, and treats filter punctuation as literal title text", async () => {
+  let url, init;
+  const repo = new NetizensRepository("https://example.test", "public", session, async (u, i) => {
+    url = new URL(u); init = i;
+    return new Response(JSON.stringify([{ id: entity, title: "Art, design" }]));
+  });
+  assert.equal((await repo.searchEntities(" Art, design "))[0].id, entity);
+  assert.equal(url.searchParams.get("title"), "ilike.%Art, design%");
+  assert.equal(url.searchParams.get("limit"), "50");
+  assert.equal(url.searchParams.has("or"), false);
+  assert.equal(init.headers.Authorization, "Bearer token");
+});
+
+test("invalid or wildcard-only search never requests an unbounded catalogue", async () => {
+  let requested = false;
+  const repo = new NetizensRepository("https://example.test", "public", session, async () => {
+    requested = true; return new Response("[]");
+  });
+  for (const value of [" ", "a", "%_", "a*", "x".repeat(81)]) {
+    await assert.rejects(repo.searchEntities(value), (error) => error instanceof ApiError && error.kind === "validation");
+  }
+  assert.equal(requested, false);
+});
+
+test("Circle messaging resolves only an existing entity-bound thread visible through RLS", async () => {
+  let called;
+  const repo = new NetizensRepository("https://example.test", "public", session, async (url, init) => {
+    called = { url: new URL(url), init };
+    return new Response(JSON.stringify([{ id: other, kind: "entity", title: "Circle" }]));
+  });
+  assert.equal((await repo.threadForEntity(entity)).id, other);
+  assert.equal(called.init.method, "GET");
+  assert.equal(called.url.searchParams.get("entity_id"), `eq.${entity}`);
+  assert.equal(called.url.searchParams.get("kind"), "eq.entity");
+  assert.equal(called.url.searchParams.get("limit"), "1");
+});
+
+test("a vote uses the authenticated vote-first RPC and cannot submit a voter identity", async () => {
+  let call;
+  const repo = new NetizensRepository("https://example.test", "public", session, async (url, init) => {
+    call = { url: String(url), init };
+    return new Response(JSON.stringify([{ yes_count: 3, no_count: 1, user_choice: "yes" }]));
+  });
+  assert.deepEqual(await repo.castVote(entity, "yes"), { yes_count: 3, no_count: 1, user_choice: "yes" });
+  assert.match(call.url, /\/rpc\/cast_yes_no_vote\?/);
+  assert.deepEqual(JSON.parse(call.init.body), { p_entity_id: entity, p_choice: "yes" });
+  assert.equal(call.init.method, "POST");
+});
+
+test("an unconfirmed or malformed vote result never produces displayed counts", async () => {
+  for (const rows of [[], [{ yes_count: -1, no_count: 1, user_choice: "yes" }], [{ yes_count: 3, no_count: 1, user_choice: "no" }]]) {
+    const repo = new NetizensRepository("https://example.test", "public", session, async () => new Response(JSON.stringify(rows)));
+    await assert.rejects(repo.castVote(entity, "yes"));
+  }
+});
+
+test('conversation requests use scoped RPCs without submitting identity or roles', async () => {
+  const calls=[];
+  const repo=new NetizensRepository('https://example.test','public',session,async (url,init)=>{
+    calls.push({url:String(url),body:JSON.parse(init.body)});
+    return new Response(JSON.stringify([{request_id:entity,status:calls.length===1?'pending':'accepted',thread_id:calls.length===1?null:other}]));
+  });
+  await repo.requestConversation(' @River ');
+  await repo.respondConversationRequest(entity,'accept');
+  assert.match(calls[0].url,/\/rpc\/request_conversation\?/);
+  assert.deepEqual(calls[0].body,{p_recipient_handle:'river'});
+  assert.deepEqual(calls[1].body,{p_request_id:entity,p_action:'accept'});
+});
+test('invitation reads are bounded and join only allowed public profile fields', async () => {
+  let seen;
+  const repo=new NetizensRepository('https://example.test','public',session,async url=>{seen=new URL(url);return new Response('[]');});
+  await repo.conversationRequests();
+  assert.equal(seen.searchParams.get('limit'),'50');
+  assert.equal(seen.searchParams.get('status'),'eq.pending');
+  assert.match(seen.searchParams.get('select'),/handle,display_name/);
+  assert.equal(seen.searchParams.get('select').includes('*'),false);
+});
+test('unconfirmed invitation responses cannot create client success states', async () => {
+  for(const result of [[],[{request_id:entity,status:'accepted',thread_id:null}],[{request_id:entity,status:'pending',thread_id:other}]]){
+    const repo=new NetizensRepository('https://example.test','public',session,async()=>new Response(JSON.stringify(result)));
+    await assert.rejects(repo.requestConversation('river'));
+  }
+});

@@ -5,11 +5,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, Button, Text, TextInput, View } from "react-native";
+import { AppState, Button, ScrollView, Text, TextInput, View } from "react-native";
 import { randomUUID } from "expo-crypto";
 import type { Session } from "@supabase/supabase-js";
 import { createSupabaseClient } from "../api/supabase";
 import { NetizensRepository } from "../api/netizens-repository";
+import { CitizenProfiles, type Citizen, type ProfileInput } from "../api/citizen-profile";
+import { AccountDeletion } from "../features/profile/AccountDeletion";
+import { isAccountErased, markAccountErased } from "../auth/account-erasure";
+import { deleteOwnAccount } from "../auth/account-deletion";
+import { CitizenProfileForm } from "../features/profile/CitizenProfileForm";
 import { readPublicEnv } from "../config/env";
 import { secureSessionStore } from "../auth/secure-session";
 import { SessionController } from "../auth/session-controller";
@@ -26,7 +31,10 @@ export type Runtime = {
   revision: number;
   sync: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (email: string, password: string, confirmation: string) => Promise<void>;
   userId: string;
+  citizen: Citizen | null;
+  saveProfile: (input: ProfileInput) => Promise<Citizen>;
 };
 const Context = createContext<Runtime | null>(null);
 export function useRuntime() {
@@ -46,15 +54,19 @@ function stored(s: Session) {
 export function RuntimeProvider({ children }: { children: ReactNode }) {
   const [runtime, setRuntime] = useState<Runtime | null>(null),
     [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
     [ready, setReady] = useState(false),
     [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [busy, setBusy] = useState(false),
+    [profileReady, setProfileReady] = useState(false),
     [epoch, setEpoch] = useState(0);
   useEffect(() => {
     let active = true,
-      cleanup = () => {};
+      cleanup = () => {},
+      retire = () => {};
     async function boot() {
+      setProfileReady(false);
       const client = createSupabaseClient();
       const env = readPublicEnv();
       const controller = new SessionController(secureSessionStore, {
@@ -62,10 +74,12 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
           const { data, error } = await client.auth.refreshSession({
             refresh_token: s.refreshToken,
           });
+          if (!active || isAccountErased(s.userId)) throw new Error("Session closed");
           if (error || !data.session) return null;
           return stored(data.session);
         },
       });
+      retire = () => controller.retire();
       await controller.restore();
       let saved = await secureSessionStore.read();
       if (controller.state === "expired") {
@@ -78,12 +92,52 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       }
       if (!saved || saved.isAnonymous) return;
       const db = await openNetizensDatabase();
-      if (!active) return;
+      if (!active || isAccountErased(saved!.userId)) return;
       const projections = new ProjectionStore(db, saved.userId);
       const outbox = new Outbox(db, saved.userId, Date.now, randomUUID);
-      const current = () => {
-        if (!active) throw new Error("Session closed");
+      const currentAuth = () => {
+        if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
         return controller.requireWriteSession();
+      };
+      const profiles = new CitizenProfiles(env, currentAuth);
+      let citizen: Citizen | null = null;
+      let profileVersion = 0, profileSaving = false, resuming = false;
+      try {
+        citizen = await profiles.read();
+        if (!active || isAccountErased(saved!.userId)) return;
+        if (citizen) await projections.put("citizens", saved.userId, citizen);
+        else await projections.remove("citizens", saved.userId);
+        setProfileReady(true);
+      } catch {
+        // A previously completed identity may render cached public data offline.
+        // Every remote operation still needs a valid session and server RLS.
+        const cached = await projections.get<Citizen>("citizens", saved.userId);
+        if (!active || isAccountErased(saved!.userId)) return;
+        citizen = cached?.body.id === saved.userId && cached.body.status === "active"
+          && cached.body.onboarding_completed_at ? cached.body : null;
+        setProfileReady(!!citizen);
+        setError("Citizen profile unavailable. Reconnect to verify your account.");
+      }
+      const current = () => {
+        const session = currentAuth();
+        if (!citizen || citizen.status !== "active" || !citizen.onboarding_completed_at)
+          throw new Error("Complete an active Citizen profile to continue");
+        return session;
+      };
+      const saveProfile = async (input: ProfileInput) => {
+        if (profileSaving) throw new Error("A profile save is already in progress.");
+        profileSaving = true;
+        profileVersion++;
+        try {
+          const updated = await profiles.save(input);
+          if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
+          citizen = updated;
+          await projections.put("citizens", saved!.userId, updated);
+          if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
+          setRuntime(r => r ? { ...r, citizen: updated } : null);
+          setError("");
+          return updated;
+        } finally { profileSaving = false; }
       };
       const repository = new NetizensRepository(
         env.supabaseUrl,
@@ -111,6 +165,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       };
       const logout = async () => {
         active = false;
+        setPassword(""); setEmail("");
         setReady(false);
         setRuntime(null);
         cleanup();
@@ -119,6 +174,23 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         await projections.clearAccount();
         setEpoch((e) => e + 1);
       };
+      let deleting = false;
+      const deleteAccount = async (accountEmail: string, currentPassword: string, confirmation: string) => {
+        if (deleting || !active) throw new Error("Account operation unavailable");
+        deleting = true;
+        try {
+          await deleteOwnAccount(env, { userId: saved!.userId, email: accountEmail, password: currentPassword, confirmation },
+            createSupabaseClient().auth, fetch, () => active);
+          markAccountErased(saved!.userId);
+          controller.retire();
+          try { await secureSessionStore.eraseAccount(saved!.userId); }
+          finally { await reconciler.whenIdle(); await projections.clearAccount(); }
+          if (active) { active = false; cleanup(); setRuntime(null); setReady(false); setEmail(""); setPassword(""); }
+          // Retire any replacement runtime as well; a different account keeps its
+          // own credentials and data and is restored from the shared store.
+          setEpoch(e => e + 1);
+        } finally { deleting = false; }
+      };
       setRuntime({
         repository,
         projections,
@@ -126,15 +198,33 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         revision: 0,
         sync,
         logout,
+        deleteAccount,
         userId: saved.userId,
+        citizen,
+        saveProfile,
       });
       const resume = async () => {
+        if (resuming || !active) return;
+        resuming = true;
         try {
-          await controller.refresh();
-        } catch {
-          /* writes remain paused on expired session */
-        }
-        if (active) await sync();
+          try { await controller.refresh(); }
+          catch { /* writes remain paused on expired session */ }
+          if (!active || isAccountErased(saved!.userId)) return;
+          if (!profileSaving) {
+            const version = profileVersion;
+            try {
+              const updated = await profiles.read();
+              if (!active || isAccountErased(saved!.userId) || profileSaving || version !== profileVersion) return;
+              citizen = updated;
+              if (updated) await projections.put("citizens", saved!.userId, updated);
+              else await projections.remove("citizens", saved!.userId);
+              if (!active || isAccountErased(saved!.userId) || profileSaving || version !== profileVersion) return;
+              setRuntime(r => r ? { ...r, citizen: updated } : null);
+              setProfileReady(true);
+            } catch { /* Cached public reads survive a connection failure. */ }
+          }
+          if (active && citizen?.status === "active" && citizen.onboarding_completed_at) await sync();
+        } finally { resuming = false; }
       };
       const timer = setInterval(() => void resume(), 30000);
       const subscription = AppState.addEventListener("change", (state) => {
@@ -144,7 +234,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         clearInterval(timer);
         subscription.remove();
       };
-      void sync();
+      if (citizen?.status === "active" && citizen.onboarding_completed_at) void sync();
     }
     void boot()
       .catch(() => {
@@ -158,12 +248,15 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       });
     return () => {
       active = false;
+      retire();
       cleanup();
     };
   }, [epoch]);
   async function signIn() {
+    if (busy) return;
     setBusy(true);
     setError("");
+    setNotice("");
     try {
       const client = createSupabaseClient();
       const { data, error } = await client.auth.signInWithPassword({
@@ -182,8 +275,45 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       setBusy(false);
     }
   }
-  if (runtime)
+  async function signUp() {
+    if (busy) return;
+    setError(""); setNotice("");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || password.length < 12) {
+      setError("Enter a valid email and a password of at least 12 characters.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data, error } = await createSupabaseClient().auth.signUp({ email: email.trim(), password });
+      if (error || !data.user || data.user.is_anonymous)
+        throw new Error("Unable to create this account. Check your details or contact NETIZENS support.");
+      setPassword("");
+      if (data.session) {
+        await secureSessionStore.write(stored(data.session));
+        setReady(false); setEpoch(e => e + 1);
+      } else setNotice("Check your email to confirm your account, then return here to sign in.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Account creation unavailable."); }
+    finally { setBusy(false); }
+  }
+  if (runtime) {
+    if (!profileReady) return <AppShell title="Citizen account"><ScrollView keyboardShouldPersistTaps="handled">
+      <Text style={styles.text} accessibilityRole="alert">{error || "Reconnect to verify your Citizen account."}</Text>
+      <Button title="Retry account verification" onPress={() => { setReady(false); setRuntime(null); setEpoch(e => e + 1); }} />
+      <AccountDeletion onDelete={runtime.deleteAccount} />
+      <Button title="Sign out" onPress={() => void runtime.logout()} />
+    </ScrollView></AppShell>;
+    if (runtime.citizen && runtime.citizen.status !== "active") return <AppShell title="Citizen account"><ScrollView keyboardShouldPersistTaps="handled">
+      <Text style={styles.text}>This account cannot enter World. Contact the NETIZENS operator for account support.</Text>
+      <AccountDeletion onDelete={runtime.deleteAccount} />
+      <Button title="Sign out" onPress={() => void runtime.logout()} />
+    </ScrollView></AppShell>;
+    if (!runtime.citizen?.onboarding_completed_at) return <AppShell title="Become a Citizen"><ScrollView keyboardShouldPersistTaps="handled">
+      <CitizenProfileForm citizen={runtime.citizen} onSave={runtime.saveProfile} onboarding scrollable={false} />
+      <AccountDeletion onDelete={runtime.deleteAccount} />
+      <Button title="Sign out" onPress={() => void runtime.logout()} />
+    </ScrollView></AppShell>;
     return <Context.Provider value={runtime}>{children}</Context.Provider>;
+  }
   return (
     <AppShell title="NETIZENS">
       <Text style={styles.text}>One network, many places.</Text>
@@ -214,8 +344,10 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
             disabled={busy}
             onPress={() => void signIn()}
           />
+          <Button title="Create Citizen account" disabled={busy} onPress={() => void signUp()} />
         </View>
       ) : null}
+      {notice ? <Text style={styles.text} accessibilityLiveRegion="polite">{notice}</Text> : null}
       {error ? (
         <Text accessibilityRole="alert" style={styles.text}>
           {error}
