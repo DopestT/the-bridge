@@ -7,6 +7,9 @@ import { toPublicLocation } from "../src/features/local/location.ts";
 import { measure, budgets, checkBudget } from "../src/performance/metrics.ts";
 import { ApiError } from "../src/api/netizens-repository.ts";
 const id = "11111111-1111-4111-8111-111111111111";
+test('a conversation invitation notification opens the protected inbox', () => {
+  assert.deepEqual(routeNotification({notification_type:'conversation_request'}),{kind:'messages'});
+});
 test("cached read renders before network and survives offline refresh", async () => {
   const states = [];
   await loadCached({

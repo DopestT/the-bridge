@@ -299,3 +299,31 @@ test("an unconfirmed or malformed vote result never produces displayed counts", 
     await assert.rejects(repo.castVote(entity, "yes"));
   }
 });
+
+test('conversation requests use scoped RPCs without submitting identity or roles', async () => {
+  const calls=[];
+  const repo=new NetizensRepository('https://example.test','public',session,async (url,init)=>{
+    calls.push({url:String(url),body:JSON.parse(init.body)});
+    return new Response(JSON.stringify([{request_id:entity,status:calls.length===1?'pending':'accepted',thread_id:calls.length===1?null:other}]));
+  });
+  await repo.requestConversation(' @River ');
+  await repo.respondConversationRequest(entity,'accept');
+  assert.match(calls[0].url,/\/rpc\/request_conversation\?/);
+  assert.deepEqual(calls[0].body,{p_recipient_handle:'river'});
+  assert.deepEqual(calls[1].body,{p_request_id:entity,p_action:'accept'});
+});
+test('invitation reads are bounded and join only allowed public profile fields', async () => {
+  let seen;
+  const repo=new NetizensRepository('https://example.test','public',session,async url=>{seen=new URL(url);return new Response('[]');});
+  await repo.conversationRequests();
+  assert.equal(seen.searchParams.get('limit'),'50');
+  assert.equal(seen.searchParams.get('status'),'eq.pending');
+  assert.match(seen.searchParams.get('select'),/handle,display_name/);
+  assert.equal(seen.searchParams.get('select').includes('*'),false);
+});
+test('unconfirmed invitation responses cannot create client success states', async () => {
+  for(const result of [[],[{request_id:entity,status:'accepted',thread_id:null}],[{request_id:entity,status:'pending',thread_id:other}]]){
+    const repo=new NetizensRepository('https://example.test','public',session,async()=>new Response(JSON.stringify(result)));
+    await assert.rejects(repo.requestConversation('river'));
+  }
+});
