@@ -16,7 +16,7 @@ Goal: bring the canonical NETIZENS app to its strongest verifiable position for 
 | --- | --- | --- |
 | Identity and core social loop | Source/UI/SQL checks; Android preview exists | Two permanent consenting test accounts, verified email/login/recovery and full loop on both phones |
 | First conversation | Hosted backend and source verified, concurrency checked | Include current code in final artifact and test invitation/block behavior with two accounts |
-| Account deletion | Missing at this audit | In-app explicit deletion, recent authentication, canonical removal, stale-token denial and local purge; external deletion URL for Play |
+| Account deletion | Reviewed source and hosted migration; anonymous denial verified | In-app explicit deletion, recent authentication, canonical removal, stale-token denial and local purge; external deletion URL for Play |
 | Privacy, terms, support | No confirmed public operator/policy/contact URLs | Truthful public policies, UGC terms acceptance and visible support/reporting; owner must supply actual operator and reachable contact |
 | Moderation | User block/report and RLS implemented | Staffed handling, review access, objectionable-content handling and measured response process |
 | Notifications | Permission/token adapter only | Canonical registration/revocation, authenticated delivery and push/deep-link device evidence |
@@ -42,7 +42,18 @@ Primary policy references checked October 30, 2026: [Apple account deletion](htt
 
 ## October 30 implementation evidence
 
-Account deletion source now includes explicit confirmation, isolated password reauthentication, same-account verification, a scoped server RPC requiring a live Auth session and recent password AMR, canonical removal, and local credential/cache/outbox purge after acknowledgement. Role fixtures cover target-report cascades, audit cleanup, restricted/incomplete accounts, stale password/revoked session denial and unrelated-user preservation. Client tests cover wrong-account credentials, unconfirmed/network results, retirement and purge ordering. Local full Jest: 75 passed; storage/transport: 36 passed; lint/typecheck passed. Hosted rollout and final device acceptance remain unverified until separately recorded.
+Account deletion source now includes explicit confirmation, isolated password reauthentication, same-account verification, a scoped server RPC requiring a live Auth session and recent password AMR, canonical removal, and local credential/cache/outbox purge after acknowledgement. Role fixtures cover target-report cascades, audit cleanup, restricted/incomplete accounts, stale password/revoked session denial and unrelated-user preservation. Client tests cover wrong-account credentials, unconfirmed/network results, retirement and purge ordering. Local full Jest after review fixes: 79 passed; storage/transport: 38 passed; lint/typecheck passed. Hosted rollout is recorded below; final device and live password/AMR acceptance remain unverified.
 
 
 Independent review identified a runtime-retirement purge race and a concurrent evidence-retention race. Both were reproduced: the earlier SQL leaves concurrent free-text evidence; the revised FK cascades remove actual descendants/evidence, including writes committed while deletion is paused. A deferred-response runtime test confirms retired-account cleanup, while shared serialized secure storage rejects late writes for an erased identity and preserves a different account's credentials. No live erasure has been executed.
+
+
+## Reviewed hosted rollout
+
+Source batch `d5d72c2` adds the final review fixes. Hosted migration `20261030053852_netizens_account_deletion` is installed on the existing NETIZENS backend (repository file `20261030052840`). Live catalog readback confirms authenticated scoped execution, denied anonymous execution/direct Auth deletion, fixed search path and all nine evidence/report cascade foreign keys. Anonymous HTTP returned 401/42501. There are still zero Auth users; no real account or data was deleted. Local PostgreSQL 16 and GitHub PostgreSQL 17 passed account-removal fixtures and the concurrent descendant/evidence test. Final static review found no remaining important issue. Real Supabase password/AMR sessions and physical-device deletion remain separate acceptance gates.
+
+The security advisor now reports five intentionally authenticated SECURITY DEFINER functions and two service-only RLS tables without client policies. This is not full security clearance. [Authenticated function advisor guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
+
+The supplied domain responds over verified HTTPS and publicly brands itself Legacy Works Ventures; the legal store publisher and public support contact remain unconfirmed. Proposed policy/support/deletion paths on that domain are not yet deployed or claimed available. The local Mac still has no simctl, adb or emulator, and only about 1.7 GB free; native SDK installation was not attempted. Existing Android APK predates invitations/deletion; no additional cloud build was started.
+
+Next work: operator/policy and external deletion pages, accessible native shell and store packaging, password recovery, genuine Local discovery, authenticated push registration/delivery/revocation, persisted College funnel, then final artifacts and both-platform physical-device evidence. Keep issue #16 open. This goal remains active.

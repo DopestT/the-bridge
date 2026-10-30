@@ -16,6 +16,10 @@ Commit `9a0eec4` adds explicit recipient consent for the first direct conversati
 
 Hosted migration `20261030052029_netizens_conversation_requests` is installed on the existing NETIZENS project. Catalog and anonymous HTTP checks passed; no real invitation was created. Local PostgreSQL 16 and CI PostgreSQL 17 passed consent/concurrency fixtures. Local app tests, lint/typecheck and both bundle exports passed. Independent static review found no important/critical defects. The existing downloadable Android APK predates this flow; signed iOS and physical-device acceptance remain outstanding. Latest evidence takes precedence over earlier baseline counts below.
 
+## October 30 store-readiness update
+
+Reviewed source now includes password-confirmed in-app account deletion, available to restricted/incomplete accounts too. The self-only RPC requires a live Auth session and recent password authentication; it removes canonical owned data and handles moderation/audit cascades. Local erasure blocks late credential, cache, outbox and profile restoration while preserving other accounts. Hosted migration `20261030053852_netizens_account_deletion` is installed; grants and anonymous HTTP denial passed. No live account was deleted. See NETIZENS_STORE_READINESS.md for current evidence, actual data-loss scope, remaining device gates and publisher-domain confirmation.
+
 ## Backend verified now
 
 The existing dedicated project `the-bridge` (`udygizxcwqoxifqlyfkq`) was inactive and was restored; a fresh read returned ACTIVE_HEALTHY. No replacement project was created. Hosted migration history contains the three foundation/participation migrations, `20261019075407_netizens_effective_privileges`, and `20261030034537_netizens_citizen_onboarding_safety`. Do not replay the repository privilege migration merely because its file timestamp differs.

@@ -74,7 +74,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
           const { data, error } = await client.auth.refreshSession({
             refresh_token: s.refreshToken,
           });
-          if (!active || isAccountErased(saved!.userId)) throw new Error("Session closed");
+          if (!active || isAccountErased(s.userId)) throw new Error("Session closed");
           if (error || !data.session) return null;
           return stored(data.session);
         },
