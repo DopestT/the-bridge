@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-The user corrected the active project to **NETIZENS**. Unrelated Archangels audit text, launch policy and code are not NETIZENS requirements. Archangels edits were stopped and preserved in their separate checkout. The user explicitly paused the stale Archangels automatic goal. It remains paused and must not be resumed as NETIZENS work. The goal API cannot replace an unfinished paused goal; NETIZENS continues as the authorized task in this chat.
+The user corrected the active project to **NETIZENS**. Unrelated Archangels audit text, launch policy and code are not NETIZENS requirements. Archangels edits were stopped and preserved in their separate checkout. The user explicitly paused the stale Archangels automatic goal. The saved controller was subsequently reactivated with the stale Archangels text; it must not drive NETIZENS work. The goal API cannot replace an unfinished goal; NETIZENS continues as the authorized task in this chat.
 
 Canonical source: `DopestT/the-bridge`, `apps/netizens-mobile`, current main `0e5fb06`. Worktree: this checkout, branch `codex/netizens-completion-20261029`. Existing worktree configuration and duplicate Expo projects are preserved. Synced `sources/` are read-only.
 
@@ -19,7 +19,7 @@ The implementation milestone remains issue #16: a permanent Citizen completes th
 | Message safety | Canonical blocking hides blocked sender bodies on reload and prevents edits/sends across a block | Real SQL role/RLS fixtures; live two-account acceptance pending |
 | Search | Authenticated, bounded title search with loading/error/empty states; superseded requests cannot display stale private results | Repository and component tests; results are not persisted in public caches |
 | Nested World | Place lists roots; authorized entities expose bounded children and parent navigation | Tests prohibit child reads before parent authorization and private/Circle cache display |
-| Circle routing | Opens an existing entity-bound authorized thread; missing/denied thread is an explicit state | No new client grants or automatic thread creation. First DM creation remains unresolved |
+| Circle routing | Opens an existing entity-bound authorized thread; missing/denied thread is an explicit state | No new client grants or automatic thread creation. Direct invitations now have the separate consent contract below |
 | Yes or No | Existing authenticated RPC records/upserts vote before returning aggregate results | UI/transport tests; only confirmed counts appear. Advisory community questions, not official ballots |
 
 ## Checks observed
@@ -41,7 +41,7 @@ Established owner decision: the user selected **big271**. Live CLI readback veri
 
 The local computer has Command Line Tools, but no usable Xcode simulator, Android SDK/emulator, Maestro or attached-device build path. Actual signed installation, push arrival, deep links and device performance need external evidence.
 
-Source still requires authenticated push registration/delivery/revocation, persisted College analytics, genuine Local area filtering, and a scoped first-conversation creation contract. Do not weaken service-controlled thread grants or fabricate content to fill empty screens. Editorial/interview/voting initiative operations still require the owner's actual scope/content and approved provenance.
+Source still requires authenticated push registration/delivery/revocation, persisted College analytics, genuine Local area filtering, and physical-device acceptance of the new first-conversation contract. Do not weaken service-controlled thread grants or fabricate content to fill empty screens. Editorial/interview/voting initiative operations still require the owner's actual scope/content and approved provenance.
 
 ## Independent review and migration compatibility
 
@@ -58,3 +58,18 @@ New profile constraints use `NOT VALID` so upgrades preserve previously allowed 
 5. Reconcile Expo/signing inputs; use consented test Citizens and labeled controlled Entities; capture both-platform physical-device evidence from the final artifact.
 
 No full-build or private-beta completion is claimed.
+
+
+## October 30: direct conversation consent
+
+Source commit `9a0eec4` adds an exact-handle, body-free invitation. The sender may cancel; the recipient may accept, decline or block. Acceptance alone creates/reuses the canonical two-member direct thread. Cancellation and decline remain possible when the other account is suspended; acceptance remains denied. Requests are not stored in the public cache. Existing conversations remain accessible when invitation loading fails.
+
+Implementation defaults are five new invitations/hour, seven-day expiry and thirty days before reinviting after a decline; these were not separately selected by the owner. See NETIZENS_CONVERSATION_REQUESTS.md for the contract.
+
+The migration is installed on the existing NETIZENS backend as `20261030052029_netizens_conversation_requests` (repository file `20261030050749`). Live readback confirms invitation RLS, participant SELECT, both authenticated RPC grants, denied anonymous reads/RPC execution, and denied client request/thread/member INSERT. All three anonymous HTTP probes returned 401/42501. Zero invitation rows were present; no real people were contacted.
+
+Fresh local PostgreSQL 16 passed all role/upgrade/consent fixtures and ten simultaneous reciprocal requests plus ten acceptance replays yielding one conversation. GitHub PostgreSQL 17 passed the actual concurrent shell fixture and all existing World QA at `9a0eec4`. Local typecheck, lint, complete Jest and 36 Node storage/transport tests passed; both platform Hermes exports completed. Independent static review found no actionable important or critical issue. Device acceptance is not established.
+
+Security advisors report four intentionally authenticated SECURITY DEFINER entry points (vote, profile completion and both invitation actions), plus two service-only RLS tables without client policies. The invitation RPCs retain explicit identity, participant, account, block and state checks; this is not full security clearance. Remediation guidance: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable and https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy.
+
+The existing Android APK predates invitation code. No additional cloud build was started for this batch, to conserve the account's build allowance. PR #21 remains draft and unmerged; issue #16 stays open. No full-build or private-beta completion is claimed.

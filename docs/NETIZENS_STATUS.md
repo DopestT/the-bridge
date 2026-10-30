@@ -1,14 +1,20 @@
 # NETIZENS Current Status
 
-**Verified update: October 29, 2026 (America/New_York).** Canonical repository: `DopestT/the-bridge`. Current main: `0e5fb06` (PR #20, native message safety controls). Issue #16 remains OPEN.
+**Verified update: October 30, 2026 (America/New_York).** Canonical repository: `DopestT/the-bridge`. Current main: `0e5fb06` (PR #20, native message safety controls). Issue #16 remains OPEN.
 
 ## Current implementation branch
 
 `codex/netizens-completion-20261029` adds a real Citizen profile/completion flow, account creation with explicit email-confirmation handling, bounded title search, nested World/Place/Entity navigation, contextual access to existing Circle conversations, and native Yes or No voting through the existing vote-first RPC. A denied request never becomes a success state. Results are advisory community polls, not official elections.
 
-The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It is installed on the hosted backend as `20261030034537_netizens_citizen_onboarding_safety`. Mobile code in this branch is not yet merged or distributed.
+The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It is installed on the hosted backend as `20261030034537_netizens_citizen_onboarding_safety`. Mobile code in this branch is not yet merged. An earlier Android preview is available; the invitation flow below is not in that APK.
 
 Observed checks on this branch: typecheck and lint passed; 54 Jest tests and 32 storage/transport tests passed; all five existing World/backend QA commands passed; iOS and Android Hermes bundles exported. Fresh disposable PostgreSQL 16 passed effective privileges, Citizen onboarding, Citizen safety and vote-first fixtures, plus legacy upgrade compatibility. These checks do not establish signed builds, real Auth email flows, device behavior, push delivery or release clearance.
+
+## October 30 invitation update
+
+Commit `9a0eec4` adds explicit recipient consent for the first direct conversation: request an exact handle, accept/decline/block incoming invitations, or cancel outgoing ones. Pending consent never unlocks messages. Current restrictions, blocking, server-side quotas and replay protection remain enforced. Defaults and acceptance details are in NETIZENS_CONVERSATION_REQUESTS.md.
+
+Hosted migration `20261030052029_netizens_conversation_requests` is installed on the existing NETIZENS project. Catalog and anonymous HTTP checks passed; no real invitation was created. Local PostgreSQL 16 and CI PostgreSQL 17 passed consent/concurrency fixtures. Local app tests, lint/typecheck and both bundle exports passed. Independent static review found no important/critical defects. The existing downloadable Android APK predates this flow; signed iOS and physical-device acceptance remain outstanding. Latest evidence takes precedence over earlier baseline counts below.
 
 ## Backend verified now
 
