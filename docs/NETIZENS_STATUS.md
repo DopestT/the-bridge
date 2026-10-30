@@ -1,41 +1,41 @@
 # NETIZENS Current Status
 
-**Latest verified update: 2026-10-13 (America/New_York)**
+**Verified update: October 29, 2026 (America/New_York).** Canonical repository: `DopestT/the-bridge`. Current main: `0e5fb06` (PR #20, native message safety controls). Issue #16 remains OPEN.
 
-## Merged implementation
+## Current implementation branch
 
-PR [#18](https://github.com/DopestT/the-bridge/pull/18) merged on October 12 at 23:40 ET (October 13 at 03:40 UTC). The verified implementation baseline is `f66d1bdd24ed46f85be6a6a52b1c8f98009cbbc3`.
+`codex/netizens-completion-20261029` adds a real Citizen profile/completion flow, account creation with explicit email-confirmation handling, bounded title search, nested World/Place/Entity navigation, contextual access to existing Circle conversations, and native Yes or No voting through the existing vote-first RPC. A denied request never becomes a success state. Results are advisory community polls, not official elections.
 
-Account-scoped SQLite projections/outbox, authenticated bounded transport, cached World/Place/Entity navigation, native join/post/reply, canonical notification reads, private message reads/sends, optional Local location and session recovery are now merged, not merely on a feature branch.
+The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It has not been applied to the hosted database. Code in this branch is not yet merged or deployed.
 
-Mobile CI [run #24](https://github.com/DopestT/the-bridge/actions/runs/38342807379) passed on the merge commit. PR-head [run #23](https://github.com/DopestT/the-bridge/actions/runs/38319159335) also passed. These checks cover typecheck, lint, Jest, SQLite/transport integration, existing browser/backend QA and iOS/Android bundle export. They do not certify signed builds, live RLS, push delivery or physical devices.
+Observed checks on this branch: typecheck and lint passed; 52 Jest tests and 32 storage/transport tests passed; all five existing World/backend QA commands passed; iOS and Android Hermes bundles exported. Fresh disposable PostgreSQL 16 passed effective privileges, Citizen onboarding and Citizen safety fixtures. These checks do not establish signed builds, real Auth email flows, device behavior, push delivery or release clearance.
 
-## Backend observations
+## Backend verified now
 
-Read-only connected-project inspection on October 13 returned:
+The existing dedicated project `the-bridge` (`udygizxcwqoxifqlyfkq`) was inactive and was restored; a fresh read returned ACTIVE_HEALTHY. No replacement project was created. Hosted migration history contains the three foundation/participation migrations and `20261019075407_netizens_effective_privileges`. Do not replay the repository privilege migration merely because its file timestamp differs.
 
-| Check | Observed result |
-| --- | --- |
-| Project | `the-bridge`, ref `udygizxcwqoxifqlyfkq` |
-| Lifecycle | `ACTIVE_HEALTHY` |
-| Recorded migrations | Empty list |
-| Public-schema tables | Empty list |
-| Dedicated NETIZENS identity | Not independently established |
+Fresh aggregate inspection: 21 public tables have RLS, 10 Places exist, and there are zero Auth users, Citizens and World Entities. No people, activity or test accounts were fabricated. The new onboarding/safety migration is local pending review and deployment verification.
 
-The October 12 inactive status and migration timeout are historical. Availability has recovered, but the connected project does not currently expose the required public NETIZENS schema. Empty public-schema results do not describe other schemas. No lifecycle changes or migrations were performed in this verification pass.
+## Locked product architecture
+
+- One network, many places: World → Place → Entity.
+- Shared Citizen identity, messaging, search, notifications and permissions.
+- College Groups live inside Crews; no top-level College island or speculative national-campus systems.
+- Supabase owns canonical social state; SQLite is account-scoped cache/outbox.
+- Private Circle/direct-message bodies never use public discussion paths.
+- Perception remains off ordinary social critical paths.
+- Seeded/test/demo activity must stay distinct from genuine activity and reputation.
 
 ## Remaining acceptance gates
 
-1. Confirm the dedicated NETIZENS project mapping; never use the Perception database. Compare and apply the three repository migrations only to the confirmed target, then verify actual grants, RLS and permanent Citizen profiles.
-2. Confirm LWV iOS/Android app identifiers, EAS ownership and signing; validate resolved configuration and create signed builds.
-3. Prove login → World → Place → Entity → join → post → reply against the live backend on both platforms.
-4. Complete and verify push registration/delivery, native block/report controls, and persistent College analytics.
-5. Prove process-death/offline recovery, duplicate suppression, session recovery, logout/account isolation and private messaging boundaries.
-6. Record device performance and physical-device E2E for the final build on both platforms.
+1. Review and deploy the additive migration to the confirmed backend; verify live grants, advisors and two-account HTTP/Auth acceptance. Prepare consented permanent test Citizens and controlled, explicitly labeled test Entities.
+2. Resolve ownership between the two existing Expo projects, confirm LWV iOS/Android identifiers and signing, and configure actual public backend variables. Do not create another project or guess identifiers.
+3. Complete authenticated push token registration/delivery, response routing and token revocation; the existing permission adapter alone is insufficient.
+4. Persist the College funnel and capture real device performance measurements. Local area selection still does not filter canonical discovery.
+5. Prove login → World → Place → Entity → join → post → reply, notifications/deep links, block/report enforcement, process-death/offline recovery, retry suppression, logout/account isolation and private-thread boundaries on physical iOS and Android.
+6. Record exact source/build/backend evidence and private-beta distribution. No usable local iOS simulator or Android emulator is currently installed; no signed artifact or physical-device result is established.
 
-Implementation and acceptance must remain separate. Issue [#16](https://github.com/DopestT/the-bridge/issues/16) was closed immediately after the merge without new device evidence and must remain open until acceptance is demonstrated. Do not use an automatic closing reference in implementation PRs for this milestone.
-
-The executable sequence and evidence checklist are in [NETIZENS_REAL_PHONE_RUNBOOK.md](NETIZENS_REAL_PHONE_RUNBOOK.md). The release requirements remain in [PRIVATE_BETA_GATE.md](../apps/netizens-mobile/PRIVATE_BETA_GATE.md). No production deployment, signed-device build, real-user retention or private-beta clearance is established by this update.
+See [the completion ledger](NETIZENS_COMPLETION_2026-10-29.md), [real-phone runbook](NETIZENS_REAL_PHONE_RUNBOOK.md), and [private-beta gate](../apps/netizens-mobile/PRIVATE_BETA_GATE.md). Implementation PRs must not automatically close #16.
 
 ## Historical record
 

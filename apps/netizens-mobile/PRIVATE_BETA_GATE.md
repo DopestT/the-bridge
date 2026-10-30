@@ -2,9 +2,9 @@
 
 Not cleared. Code checks are not physical-device certification.
 
-PR #18 is merged at `f66d1bdd24ed46f85be6a6a52b1c8f98009cbbc3`; post-merge Mobile CI run #24 passed. This establishes the implementation baseline only. See [the real-phone runbook](../../docs/NETIZENS_REAL_PHONE_RUNBOOK.md) for the dependency order and evidence matrix.
+Current main is `0e5fb06` (PR #20). The October 29 completion branch adds tested Citizen onboarding/safety and core navigation/search/vote flows; it is not yet merged or deployed. See the current repository status and completion ledger for source and check evidence.
 
-Latest backend observation (October 13, 2026): connected `the-bridge` is ACTIVE_HEALTHY, but migration history and public tables are empty. Confirm its identity as the dedicated NETIZENS target before applying migrations. The earlier inactive status/timeout no longer describes the latest inspection.
+Fresh October 29 inspection: dedicated `the-bridge` (`udygizxcwqoxifqlyfkq`) is ACTIVE_HEALTHY after restoring the existing project. Four migrations are installed, including effective privileges under hosted version `20261019075407`. The new local onboarding/safety migration is not installed. There are zero Auth users, Citizens and World Entities and 10 Places; live two-account acceptance has not run.
 
 Issue #16 must remain open until its physical-device acceptance evidence is recorded. Implementation PRs should reference it without automatic closing keywords.
 

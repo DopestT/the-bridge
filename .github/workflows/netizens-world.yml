@@ -46,6 +46,10 @@ jobs:
           done
       - name: Verify effective privileges and authenticated behavior
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/effective-privileges.sql
+      - name: Verify Citizen onboarding and account restrictions
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/citizen-onboarding.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/citizen-safety.sql
   qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5

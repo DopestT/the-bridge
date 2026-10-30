@@ -1,12 +1,12 @@
-import { Button, Text } from "react-native";
+import { Button } from "react-native";
 import { useRuntime } from "../src/runtime/RuntimeProvider";
 import { AppShell } from "../src/components/AppShell";
-import { styles } from "../src/components/mobile-styles";
+import { CitizenProfileForm } from "../src/features/profile/CitizenProfileForm";
 export default function Profile() {
   const r = useRuntime();
   return (
     <AppShell title="Profile">
-      <Text style={styles.text}>Citizen account</Text>
+      <CitizenProfileForm citizen={r.citizen} onSave={r.saveProfile} />
       <Button title="Sign out" onPress={() => void r.logout()} />
     </AppShell>
   );

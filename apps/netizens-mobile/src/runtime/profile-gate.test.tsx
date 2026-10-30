@@ -1,0 +1,110 @@
+import { Text } from 'react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { RuntimeProvider } from './RuntimeProvider';
+
+const mockSession = { userId: 'owner', accessToken: 'test', refreshToken: 'test-refresh', isAnonymous: false, expiresAt: Date.now() + 3600000 };
+const mockCitizen = { id: 'owner', handle: 'river', display_name: 'River', avatar_form: 'privacy', avatar_mode: 'commons', status: 'active', xp: 0, level: 1, onboarding_completed_at: '2026-10-29T12:00:00Z' };
+const mockProfiles = { read: jest.fn(), save: jest.fn() };
+const mockStore = { read: jest.fn(), write: jest.fn(), clear: jest.fn() };
+const mockProjections = { get: jest.fn(), put: jest.fn(), remove: jest.fn(), clearAccount: jest.fn() };
+const mockSync = jest.fn();
+const mockAuth = { refreshSession: jest.fn(), signInWithPassword: jest.fn(), signUp: jest.fn() };
+jest.mock('../api/citizen-profile', () => ({
+  ...jest.requireActual('../api/citizen-profile'), CitizenProfiles: jest.fn().mockImplementation(() => mockProfiles),
+}));
+jest.mock('../api/supabase', () => ({ createSupabaseClient: () => ({ auth: mockAuth }) }));
+jest.mock('../config/env', () => ({ readPublicEnv: () => ({ supabaseUrl: 'https://example.test', supabasePublishableKey: 'public' }) }));
+jest.mock('../auth/secure-session', () => ({ secureSessionStore: {
+  read: () => mockStore.read(), write: (value: unknown) => mockStore.write(value), clear: () => mockStore.clear(),
+} }));
+jest.mock('../storage/database', () => ({ openNetizensDatabase: async () => ({}) }));
+jest.mock('../storage/projections', () => ({ ProjectionStore: jest.fn().mockImplementation(() => mockProjections) }));
+jest.mock('../api/netizens-repository', () => ({ NetizensRepository: jest.fn() }));
+jest.mock('../sync/outbox', () => ({ Outbox: jest.fn() }));
+jest.mock('../sync/reconciler', () => ({ Reconciler: jest.fn().mockImplementation(() => ({ syncOnce: mockSync, whenIdle: async () => {} })) }));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockStore.read.mockResolvedValue(mockSession);
+  mockProfiles.read.mockResolvedValue(mockCitizen);
+  mockProjections.get.mockResolvedValue(null);
+  mockSync.mockResolvedValue({ applied: false });
+});
+const open = () => render(<RuntimeProvider><Text>Protected World</Text></RuntimeProvider>);
+
+it('opens World only after a completed current Citizen profile is read', async () => {
+  open();
+  expect(screen.queryByText('Protected World')).toBeNull();
+  await screen.findByText('Protected World');
+  expect(mockProfiles.read).toHaveBeenCalled();
+});
+it('holds a missing profile at explicit onboarding and waits for server completion', async () => {
+  mockProfiles.read.mockResolvedValue(null);
+  mockProfiles.save.mockResolvedValue(mockCitizen);
+  open();
+  await screen.findByText('Become a Citizen');
+  expect(screen.queryByText('Protected World')).toBeNull();
+  fireEvent.changeText(screen.getByLabelText('Citizen handle'), 'river');
+  fireEvent.changeText(screen.getByLabelText('Display name'), 'River');
+  fireEvent.press(screen.getByText('Enter NETIZENS'));
+  await screen.findByText('Protected World');
+  expect(mockProfiles.save).toHaveBeenCalledWith({ handle: 'river', display_name: 'River', avatar_form: 'privacy', avatar_mode: 'commons' });
+});
+it('does not infer a missing Citizen from a failed profile request', async () => {
+  mockProfiles.read.mockRejectedValue(new Error('offline'));
+  open();
+  await screen.findByText('Retry account verification');
+  expect(screen.queryByText('Protected World')).toBeNull();
+  expect(screen.queryByText('Become a Citizen')).toBeNull();
+});
+it('restores a previously completed own identity for offline cached public reads', async () => {
+  mockProfiles.read.mockRejectedValue(new Error('offline'));
+  mockProjections.get.mockResolvedValue({ body: mockCitizen });
+  open();
+  await screen.findByText('Protected World');
+});
+it('rejects another account cached identity', async () => {
+  mockProfiles.read.mockRejectedValue(new Error('offline'));
+  mockProjections.get.mockResolvedValue({ body: { ...mockCitizen, id: 'other' } });
+  open();
+  await screen.findByText('Retry account verification');
+  expect(screen.queryByText('Protected World')).toBeNull();
+});
+it('does not run queued social mutations for a restricted Citizen', async () => {
+  mockProfiles.read.mockResolvedValue({ ...mockCitizen, status: 'suspended' });
+  open();
+  await screen.findByText('This account cannot enter World. Contact the NETIZENS operator for account support.');
+  expect(mockSync).not.toHaveBeenCalled();
+});
+it('purges the account-scoped projection and outbox on sign out', async () => {
+  mockProfiles.read.mockResolvedValue(null);
+  open();
+  await screen.findByText('Become a Citizen');
+  fireEvent.press(screen.getByText('Sign out'));
+  await waitFor(() => expect(mockProjections.clearAccount).toHaveBeenCalledTimes(1));
+  expect(mockStore.clear).toHaveBeenCalledTimes(1);
+});
+
+it('keeps an email-confirmation signup outside the authenticated World', async () => {
+  mockStore.read.mockResolvedValue(null);
+  mockAuth.signUp.mockResolvedValue({ data: { session: null, user: { id: 'new-owner' } }, error: null });
+  open();
+  await screen.findByText('Sign in');
+  fireEvent.changeText(screen.getByLabelText('Email'), ' citizen@example.test ');
+  fireEvent.changeText(screen.getByLabelText('Password'), 'a-long-new-password');
+  fireEvent.press(screen.getByText('Create Citizen account'));
+  await screen.findByText('Check your email to confirm your account, then return here to sign in.');
+  expect(mockAuth.signUp).toHaveBeenCalledWith({ email: 'citizen@example.test', password: 'a-long-new-password' });
+  expect(mockStore.write).not.toHaveBeenCalled();
+  expect(screen.queryByText('Protected World')).toBeNull();
+});
+it('validates new credentials before requesting signup', async () => {
+  mockStore.read.mockResolvedValue(null);
+  open();
+  await screen.findByText('Sign in');
+  fireEvent.changeText(screen.getByLabelText('Email'), 'invalid');
+  fireEvent.changeText(screen.getByLabelText('Password'), 'short');
+  fireEvent.press(screen.getByText('Create Citizen account'));
+  await screen.findByText('Enter a valid email and a password of at least 12 characters.');
+  expect(mockAuth.signUp).not.toHaveBeenCalled();
+});
