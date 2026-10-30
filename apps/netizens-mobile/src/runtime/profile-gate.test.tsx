@@ -1,6 +1,6 @@
-import { AppState, Text } from 'react-native';
+import { AppState, Button, Text } from 'react-native';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { RuntimeProvider } from './RuntimeProvider';
+import { RuntimeProvider, useRuntime } from './RuntimeProvider';
 
 const mockSession = { userId: 'owner', accessToken: 'test', refreshToken: 'test-refresh', isAnonymous: false, expiresAt: Date.now() + 3600000 };
 const mockCitizen = { id: 'owner', handle: 'river', display_name: 'River', avatar_form: 'privacy', avatar_mode: 'commons', status: 'active', xp: 0, level: 1, onboarding_completed_at: '2026-10-29T12:00:00Z' };
@@ -8,6 +8,8 @@ const mockProfiles = { read: jest.fn(), save: jest.fn() };
 const mockStore = { read: jest.fn(), write: jest.fn(), clear: jest.fn() };
 const mockProjections = { get: jest.fn(), put: jest.fn(), remove: jest.fn(), clearAccount: jest.fn() };
 const mockSync = jest.fn();
+const mockDeleteAccount = jest.fn();
+jest.mock('../auth/account-deletion', () => ({ deleteOwnAccount: (...args: unknown[]) => mockDeleteAccount(...args) }));
 const mockAuth = { refreshSession: jest.fn(), signInWithPassword: jest.fn(), signUp: jest.fn() };
 let mockResume: ((state: 'active') => void) | undefined;
 const mockProviderSession = { access_token: 'refreshed', refresh_token: 'refreshed-token', user: { id: 'owner', is_anonymous: false }, expires_at: Math.floor(Date.now() / 1000) + 3600 };
@@ -146,4 +148,27 @@ it('a retired retry session cannot overwrite credentials after its refresh retur
   await waitFor(() => expect(mockProfiles.read).toHaveBeenCalledTimes(2));
   await act(async () => { finish({ data: { session: mockProviderSession }, error: null }); });
   expect(mockStore.write).not.toHaveBeenCalled();
+});
+
+function DeletionAction() {
+  const runtime = useRuntime();
+  return <Button title="Test account deletion" onPress={() => void runtime.deleteAccount('citizen@example.test', 'password', 'DELETE').catch(() => undefined)} />;
+}
+it('purges local credentials and account data only after canonical deletion confirmation', async () => {
+  mockDeleteAccount.mockImplementation(async () => { mockStore.read.mockResolvedValue(null); });
+  render(<RuntimeProvider><DeletionAction /></RuntimeProvider>);
+  await screen.findByText('Test account deletion');
+  fireEvent.press(screen.getByText('Test account deletion'));
+  await waitFor(() => expect(mockProjections.clearAccount).toHaveBeenCalledTimes(1));
+  expect(mockDeleteAccount).toHaveBeenCalledTimes(1); expect(mockStore.clear).toHaveBeenCalledTimes(1);
+  await screen.findByText('Sign in');
+});
+it('does not erase local state or show deletion success if canonical deletion fails', async () => {
+  mockDeleteAccount.mockRejectedValue(new Error('unconfirmed'));
+  render(<RuntimeProvider><DeletionAction /></RuntimeProvider>);
+  await screen.findByText('Test account deletion');
+  fireEvent.press(screen.getByText('Test account deletion'));
+  await waitFor(() => expect(mockDeleteAccount).toHaveBeenCalledTimes(1));
+  expect(mockStore.clear).not.toHaveBeenCalled(); expect(mockProjections.clearAccount).not.toHaveBeenCalled();
+  expect(screen.getByText('Test account deletion')).toBeTruthy();
 });

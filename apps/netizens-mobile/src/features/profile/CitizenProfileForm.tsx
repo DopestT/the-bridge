@@ -3,10 +3,11 @@ import { Button, Pressable, ScrollView, Text, TextInput, View } from 'react-nati
 import { AVATAR_FORMS, AVATAR_MODES, validateProfile, type Citizen, type ProfileInput } from '../../api/citizen-profile';
 import { styles } from '../../components/mobile-styles';
 
-export function CitizenProfileForm({ citizen, onSave, onboarding = false }: {
+export function CitizenProfileForm({ citizen, onSave, onboarding = false, scrollable = true }: {
   citizen: Citizen | null;
   onSave: (value: ProfileInput) => Promise<Citizen>;
   onboarding?: boolean;
+  scrollable?: boolean;
 }) {
   const [handle, setHandle] = useState(onboarding ? '' : citizen?.handle ?? '');
   const [name, setName] = useState(onboarding ? '' : citizen?.display_name ?? '');
@@ -25,7 +26,7 @@ export function CitizenProfileForm({ citizen, onSave, onboarding = false }: {
     } catch (e) { setError(e instanceof Error ? e.message : 'Profile could not be saved.'); }
     finally { setBusy(false); }
   }
-  return <ScrollView keyboardShouldPersistTaps="handled">
+  const fields = <>
     <Text style={styles.text}>{onboarding ? 'Create your Citizen identity. One profile follows you across every Place.' : 'Your Citizen identity'}</Text>
     {citizen ? <Text style={styles.muted}>Level {citizen.level} · {citizen.xp} XP</Text> : null}
     <Text style={styles.text}>Display name</Text>
@@ -51,5 +52,6 @@ export function CitizenProfileForm({ citizen, onSave, onboarding = false }: {
     {error ? <Text style={styles.text} accessibilityRole="alert">{error}</Text> : null}
     {saved ? <Text style={styles.text} accessibilityLiveRegion="polite">Profile saved.</Text> : null}
     <Button title={busy ? 'Saving…' : onboarding ? 'Enter NETIZENS' : 'Save profile'} disabled={busy} onPress={() => void submit()} />
-  </ScrollView>;
+  </>;
+  return scrollable ? <ScrollView keyboardShouldPersistTaps="handled">{fields}</ScrollView> : <View>{fields}</View>;
 }

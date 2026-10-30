@@ -4,6 +4,7 @@ create role authenticated nologin;
 create role service_role nologin bypassrls;
 create schema auth;
 create table auth.users (id uuid primary key, is_anonymous boolean default false, raw_user_meta_data jsonb default '{}');
+create table auth.sessions (id uuid primary key, user_id uuid not null references auth.users(id) on delete cascade);
 create function auth.jwt() returns jsonb language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb;
 $$;

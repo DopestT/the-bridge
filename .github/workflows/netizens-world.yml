@@ -58,6 +58,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/tests/citizen-safety.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/yes-no-voting.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/conversation-requests.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/account-deletion.sql
       - name: Verify concurrent conversation consent and replay
         run: bash supabase/tests/conversation-concurrency.sh
   qa:

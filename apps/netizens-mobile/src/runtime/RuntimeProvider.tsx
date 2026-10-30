@@ -5,12 +5,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, Button, Text, TextInput, View } from "react-native";
+import { AppState, Button, ScrollView, Text, TextInput, View } from "react-native";
 import { randomUUID } from "expo-crypto";
 import type { Session } from "@supabase/supabase-js";
 import { createSupabaseClient } from "../api/supabase";
 import { NetizensRepository } from "../api/netizens-repository";
 import { CitizenProfiles, type Citizen, type ProfileInput } from "../api/citizen-profile";
+import { AccountDeletion } from "../features/profile/AccountDeletion";
+import { deleteOwnAccount } from "../auth/account-deletion";
 import { CitizenProfileForm } from "../features/profile/CitizenProfileForm";
 import { readPublicEnv } from "../config/env";
 import { secureSessionStore } from "../auth/secure-session";
@@ -28,6 +30,7 @@ export type Runtime = {
   revision: number;
   sync: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (email: string, password: string, confirmation: string) => Promise<void>;
   userId: string;
   citizen: Citizen | null;
   saveProfile: (input: ProfileInput) => Promise<Citizen>;
@@ -161,6 +164,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       };
       const logout = async () => {
         active = false;
+        setPassword(""); setEmail("");
         setReady(false);
         setRuntime(null);
         cleanup();
@@ -169,6 +173,16 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         await projections.clearAccount();
         setEpoch((e) => e + 1);
       };
+      let deleting = false;
+      const deleteAccount = async (accountEmail: string, currentPassword: string, confirmation: string) => {
+        if (deleting || !active) throw new Error("Account operation unavailable");
+        deleting = true;
+        try {
+          await deleteOwnAccount(env, { userId: saved!.userId, email: accountEmail, password: currentPassword, confirmation },
+            createSupabaseClient().auth, fetch, () => active);
+          if (active) await logout();
+        } finally { deleting = false; }
+      };
       setRuntime({
         repository,
         projections,
@@ -176,6 +190,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
         revision: 0,
         sync,
         logout,
+        deleteAccount,
         userId: saved.userId,
         citizen,
         saveProfile,
@@ -273,19 +288,22 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
     finally { setBusy(false); }
   }
   if (runtime) {
-    if (!profileReady) return <AppShell title="Citizen account">
+    if (!profileReady) return <AppShell title="Citizen account"><ScrollView keyboardShouldPersistTaps="handled">
       <Text style={styles.text} accessibilityRole="alert">{error || "Reconnect to verify your Citizen account."}</Text>
       <Button title="Retry account verification" onPress={() => { setReady(false); setRuntime(null); setEpoch(e => e + 1); }} />
+      <AccountDeletion onDelete={runtime.deleteAccount} />
       <Button title="Sign out" onPress={() => void runtime.logout()} />
-    </AppShell>;
-    if (runtime.citizen && runtime.citizen.status !== "active") return <AppShell title="Citizen account">
+    </ScrollView></AppShell>;
+    if (runtime.citizen && runtime.citizen.status !== "active") return <AppShell title="Citizen account"><ScrollView keyboardShouldPersistTaps="handled">
       <Text style={styles.text}>This account cannot enter World. Contact the NETIZENS operator for account support.</Text>
+      <AccountDeletion onDelete={runtime.deleteAccount} />
       <Button title="Sign out" onPress={() => void runtime.logout()} />
-    </AppShell>;
-    if (!runtime.citizen?.onboarding_completed_at) return <AppShell title="Become a Citizen">
-      <CitizenProfileForm citizen={runtime.citizen} onSave={runtime.saveProfile} onboarding />
+    </ScrollView></AppShell>;
+    if (!runtime.citizen?.onboarding_completed_at) return <AppShell title="Become a Citizen"><ScrollView keyboardShouldPersistTaps="handled">
+      <CitizenProfileForm citizen={runtime.citizen} onSave={runtime.saveProfile} onboarding scrollable={false} />
+      <AccountDeletion onDelete={runtime.deleteAccount} />
       <Button title="Sign out" onPress={() => void runtime.logout()} />
-    </AppShell>;
+    </ScrollView></AppShell>;
     return <Context.Provider value={runtime}>{children}</Context.Provider>;
   }
   return (
