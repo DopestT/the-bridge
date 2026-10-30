@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-The user corrected the active project to **NETIZENS**. Unrelated Archangels audit text, launch policy and code are not NETIZENS requirements. Archangels edits were stopped and preserved in their separate checkout. The saved automatic goal still names Archangels; a request to pause that stale goal is pending. Do not resume it as NETIZENS work.
+The user corrected the active project to **NETIZENS**. Unrelated Archangels audit text, launch policy and code are not NETIZENS requirements. Archangels edits were stopped and preserved in their separate checkout. The user explicitly paused the stale Archangels automatic goal. It remains paused and must not be resumed as NETIZENS work. The goal API cannot replace an unfinished paused goal; NETIZENS continues as the authorized task in this chat.
 
 Canonical source: `DopestT/the-bridge`, `apps/netizens-mobile`, current main `0e5fb06`. Worktree: this checkout, branch `codex/netizens-completion-20261029`. Existing worktree configuration and duplicate Expo projects are preserved. Synced `sources/` are read-only.
 
@@ -37,7 +37,7 @@ Raw logs are outside the checkout under `/private/tmp/netizens-*`; release evide
 
 Existing Supabase project `udygizxcwqoxifqlyfkq` was restored, then verified ACTIVE_HEALTHY. Its original four migration versions are preserved; onboarding/safety is installed as `20261030034537`. Catalog readback confirms the new column/policy/RPC, denied anon execution/read access, no authenticated TRUNCATE grants, and protected status/XP/completion fields. Anonymous HTTP probes return 401 with PostgreSQL code 42501. Auth settings return 200 with email signup enabled; no real email or two-account login is claimed. Aggregate read found zero Auth users/Citizens/World Entities, 10 Places and 21 public RLS tables.
 
-Two existing Expo projects remain unresolved: `@big27/netizens-mobile` and `@big271/netizens-mobile`. Owner selection is pending. No project creation/transfer/deletion, guessed bundle/package identifiers, signing change or paid build is authorized by that ambiguity. The existing backend URL and active publishable key are configured in the ignored local environment file. The two app identifiers and selected existing EAS project remain unconfigured. The resolved release check now reports exactly these three missing values. Never use a privileged key in the client.
+Established owner decision: the user selected **big271**. Live CLI readback verifies existing `@big271/netizens-mobile`, ID `5f86b3a0-9d3b-4982-a05c-2aa6c4b3f0da`; canonical owner/project are now fixed in `app.config.ts`. No project was created, transferred or deleted. The other recorded project is preserved. The real public backend URL and publishable key are configured locally in the ignored environment file. Only the two approved application identifiers remain missing from release configuration; signing and device acceptance remain separate gates. Never use a privileged key in the client.
 
 The local computer has Command Line Tools, but no usable Xcode simulator, Android SDK/emulator, Maestro or attached-device build path. Actual signed installation, push arrival, deep links and device performance need external evidence.
 

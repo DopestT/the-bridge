@@ -2,7 +2,7 @@
 
 Not cleared. Code checks are not physical-device certification.
 
-Current main is `0e5fb06` (PR #20). The October 29 completion branch adds tested Citizen onboarding/safety and core navigation/search/vote flows; it is not yet merged or deployed. See the current repository status and completion ledger for source and check evidence.
+Current main is `0e5fb06` (PR #20). The October 29 completion branch adds tested Citizen onboarding/safety and core navigation/search/vote flows; its mobile code is not yet merged or distributed. See the current repository status and completion ledger for source and check evidence.
 
 Fresh October 29 inspection: dedicated `the-bridge` (`udygizxcwqoxifqlyfkq`) is ACTIVE_HEALTHY after restoring the existing project. Five migrations are installed, including effective privileges under hosted version `20261019075407` and onboarding/safety under `20261030034537`. Live catalogs and anonymous denial probes passed; two-account HTTP/Auth acceptance has not run. There are zero Auth users, Citizens and World Entities and 10 Places; live two-account acceptance has not run.
 

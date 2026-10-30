@@ -6,7 +6,7 @@
 
 `codex/netizens-completion-20261029` adds a real Citizen profile/completion flow, account creation with explicit email-confirmation handling, bounded title search, nested World/Place/Entity navigation, contextual access to existing Circle conversations, and native Yes or No voting through the existing vote-first RPC. A denied request never becomes a success state. Results are advisory community polls, not official elections.
 
-The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It is installed on the hosted backend as `20261030034537_netizens_citizen_onboarding_safety`. Code in this branch is not yet merged or deployed.
+The additive Citizen migration derives identity from Auth, rejects restricted accounts, preserves reputation/seed/status, validates direct profile edits, and makes blocks survive message reloads. It is installed on the hosted backend as `20261030034537_netizens_citizen_onboarding_safety`. Mobile code in this branch is not yet merged or distributed.
 
 Observed checks on this branch: typecheck and lint passed; 54 Jest tests and 32 storage/transport tests passed; all five existing World/backend QA commands passed; iOS and Android Hermes bundles exported. Fresh disposable PostgreSQL 16 passed effective privileges, Citizen onboarding, Citizen safety and vote-first fixtures, plus legacy upgrade compatibility. These checks do not establish signed builds, real Auth email flows, device behavior, push delivery or release clearance.
 
@@ -29,7 +29,7 @@ Fresh aggregate inspection: 21 public tables have RLS, 10 Places exist, and ther
 ## Remaining acceptance gates
 
 1. Complete two-account HTTP/Auth acceptance against the installed migration. Live catalogs and anonymous denial probes are verified; security advisors still flag the intentionally exposed authenticated vote/profile SECURITY DEFINER RPCs and two service-only RLS tables without client policies. Prepare consented permanent test Citizens and controlled, explicitly labeled test Entities.
-2. Resolve ownership between the two existing Expo projects, confirm LWV iOS/Android identifiers and signing, and configure signing. The existing project URL and active publishable key are configured locally in the ignored environment file; neither is a privileged server key. Do not create another project or guess identifiers.
+2. Use the user-confirmed existing `@big271/netizens-mobile` project (`5f86b3a0-9d3b-4982-a05c-2aa6c4b3f0da`), confirm LWV iOS/Android identifiers and signing, and configure signing. The existing project URL and active publishable key are configured locally in the ignored environment file; neither is a privileged server key. Do not create another project or guess identifiers.
 3. Complete authenticated push token registration/delivery, response routing and token revocation; the existing permission adapter alone is insufficient.
 4. Persist the College funnel and capture real device performance measurements. Local area selection still does not filter canonical discovery.
 5. Prove login → World → Place → Entity → join → post → reply, notifications/deep links, block/report enforcement, process-death/offline recovery, retry suppression, logout/account isolation and private-thread boundaries on physical iOS and Android.

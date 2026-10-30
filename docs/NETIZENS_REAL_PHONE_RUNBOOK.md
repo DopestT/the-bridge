@@ -14,7 +14,7 @@ Exit evidence: confirmed project mapping, migration versions, schema/grant check
 
 ## 2. Validate and build the app
 
-This work can proceed alongside backend preparation. Use confirmed LWV identifiers and the existing EAS project. Configure `NETIZENS_IOS_BUNDLE_ID`, `NETIZENS_ANDROID_PACKAGE`, `NETIZENS_EAS_PROJECT_ID`, `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` through the build environment. Keep privileged database and signing credentials out of public variables and evidence files.
+This work can proceed alongside backend preparation. Use confirmed LWV identifiers and the user-selected existing `@big271/netizens-mobile` project (`5f86b3a0-9d3b-4982-a05c-2aa6c4b3f0da`), now fixed in app.config.ts. Configure `NETIZENS_IOS_BUNDLE_ID`, `NETIZENS_ANDROID_PACKAGE`, `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` through the build environment. Keep privileged database and signing credentials out of public variables and evidence files.
 
 From `apps/netizens-mobile/`, using Node 24 for the SQLite test harness:
 
