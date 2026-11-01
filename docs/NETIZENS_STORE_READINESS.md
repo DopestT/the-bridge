@@ -57,3 +57,13 @@ The security advisor now reports five intentionally authenticated SECURITY DEFIN
 The supplied domain responds over verified HTTPS and publicly brands itself Legacy Works Ventures; the legal store publisher and public support contact remain unconfirmed. Proposed policy/support/deletion paths on that domain are not yet deployed or claimed available. The local Mac still has no simctl, adb or emulator, and only about 1.7 GB free; native SDK installation was not attempted. Existing Android APK predates invitations/deletion; no additional cloud build was started.
 
 Next work: operator/policy and external deletion pages, accessible native shell and store packaging, password recovery, genuine Local discovery, authenticated push registration/delivery/revocation, persisted College funnel, then final artifacts and both-platform physical-device evidence. Keep issue #16 open. This goal remains active.
+
+## October 31: native frame and navigation
+
+The shared root now owns safe-area handling for the status bar, notches and home/gesture indicator, with the existing dark NETIZENS palette and light system status text. AppShell no longer adds a second inset or uses deprecated native SafeAreaView. The keyboard-avoiding frame covers both authentication and signed-in screens. Login controls scroll; the private-message composer scrolls within a bounded height rather than growing across the entire screen.
+
+Primary destinations now use equal-width accessible tabs with selected state, a visible selected indicator and a minimum 56-point tab height. Nested Place/Entity routes retain World selection; a conversation retains Messages selection. Navigation tests exercise selected-state announcements and routing. Typecheck/lint and all 83 Jest tests passed locally. This is source/test evidence, not a rendered-device or keyboard-overlap clearance.
+
+Physical acceptance remains: small iPhone with notch/home indicator, Android gesture and three-button navigation, software keyboard open/closed, large accessibility text, VoiceOver/TalkBack tab announcements, and a long multiline message whose Send control remains reachable. Capture actual screenshots from the final runtime; do not substitute component tests or generated images.
+
+Publisher-site discovery found the existing repository `DopestT/legacyworksventures`, matching the supplied domain's visible page source. The current footer says Legacy Works Ventures LLC, Bethesda, Maryland; no support mailbox or policy/deletion endpoint is present. No publisher-site code, hosting, DNS or contact routing has been changed. Public recovery/privacy/support/deletion work must extend that existing site and use verified operator/contact details.

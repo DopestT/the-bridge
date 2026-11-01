@@ -179,7 +179,8 @@ function ThreadContent({ threadId }: { threadId: string }) {
           />
           <TextInput
             accessibilityLabel="Private message"
-            style={styles.input}
+            style={[styles.input, { maxHeight: 160 }]}
+            scrollEnabled
             multiline
             maxLength={5000}
             editable={!busy}
