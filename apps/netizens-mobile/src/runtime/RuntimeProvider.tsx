@@ -316,6 +316,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
   }
   return (
     <AppShell title="NETIZENS">
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>
       <Text style={styles.text}>One network, many places.</Text>
       <Text style={styles.text}>
         {ready
@@ -353,6 +354,7 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
           {error}
         </Text>
       ) : null}
+      </ScrollView>
     </AppShell>
   );
 }
