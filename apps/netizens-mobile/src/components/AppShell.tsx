@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, spacing } from '../theme/tokens';
 
@@ -28,13 +28,13 @@ export function AppShell({ title, breadcrumb = [], children }: AppShellProps) {
   const depthLabel = breadcrumb.join(' / ');
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <View style={styles.screen}>
       <View style={styles.header}>
         {depthLabel ? <Text style={styles.breadcrumb}>{depthLabel}</Text> : null}
         <Text style={styles.title}>{title}</Text>
       </View>
       <View style={styles.content}>{children}</View>
-    </SafeAreaView>
+    </View>
   );
 }
 
