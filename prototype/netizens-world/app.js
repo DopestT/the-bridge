@@ -281,12 +281,31 @@ function renderRouteActions(route){
   return "<div class='route-actions'><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button><button class='place-action secondary-action' data-save-route>SAVE ROUTE</button></div>";
 }
 
+function renderSwarmPreview(objective){
+  var swarm=window.NetizensSwarm;
+  if(!swarm || !swarm.propose) return "";
+  try{
+    var proposal=swarm.propose(objective,{placeId:state.routeOrigin||state.currentPlace||"",entityId:state.currentEntityId||""});
+    var jobs=proposal.jobs.map(function(job){
+      return "<div class='perception-node'><div><span>"+escapeHtml(job.taskKey)+"</span><strong>"+escapeHtml(job.worker)+"</strong></div>"
+        +"<p>"+escapeHtml(job.job)+"</p><small>PROPOSED · "+escapeHtml(job.deliverable)+"</small></div>";
+    }).join("");
+    return "<section class='perception-swarm' aria-label='Proposed bot swarm'>"
+      +"<p class='route-mode'>NETIZENS BOT SWARM · "+proposal.jobs.length+" JOBS PROPOSED</p>"
+      +"<p class='permission-note'>Perception owns execution and approval. No job has run or been verified.</p>"
+      +"<div class='perception-nodes'>"+jobs+"</div></section>";
+  }catch(error){
+    return "<p class='perception-warning'>Bot job preview unavailable: "+escapeHtml(error.message||"invalid source")+"</p>";
+  }
+}
+
 function renderLocalRoute(raw,route,error){
   var box=document.getElementById("routeResult");
   box.innerHTML=(error?"<div class='perception-warning'>Live Perception was unavailable: "+escapeHtml(error)+"</div>":"")
     +"<p class='route-mode'>WORLD ROUTE PREVIEW</p>"
     +renderWorldRoute(route)
     +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>This local preview connects likely NETIZENS places. It does not execute anything.</p>"
+    +renderSwarmPreview(raw)
     +renderRouteActions(route);
 }
 
@@ -349,6 +368,7 @@ async function routeIntent(){
           +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>"+escapeHtml(result.reason||"Perception produced a bounded route.")+"</p>"
           +(nodes?"<div class='perception-nodes'>"+nodes+"</div>":"")
           +"<p class='permission-note'>This is a proposed route. Any action beyond the runtime's allowed scope remains subject to Perception permissions and verification.</p>"
+          +renderSwarmPreview(raw)
           +renderRouteActions(worldRoute);
 
         renderCitizen();
