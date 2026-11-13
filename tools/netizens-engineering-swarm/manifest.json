@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "name": "NETIZENS Advanced Engineering Swarm",
+  "scope": "DopestT/the-bridge NETIZENS only",
+  "status": "work_orders_defined_not_executing",
+  "parallelismLimit": 4,
+  "canonicalSpec": "docs/superpowers/specs/2026-10-05-netizens-mobile-app-design.md",
+  "releaseGate": "apps/netizens-mobile/PRIVATE_BETA_GATE.md",
+  "acceptanceIssue": "https://github.com/DopestT/the-bridge/issues/16",
+  "roles": [
+    {
+      "id": "SW01",
+      "name": "Blueprint reconciler",
+      "phase": "discovery",
+      "dependsOn": [],
+      "mission": "Compare canonical mobile spec, architecture, issue #16 and actual main; produce requirement-to-file/issue trace.",
+      "acceptance": "Evidence-backed discrepancy matrix; no assumptions from stale checkboxes",
+      "status": "not_started"
+    },
+    {
+      "id": "SW02",
+      "name": "Dependency and build mapper",
+      "phase": "discovery",
+      "dependsOn": [],
+      "mission": "Inspect Expo 57, Node >=22.13, CI, EAS config and branch divergence; map version and signing blockers.",
+      "acceptance": "Exact version/config evidence, no secret exposure",
+      "status": "not_started"
+    },
+    {
+      "id": "SW03",
+      "name": "NETIZENS backend investigator",
+      "phase": "discovery",
+      "dependsOn": [],
+      "mission": "Read-only map dedicated Supabase project, migrations, RLS/grants and known effective timestamps.",
+      "acceptance": "No migration replay or cross-project connection",
+      "status": "not_started"
+    },
+    {
+      "id": "SW04",
+      "name": "Security adversary",
+      "phase": "discovery",
+      "dependsOn": [],
+      "mission": "Challenge access and data-leak hypotheses across Citizen, public discussion, Circle, DM, blocked users.",
+      "acceptance": "Reproducible tests, not unverified claims",
+      "status": "not_started"
+    },
+    {
+      "id": "SW05",
+      "name": "Citizen identity engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01",
+        "SW03"
+      ],
+      "mission": "Repair permanent-Citizen signup/onboarding/session recovery edge cases against canonical backend.",
+      "acceptance": "Auth regression tests, no anonymous World access",
+      "status": "not_started"
+    },
+    {
+      "id": "SW06",
+      "name": "World/navigation engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01"
+      ],
+      "mission": "Finish World→Place→Entity and parent navigation, cached-first screens and authorized deep links.",
+      "acceptance": "No private content leak; no Perception on social path",
+      "status": "not_started"
+    },
+    {
+      "id": "SW07",
+      "name": "Participation/outbox engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01",
+        "SW03"
+      ],
+      "mission": "Fix idempotent offline join/post/reply retries, terminal RLS rejection and account switching.",
+      "acceptance": "Stable mutation ID and no duplicate canonical writes",
+      "status": "not_started"
+    },
+    {
+      "id": "SW08",
+      "name": "Push registration engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW02",
+        "SW03"
+      ],
+      "mission": "Implement authenticated persistent push token lifecycle, replacements, logout revoke and delivery failure handling.",
+      "acceptance": "Server evidence needed before delivery claims",
+      "status": "not_started"
+    },
+    {
+      "id": "SW09",
+      "name": "Notification/deep-link engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW06",
+        "SW08"
+      ],
+      "mission": "Build notification response routing to authorized entity and background/terminated handling.",
+      "acceptance": "Actual iOS/Android arrival remains separate acceptance",
+      "status": "not_started"
+    },
+    {
+      "id": "SW10",
+      "name": "Safety UI engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW03",
+        "SW04"
+      ],
+      "mission": "Complete report/block controls with canonical server-authorized states and appeal/review boundaries.",
+      "acceptance": "No automatic sanctions or unreviewed allegations",
+      "status": "not_started"
+    },
+    {
+      "id": "SW11",
+      "name": "Private messaging isolation engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW03",
+        "SW04"
+      ],
+      "mission": "Audit DM/Circle request-consent, server RLS, cached private data and blocked-recipient enforcement.",
+      "acceptance": "No Circle/DM messages in public entity discussion",
+      "status": "not_started"
+    },
+    {
+      "id": "SW12",
+      "name": "College funnel engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01",
+        "SW03"
+      ],
+      "mission": "Persist College Groups impression→open→join→participate→return→cross-campus events with retry-safe IDs.",
+      "acceptance": "Seeded/demo/test excluded from genuine counts",
+      "status": "not_started"
+    },
+    {
+      "id": "SW13",
+      "name": "Local discovery engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01",
+        "SW03"
+      ],
+      "mission": "Finish true local-area filtering and context permissions without revealing precise location.",
+      "acceptance": "Optional permission and denied-permission fallback",
+      "status": "not_started"
+    },
+    {
+      "id": "SW14",
+      "name": "Performance engineer",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01",
+        "SW02"
+      ],
+      "mission": "Instrument five speed budgets and raw device sample capture without delaying social paths.",
+      "acceptance": "No synthetic production-performance claims",
+      "status": "not_started"
+    },
+    {
+      "id": "SW15",
+      "name": "Accessibility and UX reviewer",
+      "phase": "verification",
+      "dependsOn": [
+        "SW06",
+        "SW10"
+      ],
+      "mission": "Test screen reader labels, touch targets, contrast, reduced motion and denied permission flows.",
+      "acceptance": "Evidence linked to exact build; design source preserved",
+      "status": "not_started"
+    },
+    {
+      "id": "SW16",
+      "name": "Offline and crash test engineer",
+      "phase": "verification",
+      "dependsOn": [
+        "SW05",
+        "SW07"
+      ],
+      "mission": "Exercise process termination, rejected writes, offline replay, stale tokens and account switches.",
+      "acceptance": "Repeatable test output plus canonical-record checks",
+      "status": "not_started"
+    },
+    {
+      "id": "SW17",
+      "name": "Database/RLS validator",
+      "phase": "verification",
+      "dependsOn": [
+        "SW03",
+        "SW10",
+        "SW11"
+      ],
+      "mission": "Run authorized two-account allow/deny scenarios and DB fixture regressions.",
+      "acceptance": "Read-only first; changes approved separately",
+      "status": "not_started"
+    },
+    {
+      "id": "SW18",
+      "name": "iOS physical-device tester",
+      "phase": "verification",
+      "dependsOn": [
+        "SW08",
+        "SW09",
+        "SW14"
+      ],
+      "mission": "Collect signed iOS build/install, push, deep-link, speed and auth evidence from a real phone.",
+      "acceptance": "Apple developer/signing membership may block",
+      "status": "not_started"
+    },
+    {
+      "id": "SW19",
+      "name": "Android physical-device tester",
+      "phase": "verification",
+      "dependsOn": [
+        "SW08",
+        "SW09",
+        "SW14"
+      ],
+      "mission": "Collect signed Android build/install, push, deep-link, speed and auth evidence from a real phone.",
+      "acceptance": "New artifact must contain current source",
+      "status": "not_started"
+    },
+    {
+      "id": "SW20",
+      "name": "Independent integration auditor",
+      "phase": "verification",
+      "dependsOn": [
+        "SW12",
+        "SW13",
+        "SW16",
+        "SW17"
+      ],
+      "mission": "Cross-check test results, repository diffs, staged build and proof ledger; challenge optimistic reports.",
+      "acceptance": "Never close issue #16 from code/CI alone",
+      "status": "not_started"
+    },
+    {
+      "id": "SW21",
+      "name": "Release readiness owner",
+      "phase": "release",
+      "dependsOn": [
+        "SW15",
+        "SW18",
+        "SW19",
+        "SW20"
+      ],
+      "mission": "Assemble private-beta evidence matrix and identify exact remaining user-complete blockers.",
+      "acceptance": "No publication, production deployment, DNS or signing spend",
+      "status": "not_started"
+    },
+    {
+      "id": "SW22",
+      "name": "Perception integration architect",
+      "phase": "implementation",
+      "dependsOn": [
+        "SW01",
+        "SW04"
+      ],
+      "mission": "Maintain optional bounded bridge; verify tasks/grants/receipts only against real runtime interfaces.",
+      "acceptance": "Do not create duplicate Perception or force AI into social critical path",
+      "status": "not_started"
+    },
+    {
+      "id": "SW23",
+      "name": "Continuous integration engineer",
+      "phase": "verification",
+      "dependsOn": [
+        "SW02",
+        "SW07",
+        "SW10"
+      ],
+      "mission": "Strengthen relevant tests/checks and record exact source SHA and job outcome.",
+      "acceptance": "Passing bundles cannot substitute for phone verification",
+      "status": "not_started"
+    },
+    {
+      "id": "SW24",
+      "name": "Contradiction and provenance reviewer",
+      "phase": "verification",
+      "dependsOn": [
+        "SW01",
+        "SW20"
+      ],
+      "mission": "Compare observed outputs against the blueprint and sources, detect stale or conflicting claims.",
+      "acceptance": "Separate verified, unverified, stale, blocked and failed",
+      "status": "not_started"
+    }
+  ]
+}
