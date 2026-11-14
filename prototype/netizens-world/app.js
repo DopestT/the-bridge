@@ -402,17 +402,15 @@ function renderCitizen(){
   var snap=store.snapshot();
   var citizen=snap.citizen;
   var current=placeData[citizen.mode]||placeData.commons;
-  var levelNode=document.getElementById("citizenLevel");
-  var xpNode=document.getElementById("citizenXp");
-  var progressNode=document.getElementById("citizenProgress");
-  var artifacts=document.getElementById("artifactGrid");
+  var activityNode=document.getElementById("citizenActivity");
   var mini=document.getElementById("avatarMini");
   var avatar=document.getElementById("citizenAvatar");
   var nameNode=document.getElementById("citizenName");
-  if(levelNode) levelNode.textContent="LEVEL "+String(citizen.level).padStart(2,"0");
-  if(xpNode) xpNode.textContent=citizen.xp+" XP";
-  if(progressNode) progressNode.style.width=((citizen.xp%500)/5)+"%";
-  if(artifacts) artifacts.innerHTML=citizen.artifacts.map(function(a){return "<span>"+escapeHtml(a)+"</span>";}).join("");
+  if(activityNode){
+    var visits=Object.keys(snap.world.visitedPlaces||{}).length;
+    var plans=Array.isArray(snap.world.plans) ? snap.world.plans.length : 0;
+    activityNode.textContent=visits+" place"+(visits===1?"":"s")+" explored · "+plans+" local plan"+(plans===1?"":"s");
+  }
   if(mini) mini.textContent=citizen.initial;
   if(avatar){avatar.style.setProperty("--mode",current.color);avatar.dataset.form=citizen.form||"stylized";var s=avatar.querySelector("span");if(s)s.textContent=citizen.initial;}
   document.querySelectorAll("[data-avatar-form]").forEach(function(btn){btn.classList.toggle("active",btn.dataset.avatarForm===(citizen.form||"stylized"));});
