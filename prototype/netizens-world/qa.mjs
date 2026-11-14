@@ -4,6 +4,10 @@ import assert from "node:assert/strict";
 
 const source=fs.readFileSync(new URL("./world-state.js",import.meta.url),"utf8");
 const appSource=fs.readFileSync(new URL("./app.js",import.meta.url),"utf8");
+const htmlSource=fs.readFileSync(new URL("./index.html",import.meta.url),"utf8");
+assert.ok(htmlSource.includes('id="citizenActivity"'),"Citizen panel shows local real-world activity");
+assert.ok(!htmlSource.includes('id="citizenLevel"')&&!htmlSource.includes('id="citizenXp"')&&!htmlSource.includes('id="citizenProgress"'),"Citizen panel must not display XP or levels");
+assert.ok(!appSource.includes('levelNode.textContent')&&!appSource.includes('xpNode.textContent'),"Citizen render must not revive gamified ranks");
 const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
 const perceptionSource=fs.readFileSync(new URL("./perception-client.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);
