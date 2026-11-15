@@ -4,13 +4,17 @@ import { pathToFileURL } from "node:url";
 export function validateRelease(config, env) {
   const errors = [];
   if (config.scheme !== "netizens") errors.push("netizens URL scheme required");
-  for (const id of [config.ios?.bundleIdentifier, config.android?.package])
-    if (typeof id !== "string" || !/^([a-zA-Z][\w]*\.)+[\w]+$/.test(id))
-      errors.push("Set the confirmed iOS/Android application identifiers");
-  if (!config.extra?.eas?.projectId)
-    errors.push("Set the existing EAS project ID");
-  if (!/^https:\/\//.test(env.EXPO_PUBLIC_SUPABASE_URL ?? ""))
-    errors.push("HTTPS Supabase URL required");
+  if (config.owner !== "big271" || config.slug !== "netizens-mobile")
+    errors.push("NETIZENS Expo owner/slug mismatch");
+  if (config.ios?.bundleIdentifier !== "com.big271.netizens" ||
+      config.android?.package !== "com.big271.netizens")
+    errors.push("NETIZENS iOS/Android application identifiers mismatch");
+  if (config.extra?.eas?.projectId !== "5f86b3a0-9d3b-4982-a05c-2aa6c4b3f0da")
+    errors.push("NETIZENS EAS project ID mismatch");
+  const backendUrl = env.EXPO_PUBLIC_SUPABASE_URL ?? "";
+  if (backendUrl !== "https://udygizxcwqoxifqlyfkq.supabase.co" &&
+      backendUrl !== "https://udygizxcwqoxifqlyfkq.supabase.co/")
+    errors.push("NETIZENS dedicated Supabase project URL required");
   const key = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
   if (!key || key.startsWith("sb_secret_"))
     errors.push("Public Supabase credential required");
