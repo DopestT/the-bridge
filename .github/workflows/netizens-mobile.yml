@@ -45,6 +45,14 @@ jobs:
       - name: SQLite and transport integration tests
         working-directory: apps/netizens-mobile
         run: npm run test:storage
+      - name: Static NETIZENS release identity preflight (synthetic public fixture only)
+        working-directory: apps/netizens-mobile
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://udygizxcwqoxifqlyfkq.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_fixture_not_a_real_key
+        run: |
+          npx expo config --type public --json > /tmp/netizens-resolved-config.json
+          npm run release:check -- /tmp/netizens-resolved-config.json
       - name: Native JavaScript bundle gate
         working-directory: apps/netizens-mobile
         run: npx expo export --platform ios --platform android --output-dir /tmp/netizens-export
