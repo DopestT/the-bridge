@@ -28,8 +28,21 @@ stream, connected LiveKit room, signed-in event, newsroom, or production feature
   not linked from production navigation; it does not pretend that anyone is live.
 - `apps/netizens-mobile/tests/live-contract.test.mjs` covers cross-Entity
   rejection, invalid grants, insecure transport and fabricated viewer counts.
-- The code does NOT verify a JWT signature or enforce actual permissions; only
-  the backend and streaming service can do that.
+- `supabase/functions/_shared/live-admission.ts` defines a fail-closed
+  server-authorized admission policy for creator host, active moderator, or
+  eligible viewer. The policy accepts only trusted server facts, never raw
+  client-submitted role or permission fields.
+- `apps/netizens-mobile/tests/live-admission.test.mjs` checks blocked,
+  unverified, inactive, private, invited, muted and closed-session denial.
+- `supabase/functions/netizens-live-join/index.ts` is an authenticated
+  Supabase Edge Function preflight: user-mode auth, 1 KiB request cap, strict
+  room and World Entity identifiers, Citizen eligibility, and RLS-filtered
+  Entity lookup. It always returns `live_streaming_not_activated` (503)
+  because no server-verified room registry, rate limiter, security clearance,
+  LiveKit signer, or hosted stream has been established. It is NOT deployed.
+- The client-side contract does NOT verify a JWT signature or enforce actual
+  permissions; the backend and streaming service must do that. The Edge
+  Function stub does NOT issue a token or prove a working stream.
 
 ## Required backend contract — not implemented
 
