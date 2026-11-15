@@ -31,8 +31,26 @@ export default {
     // Ensure the body cannot request elevated roles or supply authorization
     // facts. Only the destination identifiers are accepted.
     let body: unknown;
-    try { body = await req.json(); }
-    catch { return response(400, "invalid_request"); }
+    try {
+      if (!req.body) return response(400, "invalid_request");
+      const reader = req.body.getReader();
+      const decoder = new TextDecoder();
+      let raw = "", size = 0;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > 1024) {
+          await reader.cancel();
+          return response(413, "request_too_large");
+        }
+        raw += decoder.decode(value, { stream: true });
+      }
+      raw += decoder.decode();
+      body = JSON.parse(raw);
+    } catch {
+      return response(400, "invalid_request");
+    }
     if (!body || typeof body !== "object" || Array.isArray(body))
       return response(400, "invalid_request");
     const values = body as Record<string, unknown>;
