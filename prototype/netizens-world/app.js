@@ -327,8 +327,8 @@ function renderSwarmPreview(objective){
       return "<div class='perception-node'><div><span>"+escapeHtml(job.taskKey)+"</span><strong>"+escapeHtml(job.worker)+"</strong></div>"
         +"<p>"+escapeHtml(job.job)+"</p><small>PROPOSED · "+escapeHtml(job.deliverable)+"</small></div>";
     }).join("");
-    return "<section class='perception-swarm' aria-label='Proposed bot swarm'>"
-      +"<p class='route-mode'>NETIZENS BOT SWARM · "+proposal.jobs.length+" JOBS PROPOSED</p>"
+    return "<section class='perception-swarm' aria-label='Proposed NETIZENS superstar specialists'>"
+      +"<p class='route-mode'>NETIZENS SUPERSTARS · "+proposal.jobs.length+" SPECIALISTS PROPOSED</p>"
       +"<p class='permission-note'>Perception owns execution and approval. No job has run or been verified.</p>"
       +"<div class='perception-nodes'>"+jobs+"</div></section>";
   }catch(error){

@@ -1,5 +1,5 @@
-# NETIZENS — Advanced Engineering Swarm (Codex-ready work orders)
-Updated: November 13, 2026. **Status: engineering task definitions only; no autonomous workers were launched by this change.**
+# NETIZENS — Advanced Engineering Swarm (historical 24-role specification)
+Updated: November 13, 2026. **Historical reference only as of November 20, 2026: the owner retired the 24 engineering roles and 14 in-app proposal roles as an active planning model. Nothing was verified running under those 38 roles.** The current five-role NETIZENS Superstar Team is in [NETIZENS_SWARM.md](NETIZENS_SWARM.md) and [manifest.json](../tools/netizens-engineering-swarm/manifest.json). Instructions below are retained for historical rationale, not current dispatch.
 
 ## Mission
 Finish NETIZENS against the canonical [mobile specification](superpowers/specs/2026-10-05-netizens-mobile-app-design.md), [World architecture](../prototype/netizens-world/ARCHITECTURE.md), [real-phone runbook](NETIZENS_REAL_PHONE_RUNBOOK.md) and [release gate](../apps/netizens-mobile/PRIVATE_BETA_GATE.md). Keep [issue #16](https://github.com/DopestT/the-bridge/issues/16) open until physical-device acceptance is evidenced on both platforms.
