@@ -38,3 +38,61 @@ Human/assistant execution only: no independently running bots or worker completi
 - Removed fabricated Yes/No community percentages. Displays only the local saved choice and explicitly unavailable community results; choice survives leaving the Place and reloading. Added QA guard against restoring the old fake percentages.
 - Existing six World suites, six syntax checks and diff check pass. Chrome checks at 1440×900, 390×844, 320×740, 768×1024 and 1101×900 pass: all ten default routes, city and directory route samples, no target overlap in default layout, >=44px default targets, no document horizontal overflow, keyboard entry, nested entity/breadcrumb return, Citizen panel, saved local vote/reload, zero page errors and external requests. Phone city intentionally scrolls within its own region.
 - Browser receipts and fresh screenshots saved under the same task outputs, suffixed refined; prior screenshots preserved. No native Expo build or real-device acceptance. No remote push/PR, production change, publishing or spending. Issues #27/#16 remain open. Local review package updated only.
+
+
+## Recovery delivery: rendered World arrival — November 23
+
+Base: local `2a8f61a755229186982560e2173682c68014ca05`. This pass replaces the
+flattened-reference-image implementation with original deterministic vector scene
+geometry: ten separate floating landforms, faceted terrain, bridge decks/lamps,
+Commons globe/plaza, warm Crews housing, Local gardens, Projects towers/crane, Ask
+library/beacon, private Circles pavilion, Events canopy, Exchange market, Plans
+meeting garden and Yes/No sculpture. No simulated users or activity.
+
+### Reference comparison
+
+Both approved originals were visually inspected again. Primary reference informs
+floating land, central luminous Commons, connected paths, neighborhood-specific
+architecture, atmospheric skyline and colored evening light. Secondary reference
+informs dark slate/cream navigation, selectable directory and readable social
+controls. Native route buttons remain separate from scene geometry and clicking
+architecture forwards to the same route. The image-backed crop and its embedded
+fake controls are no longer part of the runtime World.
+
+Phone entry now opens the city centered on Commons, with contained native pan and
+a place directory. Desktop scene fits the available height; all ten routes remain
+available at six tested viewport sizes. Pointer dragging cannot accidentally open
+a district. Reduced-motion preferences disable scene transitions.
+
+**Visual verdict:** substantial source-to-screen implementation, still a stylized
+2.5D vector interpretation. It does not match the primary reference's photoreal
+materials, dense organic city detail or full Citizen Studio. No pixel-fidelity or
+owner acceptance is claimed. Issue #27 stays open; native Expo and physical phone
+acceptance #16 remain unverified. These limitations are visible in the saved
+reference-comparison artifact rather than concealed by passing route tests.
+
+### Verification and provenance
+
+Seven local suites pass (six existing World suites plus new geometry/route-parity
+check). New scene test is wired into the existing World QA workflow. Browser test
+is checked in and reusable with existing Playwright/Chrome, no installation.
+Real Chrome at 1440×900, 390×844, 320×740, 768×1024, 1101×900 and 1920×1080 passed:
+all ten routes in both modes using keyboard, all targets >=44px, no overlaps,
+clickable architecture, drag without navigation, nested entity/breadcrumb return,
+Citizen and notification panels, local vote/reload, no document overflow, zero
+page errors/external requests and no reference PNG request. Local cold navigation
+through Enter World measured 265–389ms in that run; this is not a field performance
+metric. Live in-app-browser preview also opened and was visually inspected.
+
+The first browser test attempt selected a wall hidden behind its own facade
+reflection; the acceptance locator was corrected to the visible facade and the
+entire six-size test rerun. This was a test-target error, not a corrected user
+route failure.
+
+Evidence: task outputs `world-arrival/` contains six-size screenshots, browser
+receipt, raw local QA log, reference comparison, review description and change
+patch. Browser runs are viewport emulations on this Mac, not real-phone tests.
+
+This is work executed by the assistant in this chat. No independent bot execution,
+worker runtime, public release, cloud build, merge, remote push, paid tool use or
+production data mutation. The localhost preview remains available for inspection.

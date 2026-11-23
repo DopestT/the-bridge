@@ -27,20 +27,21 @@ let lastRoute = null;
 function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
 
 // Layout is a display preference only; all Place buttons retain their existing routes.
-const worldLayoutMedia = window.matchMedia("(min-width: 1101px)");
-let worldLayoutChosen = false;
+
 function setWorldLayout(layout){
   mapView.dataset.layout = layout;
   document.querySelectorAll("[data-world-layout]").forEach(function(button){
     button.setAttribute("aria-pressed",String(button.dataset.worldLayout===layout));
   });
   document.getElementById("cityNavigationHint").hidden=layout!=="city";
-  document.querySelector(".world-scene-viewport").scrollLeft=0;
+  if(layout==="city") requestAnimationFrame(centerWorldCity);
 }
-setWorldLayout(worldLayoutMedia.matches ? "city" : "directory");
-worldLayoutMedia.addEventListener("change",function(event){
-  if(!worldLayoutChosen) setWorldLayout(event.matches ? "city" : "directory");
-});
+function centerWorldCity(){
+  const viewport=document.querySelector(".world-scene-viewport");
+  viewport.scrollLeft=(viewport.scrollWidth-viewport.clientWidth)/2;
+  viewport.scrollTop=Math.max(0,(viewport.scrollHeight-viewport.clientHeight)*.45);
+}
+setWorldLayout("city");
 
 function showWorld(){
   surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); emit("world_enter"); showMap();
@@ -51,7 +52,7 @@ function exitWorld(){
 function showMap(){
   state.depth=[{type:"world",label:"WORLD"}]; state.currentPlace=null; state.currentEntityId=null; state.routeOrigin=null;
   mapView.classList.add("active"); placeView.classList.remove("active");
-  renderDepth(); document.getElementById("worldMain").focus({preventScroll:true}); emit("world_map_view");
+  renderDepth(); document.getElementById("worldMain").focus({preventScroll:true}); if(mapView.dataset.layout==="city") requestAnimationFrame(centerWorldCity); emit("world_map_view");
 }
 function renderDepth(){
   depthTrail.innerHTML = "";
@@ -448,7 +449,7 @@ function renderFutureScenario(horizon){
 
 document.addEventListener("click",function(e){
   var layout=e.target.closest("[data-world-layout]");
-  if(layout){worldLayoutChosen=true;setWorldLayout(layout.dataset.worldLayout);return;}
+  if(layout){setWorldLayout(layout.dataset.worldLayout);return;}
   var p=e.target.closest("[data-place]"); if(p)return openPlace(p.dataset.place);
   var d=e.target.closest("[data-depth-index]"); if(d)return popDepthTo(Number(d.dataset.depthIndex));
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);

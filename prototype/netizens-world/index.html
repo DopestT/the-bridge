@@ -72,9 +72,9 @@
             <button type="button" data-world-layout="city" aria-pressed="false" aria-controls="placeWorld">Explore city</button>
             <button type="button" data-world-layout="directory" aria-pressed="true" aria-controls="placeWorld">Place directory</button>
           </div>
-          <button type="button" class="world-plan-link" data-place="plans">↗ Make a plan</button>
+          <span class="world-scene-caption">TEN PLACES · ONE CONNECTED WORLD</span>
         </div>
-        <p id="cityNavigationHint" class="city-navigation-hint" hidden>Scroll across the city or use Tab to reach each place. Choose a labeled control to enter.</p>
+        <p id="cityNavigationHint" class="city-navigation-hint" hidden>Drag or scroll to explore. Choose a district to enter.</p>
         <div class="world-scene-viewport" role="region" aria-label="World places" tabindex="0">
         <div id="placeWorld" class="place-world" aria-label="NETIZENS places">
           <button class="island island-commons" data-place="commons">
@@ -100,6 +100,9 @@
           </button>
           <button class="island island-events" data-place="events">
             <span class="island-icon">✦</span><strong>EVENTS</strong><small>Things happening</small>
+          </button>
+          <button class="island island-plans" data-place="plans">
+            <span class="island-icon">↗</span><strong>PLANS</strong><small>Turn an idea into a gathering</small>
           </button>
           <button class="island island-yesno" data-place="yesno">
             <span class="island-icon">◐</span><strong>YES OR NO</strong><small>Quick decisions</small>
@@ -192,6 +195,7 @@
   <script src="./data-adapter.js"></script>
   <script src="./perception-client.js"></script>
   <script src="./swarm.js"></script>
+  <script src="./city-scene.js"></script>
   <script src="./app.js"></script>
   <script src="./participation-ui.js"></script>
 </body>

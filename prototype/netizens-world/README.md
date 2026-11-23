@@ -168,3 +168,28 @@ node prototype/netizens-world/participation-ui-qa.mjs
 node prototype/netizens-world/backend/contract-qa.mjs
 node prototype/netizens-world/backend/production-contract-qa.mjs
 ```
+
+
+## Rendered World arrival (November 23)
+
+`city-scene.js` constructs the floating city from deterministic vector geometry.
+It does not render the approved composite screenshot as a backdrop. Districts
+have separate terrain, architecture and landscape; bridges connect them through
+Commons. Native HTML buttons own the existing Place routes and provide keyboard
+access. Clicking architecture activates the equivalent button. Dragging pans the
+camera without activating a Place; touch uses the browser's native scrolling.
+City is the first arrival at all sizes. The directory offers a compact alternative.
+
+This is a stylized 2.5D interpretation, not a photoreal renderer, and does not
+establish native Expo or physical-device acceptance. The exact reference images
+remain the comparison targets; no fabricated people/activity are added.
+
+Local geometry check: `node prototype/netizens-world/city-scene-qa.mjs`.
+Optional Chrome acceptance: serve this directory on localhost port 4189, then run
+`node prototype/netizens-world/browser-scene-qa.mjs` with an existing Playwright
+installation. `PLAYWRIGHT_MODULE` may name an absolute Playwright module path;
+`QA_OUTPUT_DIR` may select the local evidence directory. No install or cloud build
+is required. The six-size test checks all Place routes in both modes, keyboard
+and architecture entry, drag behavior, target geometry, nested routes, Citizen,
+notifications and genuine local vote persistence. Source references are not
+requested at runtime, which the browser check verifies.
