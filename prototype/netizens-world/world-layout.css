@@ -1,0 +1,29 @@
+/* Owner-supplied city artwork; native buttons retain all Place navigation. */
+.world-copy h1{font-size:clamp(2.3rem,5vw,4.5rem)}
+.world-map{padding-top:26px}
+.world-copy>p:not(.kicker){max-width:720px;margin-bottom:0}
+.place-world::before{display:none}
+.place-world .island{position:absolute!important;inset:auto!important;left:var(--x)!important;top:var(--y)!important;transform:translate(-50%,-50%)}
+.place-world .island:hover{transform:translate(-50%,-54%);border-color:white}
+.place-world .island:focus-visible{outline:3px solid #f6f0d5;outline-offset:5px;z-index:5}
+.island small{color:#c3cdd8}
+.world-footer{margin-top:30px}
+/* Crop out the supplied reference's sample social cards and Citizen level header.
+   Desktop controls overlay its districts. Phone art is decorative above the
+   Commons-first directory, following the secondary reference composition. */
+.approved-city-scene{position:relative;margin-top:22px;aspect-ratio:1536/305;background-image:url("assets/approved-neon-world-reference.png");background-size:105% auto;background-position:right 10%;border-radius:12px;border:1px solid #334654}
+.city-study-note{position:relative;color:#b3c3ce;font-size:.66rem;letter-spacing:.1em;margin-top:12px}
+@media(min-width:1101px){
+ .approved-city-scene,.city-study-note{display:none}
+ .place-world{aspect-ratio:1536/310;height:auto;min-height:0;margin-top:28px;border-radius:20px;background-image:url("assets/approved-neon-world-reference.png");background-size:105% auto;background-position:right 10%;border:1px solid #334654;box-shadow:0 20px 70px #0008}
+ .place-world .island,.place-world .island-commons{width:140px;min-height:60px;padding:8px 5px;border-radius:12px;background:#09131d;border:1px solid color-mix(in srgb,var(--accent) 75%,#34495a);box-shadow:0 5px 16px #0007}
+ .island .island-icon{display:none}
+ .island-commons{--x:52%;--y:43%}.island-crews{--x:18%;--y:32%}.island-local{--x:37%;--y:21%}.island-projects{--x:68%;--y:18%}.island-ask{--x:84%;--y:34%}.island-exchange{--x:86%;--y:73%}.island-circles{--x:18%;--y:72%}.island-events{--x:37%;--y:80%}.island-yesno{--x:52%;--y:87%}.island-plans{--x:69%;--y:85%}
+}
+@media(max-width:1100px){
+ .place-world{height:auto;min-height:0;margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;background:transparent}
+ .place-world .island,.place-world .island-commons{position:relative!important;inset:auto!important;transform:none;width:auto;min-height:94px;border-radius:16px;padding:14px 8px;box-shadow:0 8px 20px #0004}
+ .place-world .island:hover{transform:none}
+ .place-world .island-commons{grid-column:1/-1;grid-row:1}
+ .island strong{font-size:.78rem}.island small{font-size:.7rem}
+}

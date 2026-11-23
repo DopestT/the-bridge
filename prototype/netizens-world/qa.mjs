@@ -8,6 +8,9 @@ const htmlSource=fs.readFileSync(new URL("./index.html",import.meta.url),"utf8")
 assert.ok(htmlSource.includes('id="citizenActivity"'),"Citizen panel shows local real-world activity");
 assert.ok(!htmlSource.includes('id="citizenLevel"')&&!htmlSource.includes('id="citizenXp"')&&!htmlSource.includes('id="citizenProgress"'),"Citizen panel must not display XP or levels");
 assert.ok(!appSource.includes('levelNode.textContent')&&!appSource.includes('xpNode.textContent'),"Citizen render must not revive gamified ranks");
+assert.ok(!appSource.includes('people active now'),"Illustrative Place cards must never invent live audience counts");
+assert.ok(!/\d+(?:\.\d+)?K? members/.test(appSource),"Illustrative Place cards must not claim fabricated member totals");
+assert.ok(appSource.includes('Example content · not live activity'),"Example content must disclose its provenance");
 const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
 const perceptionSource=fs.readFileSync(new URL("./perception-client.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);
