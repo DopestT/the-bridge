@@ -26,6 +26,22 @@ let lastRoute = null;
 
 function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
 
+// Layout is a display preference only; all Place buttons retain their existing routes.
+const worldLayoutMedia = window.matchMedia("(min-width: 1101px)");
+let worldLayoutChosen = false;
+function setWorldLayout(layout){
+  mapView.dataset.layout = layout;
+  document.querySelectorAll("[data-world-layout]").forEach(function(button){
+    button.setAttribute("aria-pressed",String(button.dataset.worldLayout===layout));
+  });
+  document.getElementById("cityNavigationHint").hidden=layout!=="city";
+  document.querySelector(".world-scene-viewport").scrollLeft=0;
+}
+setWorldLayout(worldLayoutMedia.matches ? "city" : "directory");
+worldLayoutMedia.addEventListener("change",function(event){
+  if(!worldLayoutChosen) setWorldLayout(event.matches ? "city" : "directory");
+});
+
 function showWorld(){
   surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); emit("world_enter"); showMap();
 }
@@ -203,7 +219,7 @@ function openPlace(id,preserveDepth){
 
   var content="";
   if(id==="yesno"){
-    content="<section class='panel yesno-stage'><p class='kicker'>QUESTION NOW</p><h2>Should group chats have an expiration date?</h2><div class='vote-row'><button class='vote yes' data-vote='yes'>YES</button><button class='vote no' data-vote='no'>NO</button></div><div id='voteResult' class='vote-result'>Results stay hidden until you vote.</div></section>";
+    content="<section class='panel yesno-stage'><p class='kicker'>QUESTION NOW</p><h2>Should group chats have an expiration date?</h2><div class='vote-row'><button class='vote yes' data-vote='yes'>YES</button><button class='vote no' data-vote='no'>NO</button></div><div id='voteResult' class='vote-result'>Community results are not available in this local prototype.</div></section>";
   } else {
     var activities=p.items.map(function(x){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>Example content · not live activity</span></div>";}).join("");
     var entities=renderEntityCards(id);
@@ -217,6 +233,7 @@ function openPlace(id,preserveDepth){
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
   placeView.innerHTML="<section class='place-hero'><div><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p>"+escapeHtml(p.desc)+"</p></div><div class='place-symbol'>"+p.symbol+"</div></section>"+content+door;
   emit("place_view",{place:id,time_machine_surface:showTimeDoor(id)});
+  if(id==="yesno") renderLocalVote();
   if(id==="crews") emit("college_groups_pilot_impression",{pilot:"dmv",seeded_groups:5});
 }
 
@@ -229,10 +246,14 @@ function openTimeMachine(){
   renderFutureScenario("6m");
   emit("time_machine_open",{from:state.currentPlace});
 }
+function renderLocalVote(){
+  var result=document.getElementById("voteResult"); if(!result)return;
+  var saved=(store.snapshot().world.yesNoVotes||{})["group-chat-expiration"];
+  result.textContent=saved ? "Your "+saved.choice.toUpperCase()+" choice is saved on this device. Community results are not available." : "Community results are not available in this local prototype.";
+}
 function vote(choice){
-  var r=document.getElementById("voteResult"); if(!r)return;
-  r.innerHTML=choice==="yes"?"<strong style='color:#91f3bb'>YES 62%</strong> · NO 38% — now explain why.":"YES 62% · <strong style='color:#ff99a8'>NO 38%</strong> — now explain why.";
   store.vote("group-chat-expiration",choice);
+  renderLocalVote();
   renderCitizen();
   emit("yes_no_vote",{choice:choice});
 }
@@ -426,6 +447,8 @@ function renderFutureScenario(horizon){
 }
 
 document.addEventListener("click",function(e){
+  var layout=e.target.closest("[data-world-layout]");
+  if(layout){worldLayoutChosen=true;setWorldLayout(layout.dataset.worldLayout);return;}
   var p=e.target.closest("[data-place]"); if(p)return openPlace(p.dataset.place);
   var d=e.target.closest("[data-depth-index]"); if(d)return popDepthTo(Number(d.dataset.depthIndex));
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);

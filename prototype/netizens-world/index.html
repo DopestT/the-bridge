@@ -67,8 +67,15 @@
           <p>Start in Commons. Explore connected places for conversation, collaboration and belonging. Your Citizen identity travels with you.</p>
         </div>
 
-        <div class="approved-city-scene" aria-hidden="true"></div>
-        <p class="city-study-note">WORLD DESIGN STUDY · Select a connected place below.</p>
+        <div class="world-view-tools">
+          <div role="group" aria-label="World view">
+            <button type="button" data-world-layout="city" aria-pressed="false" aria-controls="placeWorld">Explore city</button>
+            <button type="button" data-world-layout="directory" aria-pressed="true" aria-controls="placeWorld">Place directory</button>
+          </div>
+          <button type="button" class="world-plan-link" data-place="plans">↗ Make a plan</button>
+        </div>
+        <p id="cityNavigationHint" class="city-navigation-hint" hidden>Scroll across the city or use Tab to reach each place. Choose a labeled control to enter.</p>
+        <div class="world-scene-viewport" role="region" aria-label="World places" tabindex="0">
         <div id="placeWorld" class="place-world" aria-label="NETIZENS places">
           <button class="island island-commons" data-place="commons">
             <span class="island-icon">◎</span><strong>COMMONS</strong><small>Public conversation</small>
@@ -94,12 +101,11 @@
           <button class="island island-events" data-place="events">
             <span class="island-icon">✦</span><strong>EVENTS</strong><small>Things happening</small>
           </button>
-          <button class="island island-plans" data-place="plans">
-            <span class="island-icon">↗</span><strong>PLANS</strong><small>Anybody want to...?</small>
-          </button>
           <button class="island island-yesno" data-place="yesno">
             <span class="island-icon">◐</span><strong>YES OR NO</strong><small>Quick decisions</small>
           </button>
+        </div>
+
         </div>
 
         <div class="world-footer">

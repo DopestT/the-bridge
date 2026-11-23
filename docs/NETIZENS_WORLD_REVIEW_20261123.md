@@ -26,3 +26,15 @@ Fresh Chrome checks at both viewports: all 10 districts clicked successfully; ea
 Reviewable local commit/patch and PR description prepared. No remote PR or branch publication, merge, deployment, production mutation, paid generation or new build requested. Keep #27 and physical-device acceptance #16 open. This is assistant-executed work, not evidence of an independently running World Architect worker.
 
 Rollback: revert this change commit; supplied original feature branch history is preserved.
+
+
+## Follow-up refinement — November 23
+
+Human/assistant execution only: no independently running bots or worker completions established. The five specialist roles remain a documented operating model.
+
+- City and directory display modes now share the same nine district buttons. Default is city on desktop and directory on phones; phones can scroll through the full city instead of seeing a tiny static banner. Buttons expose their selected state to assistive technology.
+- Plans is a separate Make a plan control, no longer mislabeled over the reference's Time Machine portal. All ten existing Place routes remain available. The Time Machine art itself is illustrative, not a newly implemented route.
+- Directory uses dark slate/cream controls and Commons-first hierarchy from the secondary approved reference. Original primary image remains unchanged. Exact embedded-text alignment and a layered city remain unresolved.
+- Removed fabricated Yes/No community percentages. Displays only the local saved choice and explicitly unavailable community results; choice survives leaving the Place and reloading. Added QA guard against restoring the old fake percentages.
+- Existing six World suites, six syntax checks and diff check pass. Chrome checks at 1440×900, 390×844, 320×740, 768×1024 and 1101×900 pass: all ten default routes, city and directory route samples, no target overlap in default layout, >=44px default targets, no document horizontal overflow, keyboard entry, nested entity/breadcrumb return, Citizen panel, saved local vote/reload, zero page errors and external requests. Phone city intentionally scrolls within its own region.
+- Browser receipts and fresh screenshots saved under the same task outputs, suffixed refined; prior screenshots preserved. No native Expo build or real-device acceptance. No remote push/PR, production change, publishing or spending. Issues #27/#16 remain open. Local review package updated only.

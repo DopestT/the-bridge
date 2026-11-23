@@ -11,6 +11,7 @@ assert.ok(!appSource.includes('levelNode.textContent')&&!appSource.includes('xpN
 assert.ok(!appSource.includes('people active now'),"Illustrative Place cards must never invent live audience counts");
 assert.ok(!/\d+(?:\.\d+)?K? members/.test(appSource),"Illustrative Place cards must not claim fabricated member totals");
 assert.ok(appSource.includes('Example content · not live activity'),"Example content must disclose its provenance");
+assert.ok(!appSource.includes('62%')&&!appSource.includes('38%'),"Local voting must not fabricate community poll percentages");
 const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
 const perceptionSource=fs.readFileSync(new URL("./perception-client.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);
