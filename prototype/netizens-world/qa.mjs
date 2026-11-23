@@ -12,6 +12,8 @@ assert.ok(!appSource.includes('people active now'),"Illustrative Place cards mus
 assert.ok(!/\d+(?:\.\d+)?K? members/.test(appSource),"Illustrative Place cards must not claim fabricated member totals");
 assert.ok(appSource.includes('Example content · not live activity'),"Example content must disclose its provenance");
 assert.ok(!appSource.includes('62%')&&!appSource.includes('38%'),"Local voting must not fabricate community poll percentages");
+assert.ok(!htmlSource.includes('src="./swarm.js"'),"Ordinary social navigation must not load the engineering-role roster");
+assert.ok(!appSource.includes('renderSwarmPreview'),"Perception search results must not inject engineering job proposals");
 const adapterSource=fs.readFileSync(new URL("./data-adapter.js",import.meta.url),"utf8");
 const perceptionSource=fs.readFileSync(new URL("./perception-client.js",import.meta.url),"utf8");
 const memory=new Map([["netizens_world_seed","qa-seed"]]);

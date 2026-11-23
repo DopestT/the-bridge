@@ -315,34 +315,27 @@ function renderWorldRoute(route){
 }
 
 function renderRouteActions(route){
-  return "<div class='route-actions'><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button><button class='place-action secondary-action' data-save-route>SAVE ROUTE</button></div>";
+  return "<div class='route-actions'>"+route.map(function(id){
+    return "<button class='place-action' data-open-route='"+escapeHtml(id)+"'>Open "+escapeHtml(placeData[id].name)+"</button>";
+  }).join("")+"<button class='place-action secondary-action' data-save-route>Save these suggestions</button></div>";
 }
 
-function renderSwarmPreview(objective){
-  var swarm=window.NetizensSwarm;
-  if(!swarm || !swarm.propose) return "";
-  try{
-    var proposal=swarm.propose(objective,{placeId:state.routeOrigin||state.currentPlace||"",entityId:state.currentEntityId||""});
-    var jobs=proposal.jobs.map(function(job){
-      return "<div class='perception-node'><div><span>"+escapeHtml(job.taskKey)+"</span><strong>"+escapeHtml(job.worker)+"</strong></div>"
-        +"<p>"+escapeHtml(job.job)+"</p><small>PROPOSED · "+escapeHtml(job.deliverable)+"</small></div>";
-    }).join("");
-    return "<section class='perception-swarm' aria-label='Proposed NETIZENS superstar specialists'>"
-      +"<p class='route-mode'>NETIZENS SUPERSTARS · "+proposal.jobs.length+" SPECIALISTS PROPOSED</p>"
-      +"<p class='permission-note'>Perception owns execution and approval. No job has run or been verified.</p>"
-      +"<div class='perception-nodes'>"+jobs+"</div></section>";
-  }catch(error){
-    return "<p class='perception-warning'>Bot job preview unavailable: "+escapeHtml(error.message||"invalid source")+"</p>";
-  }
+function renderUsefulActions(){
+  return "<section class='route-next-steps' aria-label='Things you can do'>"
+    +"<h3>Take a next step</h3>"
+    +"<button class='place-action' data-start-plan>Start a plan</button>"
+    +"<button class='place-action secondary-action' data-open-route='crews'>Explore groups</button>"
+    +"<button class='place-action secondary-action' data-open-route='ask'>Browse questions</button>"
+    +"<p class='muted small-copy'>This preview saves your changes on this device. Example groups and questions are not evidence of a live community.</p></section>";
 }
 
 function renderLocalRoute(raw,route,error){
   var box=document.getElementById("routeResult");
   box.innerHTML=(error?"<div class='perception-warning'>Live Perception was unavailable: "+escapeHtml(error)+"</div>":"")
-    +"<p class='route-mode'>WORLD ROUTE PREVIEW</p>"
+    +"<p class='route-mode'>PLACES TO EXPLORE</p>"
     +renderWorldRoute(route)
-    +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>This local preview connects likely NETIZENS places. It does not execute anything.</p>"
-    +renderSwarmPreview(raw)
+    +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>These are suggestions. Nothing has been run or shared.</p>"
+    +renderUsefulActions()
     +renderRouteActions(route);
 }
 
@@ -405,7 +398,7 @@ async function routeIntent(){
           +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>"+escapeHtml(result.reason||"Perception produced a bounded route.")+"</p>"
           +(nodes?"<div class='perception-nodes'>"+nodes+"</div>":"")
           +"<p class='permission-note'>This is a proposed route. Any action beyond the runtime's allowed scope remains subject to Perception permissions and verification.</p>"
-          +renderSwarmPreview(raw)
+          +renderUsefulActions()
           +renderRouteActions(worldRoute);
 
         renderCitizen();
@@ -465,11 +458,13 @@ function renderFutureScenario(horizon){
 document.addEventListener("click",function(e){
   var layout=e.target.closest("[data-world-layout]");
   if(layout){setWorldLayout(layout.dataset.worldLayout);return;}
+  if(e.target.closest("[data-start-plan]")){closePanels();openPlace("plans");document.getElementById("planTitle").focus();return;}
   var p=e.target.closest("button.island[data-place]"); if(p){if(worldPresence && mapView.classList.contains("active"))return worldPresence.travelTo(p.dataset.place,function(){openPlace(p.dataset.place);});return openPlace(p.dataset.place);}
+
   var d=e.target.closest("[data-depth-index]"); if(d)return popDepthTo(Number(d.dataset.depthIndex));
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }
-  var openEntityBtn=e.target.closest("[data-open-entity]"); if(openEntityBtn)return openEntity(openEntityBtn.dataset.openEntity);
+  var openEntityBtn=e.target.closest("[data-open-entity]"); if(openEntityBtn){closePanels();return openEntity(openEntityBtn.dataset.openEntity);}
   var membershipBtn=e.target.closest("[data-entity-membership]"); if(membershipBtn){var current=store.getEntityMembership(membershipBtn.dataset.entityMembership);var next=current && !["left","removed"].includes(current.status) ? "left" : (membershipBtn.dataset.activeStatus||"active");var membershipEntity=store.getEntity(membershipBtn.dataset.entityMembership);store.setEntityMembership(membershipBtn.dataset.entityMembership,next,next==="following"?"follower":next==="interested"?"attendee":"member");if(membershipEntity && membershipEntity.metadata && membershipEntity.metadata.kind==="college_group")emit("college_group_membership",{entity_id:membershipEntity.id,campus:membershipEntity.metadata.campus||membershipEntity.title,status:next});renderCitizen();return openEntity(membershipBtn.dataset.entityMembership,true);}
   var promoteBtn=e.target.closest("[data-promote-plan]"); if(promoteBtn){var eventEntity=store.promotePlanToEvent(promoteBtn.dataset.promotePlan);renderCitizen();if(eventEntity&&eventEntity.id)return openEntity(eventEntity.id);return;}
   var transformBtn=e.target.closest("[data-transform-entity]"); if(transformBtn){var transformed=store.transformEntity(transformBtn.dataset.transformEntity,transformBtn.dataset.targetPlace,{linkType:"became_project",entityType:"project"});renderCitizen();if(transformed&&transformed.id)return openEntity(transformed.id);return;}
@@ -478,7 +473,7 @@ document.addEventListener("click",function(e){
   var horizon=e.target.closest("[data-horizon]"); if(horizon)return renderFutureScenario(horizon.dataset.horizon);
   var createPlan=e.target.closest("[data-create-plan]"); if(createPlan){var input=document.getElementById("planTitle");var title=input?input.value.trim():"";if(title){store.createPlan(title,{source:"plans"});store.addArtifact("PLANNER");renderCitizen();openPlace("plans",true);}return;}
   var worldAction=e.target.closest("[data-world-action]"); if(worldAction){store.toggleList(worldAction.dataset.list,worldAction.dataset.value);renderCitizen();openPlace(state.currentPlace,true);return;}
-  if(e.target.closest("[data-save-route]")){if(lastRoute){store.saveRoute(lastRoute.objective,lastRoute.route);store.addArtifact("ROUTE MAKER");renderCitizen();var saveBtn=e.target.closest("[data-save-route]");saveBtn.textContent="ROUTE SAVED";saveBtn.disabled=true;}return;}
+  if(e.target.closest("[data-save-route]")){if(lastRoute){store.saveRoute(lastRoute.objective,lastRoute.route);store.addArtifact("ROUTE MAKER");renderCitizen();var saveBtn=e.target.closest("[data-save-route]");saveBtn.textContent="Suggestions saved on this device";saveBtn.disabled=true;}return;}
   if(e.target.closest("#timeDoor"))return openTimeMachine();
   var close=e.target.closest("[data-close-panel]"); if(close){var panel=document.getElementById(close.dataset.closePanel);panel.classList.remove("open");panel.setAttribute("aria-hidden","true");return;}
   var mode=e.target.closest("[data-preview-mode]"); if(mode)return previewMode(mode.dataset.previewMode);

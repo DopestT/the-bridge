@@ -96,3 +96,25 @@ patch. Browser runs are viewport emulations on this Mac, not real-phone tests.
 This is work executed by the assistant in this chat. No independent bot execution,
 worker runtime, public release, cloud build, merge, remote push, paid tool use or
 production data mutation. The localhost preview remains available for inspection.
+
+
+## Perception search correction — November 23
+
+Owner reproduced internal five-specialist proposals in every Perception search.
+Removed roster rendering from both local and connected-route results and removed
+its script from the consumer shell. Engineering proposal module/history is
+preserved; no worker was activated. Results now offer individual Place links,
+Start a plan (opens/focuses the existing composer), Explore groups and Browse
+questions. Suggestions are explicitly not executed/shared; seeded examples and
+on-device preview persistence remain disclosed. Save suggestions preserves the
+existing local save behavior.
+
+Desktop 1440×900 and phone 390×844 browser checks passed the exact Commons repro,
+absence of specialist roster, group navigation, focused plan composer, creation
+of a local plan and discussion note, reload persistence, suggestion save and a
+mocked connected routing result. Zero page errors/external requests. Connected
+routing was mocked, not a claim of a live Perception session. Added reusable
+suggestions-browser-qa.mjs and roster-leak guards to existing QA. Live in-app
+preview refreshed and its existing “talk to the moon” input restored; it shows
+suggestions instead of specialist proposals. No bot runtime, production mutation,
+remote push, deployment or spending.
