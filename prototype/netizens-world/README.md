@@ -193,3 +193,9 @@ is required. The six-size test checks all Place routes in both modes, keyboard
 and architecture entry, drag behavior, target geometry, nested routes, Citizen,
 notifications and genuine local vote persistence. Source references are not
 requested at runtime, which the browser check verifies.
+
+### Recovered cinematic city + privacy-preserving presence (local review)
+
+See [CINEMATIC_CITY_INTEGRATION_20261123.md](./CINEMATIC_CITY_INTEGRATION_20261123.md). This proof combines the recovered vector faceted city (actual 1600×940 custom SVG, distinct ten-district architecture and pan-enabled City/Directory modes) with an explicitly labeled four-demo-dot movement layer, one private browser dot, ten local hidden-detail stories and user-controlled identity/follow preview settings. The changes remain **local and non-production**.
+
+Core tests: `node city-scene-qa.mjs`, `node world-presence-qa.mjs`, `node world-secrets-qa.mjs`, `node qa.mjs`. Browser tests require locally served prototype and a compatible local Chrome/Puppeteer installation; run `city-integration-browser-qa.cjs`, `world-presence-browser-qa.cjs`, `world-secrets-browser-qa.cjs`, `privacy-entity-browser-qa.cjs`. No server, GPS, account, analytics or real participant is created by this preview.

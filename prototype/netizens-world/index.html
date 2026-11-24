@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./participation.css" />
   <link rel="stylesheet" href="world-layout.css">
+  <link rel="stylesheet" href="./cinematic-city.css" />
 </head>
 <body>
   <section id="surfaceApp" class="surface-app" aria-label="NETIZENS app surface">
@@ -77,6 +78,7 @@
         <p id="cityNavigationHint" class="city-navigation-hint" hidden>Drag or scroll to explore. Choose a district to enter.</p>
         <div class="world-scene-viewport" role="region" aria-label="World places" tabindex="0">
         <div id="placeWorld" class="place-world" aria-label="NETIZENS places">
+          <div id="worldPresenceLayer" class="world-presence-layer" aria-hidden="true"></div>
           <button class="island island-commons" data-place="commons">
             <span class="island-icon">◎</span><strong>COMMONS</strong><small>Public conversation</small>
           </button>
@@ -111,6 +113,7 @@
 
         </div>
 
+        <p id="worldPresenceStatus" class="world-presence-status" role="status">LIVE COMMUNITY PRESENCE NOT CONNECTED</p>
         <div class="world-footer">
           <span>SAME YOU.</span><span>DIFFERENT PLACES.</span><span>A BIGGER WORLD.</span>
         </div>
@@ -133,6 +136,19 @@
       </div>
       <div class="activity-summary" aria-label="Activity on this device"><span>LOCAL ACTIVITY</span><span id="citizenActivity">No local activity yet</span></div>
       <p class="muted">This is a local preview, not verified community participation.</p>
+      <section class="presence-privacy-settings" aria-label="Dot privacy settings">
+        <h3>World dot privacy</h3>
+        <p class="muted">You contribute a dot to the World. By default others cannot identify your dot or follow where you go.</p>
+        <label><input type="checkbox" id="presenceIdentity"> Let others identify my dot</label>
+        <label><input type="checkbox" id="presenceFollow" disabled> Let others follow my movements between World Places</label>
+        <p class="muted">Device-only preview settings. They do not activate public sharing. No GPS, travel history or real member tracking is connected.</p>
+      </section>
+      <section class="secret-collection" aria-label="Your hidden detail collection">
+        <h3>Hidden details</h3>
+        <p id="worldSecretCount" class="muted">0 of 10 hidden signals discovered · this device only</p>
+        <details><summary>Explore your noticed details</summary><ol id="worldSecretCollection"></ol></details>
+        <p class="muted">Private discoveries, not people, popularity or rewards.</p>
+      </section>
       <h3>Place Modes</h3>
       <div class="mode-list">
         <button data-preview-mode="commons">Commons</button>
@@ -171,6 +187,16 @@
       </div>
     </aside>
 
+    <dialog id="worldSecretDialog" class="world-secret-dialog" aria-labelledby="worldSecretTitle">
+      <section class="world-secret-card">
+        <p class="kicker">A DETAIL WORTH NOTICING</p>
+        <h2 id="worldSecretTitle"></h2>
+        <p id="worldSecretStory"></p>
+        <p id="worldSecretEpilogue" class="world-secret-epilogue"></p>
+        <button id="worldSecretClose" type="button" class="place-action">BACK TO THE WORLD</button>
+        <small>Private to this browser · no account or external request</small>
+      </section>
+    </dialog>
     <dialog id="timeMachineDialog" class="time-dialog">
       <div class="time-machine time-machine-live">
         <button id="closeTimeMachine" class="panel-close time-close">×</button>
@@ -196,6 +222,8 @@
   <script src="./perception-client.js"></script>
   <script src="./swarm.js"></script>
   <script src="./city-scene.js"></script>
+  <script src="./world-presence.js"></script>
+  <script src="./world-secrets.js"></script>
   <script src="./app.js"></script>
   <script src="./participation-ui.js"></script>
 </body>

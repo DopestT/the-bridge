@@ -152,9 +152,8 @@
 
   if(openNotifications) openNotifications.addEventListener("click",openNotificationPanel);
 
-  window.addEventListener("netizens:analytics",function(event){
+  window.addEventListener("netizens:entity-view",function(event){
     const detail=event.detail||{};
-    if(detail.event!=="entity_view") return;
     currentEntityId=detail.entity_id||null;
     replyToId=null;
     const entity=currentEntityId && data.getEntity(currentEntityId);

@@ -23,8 +23,17 @@ const timeDialog = document.getElementById("timeMachineDialog");
 const store = window.NetizensData || window.NetizensStore;
 const perception = window.NetizensPerception || null;
 let lastRoute = null;
+const worldPresence = window.NetizensWorldPresence || null;
 
-function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
+function emit(event,data){
+  // Local discussion UI uses a separate event; privacy-gated analytics carry
+  // no route, identity or place data while presence is disconnected/private.
+  if(event==="entity_view"){
+    window.dispatchEvent(new CustomEvent("netizens:entity-view",{detail:{entity_id:data && data.entity_id || null}}));
+  }
+  if(!worldPresence || !worldPresence.previewState().livePresenceConnected || !worldPresence.mayShareMovement()) return;
+  window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})}));
+}
 
 // Layout is a display preference only; all Place buttons retain their existing routes.
 
@@ -35,6 +44,7 @@ function setWorldLayout(layout){
   });
   document.getElementById("cityNavigationHint").hidden=layout!=="city";
   if(layout==="city") requestAnimationFrame(centerWorldCity);
+  if(worldPresence)requestAnimationFrame(function(){worldPresence.relayout();});
 }
 function centerWorldCity(){
   const viewport=document.querySelector(".world-scene-viewport");
@@ -44,15 +54,15 @@ function centerWorldCity(){
 setWorldLayout("city");
 
 function showWorld(){
-  surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); emit("world_enter"); showMap();
+  surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); if(worldPresence)worldPresence.start(); emit("world_enter"); showMap();
 }
 function exitWorld(){
-  world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels(); emit("world_exit");
+  emit("world_exit"); if(worldPresence)worldPresence.stop(); world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels();
 }
 function showMap(){
   state.depth=[{type:"world",label:"WORLD"}]; state.currentPlace=null; state.currentEntityId=null; state.routeOrigin=null;
   mapView.classList.add("active"); placeView.classList.remove("active");
-  renderDepth(); document.getElementById("worldMain").focus({preventScroll:true}); if(mapView.dataset.layout==="city") requestAnimationFrame(centerWorldCity); emit("world_map_view");
+  renderDepth(); if(worldPresence)worldPresence.returnToMap(); document.getElementById("worldMain").focus({preventScroll:true}); if(mapView.dataset.layout==="city") requestAnimationFrame(centerWorldCity); emit("world_map_view");
 }
 function renderDepth(){
   depthTrail.innerHTML = "";
@@ -155,6 +165,8 @@ function openEntity(id,preserveDepth){
   var entity=store.getEntity(id); if(!entity)return;
   var p=placeData[entity.placeId]||placeData.commons;
   state.currentPlace=entity.placeId;
+  placeView.dataset.place=entity.placeId;
+  if(worldPresence)worldPresence.atPlace(entity.placeId);
   state.currentEntityId=entity.id;
   state.routeOrigin=entity.placeId;
   store.setMode(entity.placeId);
@@ -208,6 +220,8 @@ function openEntity(id,preserveDepth){
 function openPlace(id,preserveDepth){
   var p=placeData[id]; if(!p)return;
   state.currentPlace=id;
+  placeView.dataset.place=id;
+  if(worldPresence)worldPresence.atPlace(id);
   state.currentEntityId=null;
   store.visitPlace(id);
   store.setMode(id);
@@ -233,6 +247,7 @@ function openPlace(id,preserveDepth){
 
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
   placeView.innerHTML="<section class='place-hero'><div><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p>"+escapeHtml(p.desc)+"</p></div><div class='place-symbol'>"+p.symbol+"</div></section>"+content+door;
+  if(window.NetizensWorldSecrets)window.NetizensWorldSecrets.mountPlace(id,placeView);
   emit("place_view",{place:id,time_machine_surface:showTimeDoor(id)});
   if(id==="yesno") renderLocalVote();
   if(id==="crews") emit("college_groups_pilot_impression",{pilot:"dmv",seeded_groups:5});
@@ -450,7 +465,7 @@ function renderFutureScenario(horizon){
 document.addEventListener("click",function(e){
   var layout=e.target.closest("[data-world-layout]");
   if(layout){setWorldLayout(layout.dataset.worldLayout);return;}
-  var p=e.target.closest("[data-place]"); if(p)return openPlace(p.dataset.place);
+  var p=e.target.closest("button.island[data-place]"); if(p){if(worldPresence && mapView.classList.contains("active"))return worldPresence.travelTo(p.dataset.place,function(){openPlace(p.dataset.place);});return openPlace(p.dataset.place);}
   var d=e.target.closest("[data-depth-index]"); if(d)return popDepthTo(Number(d.dataset.depthIndex));
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }

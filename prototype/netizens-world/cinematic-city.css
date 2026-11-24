@@ -1,0 +1,202 @@
+/*
+ * Cinematic city skin for the recovered faceted NETIZENS World.
+ * Retains the actual 1600x940 city-scene geometry and both directory/city
+ * modes. This is still vector 2.5D, not photoreal 3D.
+ */
+.world-app{
+  --city-ink:#0a131a;
+  --city-line:rgba(198,216,213,.28);
+  background:#091117;
+  color:#e7eeeb;
+}
+.world-topbar{
+  border-bottom-color:rgba(179,197,190,.18);
+  background:rgba(9,17,22,.94);
+  backdrop-filter:blur(12px);
+}
+.world-brand{letter-spacing:.10em;font-weight:760}
+.world-brand b{color:#c3d3ca}
+.world-mark{
+  border-radius:5px;
+  color:#dce7e1;
+  background:linear-gradient(145deg,#657e81,#293c42);
+  box-shadow:0 0 0 1px rgba(213,228,218,.25);
+}
+.world-app .kicker{color:#c2d0c6;letter-spacing:.19em;font-weight:680}
+.world-map{
+  background:
+    radial-gradient(ellipse at 85% -4%,rgba(166,179,171,.12),transparent 48%),
+    linear-gradient(180deg,#111e25,#09131a 72%,#070e13);
+}
+.world-copy h1{
+  color:#ebf1eb;
+  font-weight:530;
+  letter-spacing:-.055em;
+}
+.world-copy>p:not(.kicker){color:#b8c9c9}
+.world-view-tools [role="group"]{
+  border:1px solid rgba(187,207,198,.25);
+  border-radius:6px;
+  background:rgba(12,24,29,.83);
+}
+.world-view-tools button{border-radius:4px;color:#bfcbca}
+.world-view-tools button[aria-pressed="true"]{
+  background:#d1d6ca;color:#17262b;
+}
+.world-scene-caption,.city-navigation-hint{color:#aebdba}
+.world-scene-viewport{
+  border:1px solid rgba(176,200,193,.38);
+  border-radius:9px;
+  background:#132731;
+  box-shadow:0 20px 48px rgba(1,5,9,.26);
+}
+.world-map[data-layout="city"] .place-world{background:#152937}
+.world-map[data-layout="city"] .city-art{
+  filter:saturate(.62) brightness(.91) contrast(1.08);
+}
+.world-map[data-layout="city"] .city-district{
+  transition:filter .22s ease;
+}
+.world-map[data-layout="city"] .city-district:hover,
+.world-map[data-layout="city"] .city-district.district-lit{
+  filter:brightness(1.13);
+}
+.world-map[data-layout="city"] .island{
+  border-radius:5px;
+  border:1px solid rgba(196,211,203,.49);
+  background:rgba(7,22,30,.89);
+  color:#edf2ed;
+  box-shadow:0 9px 22px rgba(3,9,13,.33);
+  backdrop-filter:blur(7px);
+  transition:background .2s,border-color .2s;
+}
+.world-map[data-layout="city"] .island:hover{
+  border-color:#e0e8dc;
+  background:rgba(30,53,57,.93);
+  transform:translate(-50%,-12%);
+}
+.world-map[data-layout="city"] .island::before,
+.world-map[data-layout="city"] .island::after{display:none}
+.world-map[data-layout="city"] .island strong{color:#edf3ed;font-weight:730}
+.world-map[data-layout="city"] .island small{color:#b9cbc8}
+.world-map[data-layout="directory"] .place-world{
+  background:linear-gradient(160deg,#1b3036,#0d1b22 76%);
+}
+.world-map[data-layout="directory"] .island{
+  border-radius:6px;
+  border:1px solid rgba(197,212,198,.31);
+  background:linear-gradient(145deg,rgba(56,77,78,.44),rgba(12,29,36,.94));
+  box-shadow:0 9px 22px rgba(1,7,10,.24);
+  transition:border-color .2s,background .2s;
+}
+.world-map[data-layout="directory"] .island::before,
+.world-map[data-layout="directory"] .island::after{display:none}
+.world-map[data-layout="directory"] .island:hover{
+  transform:none;
+  border-color:#d0dfd3;
+  background:linear-gradient(135deg,#324c50,#162931);
+}
+.world-map[data-layout="directory"] .island-icon{
+  border-radius:3px;
+  background:rgba(170,195,184,.09);
+  border:1px solid rgba(184,210,193,.2);
+  color:#d4e2d5;
+  box-shadow:none;
+}
+.world-footer{color:#b2c0b7;letter-spacing:.19em;font-weight:630}
+.world-presence-status{
+  margin:13px auto 0;
+  border-radius:3px;
+  border:1px solid rgba(183,207,193,.32);
+  background:rgba(9,17,21,.82);
+  color:#d3e1d8;
+  width:max-content;
+  max-width:100%;
+  font-size:.65rem;
+  font-weight:720;
+  line-height:1.5;
+  text-align:center;
+  padding:7px 12px;
+  letter-spacing:.085em;
+}
+.presence-dot--self{
+  width:9px;height:9px;
+  border:1px solid #12262b;
+  background:#d8e7e4;
+  box-shadow:0 0 0 2px rgba(178,218,212,.24),0 0 7px rgba(191,227,224,.28);
+}
+.presence-dot--self::after{border-color:rgba(184,224,213,.2);inset:-7px}
+.presence-dot--demo{
+  width:7px;height:7px;
+  border:1px solid #2b2c29;
+  background:#d1bda0;
+  box-shadow:0 0 0 2px rgba(210,182,151,.14),0 0 6px rgba(210,182,151,.2);
+}
+.presence-dot--demo::after{inset:-5px;border-color:rgba(193,175,145,.20)}
+.place-view{
+  background:linear-gradient(180deg,#111e24,#091318 70%);
+}
+.place-hero,.entity-hero{
+  position:relative;
+  border-radius:9px;
+  border-color:rgba(177,204,194,.27);
+  background:linear-gradient(135deg,#2a3d44,#182930 60%,#0d1b20);
+}
+.place-hero h1,.entity-hero h1{font-weight:520;letter-spacing:-.05em}
+.place-symbol,.entity-symbol{opacity:.17;text-shadow:none;color:#d0e1d9}
+.place-grid .panel,.entity-grid .entity-card,.entity-layout .panel{
+  border-color:rgba(183,208,202,.22);
+  border-radius:8px;
+  background:linear-gradient(150deg,#16252d,#101c23);
+}
+.world-secret-trigger{
+  border-radius:4px;
+  border-color:rgba(191,207,201,.28);
+  background:rgba(19,33,38,.8);
+  box-shadow:none;
+  color:#ccdacf;
+  font-size:18px;
+}
+.world-secret-trigger:hover,.world-secret-trigger:focus-visible{
+  transform:none;
+  background:rgba(166,190,184,.12);
+  border-color:#e0e7de;
+  box-shadow:none;
+}
+.world-secret-dialog{
+  border-radius:9px;
+  border:1px solid rgba(198,213,201,.32);
+  background:linear-gradient(155deg,#22343b,#0d181d);
+  box-shadow:0 28px 83px rgba(0,0,0,.61);
+  color:#e9eee8;
+}
+.world-secret-card p:not(.kicker){color:#cedbd2}
+.world-secret-card .world-secret-epilogue{
+  color:#d4cdbb;
+  border-color:rgba(204,217,205,.21);
+}
+.secret-collection,.presence-privacy-settings{
+  border-radius:8px;
+  border-color:rgba(180,205,193,.22);
+  background:#14232a;
+}
+.world-app .world-brand,.world-app .world-actions button,
+.world-app .depth-trail button,.world-app .panel-close,
+.world-app .world-secret-trigger,.world-app .world-view-tools button{min-height:44px}
+.world-app .panel-close{min-width:44px}
+.world-app button:focus-visible,.world-scene-viewport:focus-visible{
+  outline:2px solid #e3ebde;
+  outline-offset:3px;
+}
+@media(max-width:600px){
+  .world-map{padding-top:21px}
+  .world-scene-viewport{border-radius:7px}
+  .world-view-tools button{padding:9px 11px}
+  .world-map[data-layout="directory"] .island{border-radius:5px}
+  .world-presence-status{font-size:.60rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .world-map[data-layout="city"] .city-district,
+  .world-map[data-layout="city"] .island,
+  .world-map[data-layout="directory"] .island{transition:none!important}
+}
