@@ -1,4 +1,4 @@
-const puppeteer=require("puppeteer");
+const puppeteer=require("puppeteer-core");
 const url=process.env.NETIZENS_WORLD_PREVIEW_URL||"http://127.0.0.1:4197/prototype/netizens-world/index.html";
 (async()=>{
  const browser=await puppeteer.launch({headless:true,executablePath:"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",args:["--no-sandbox","--no-proxy-server","--proxy-bypass-list=*"]});

@@ -8,8 +8,26 @@ const placeData = {
   circles:{name:"Circles",symbol:"◉",color:"#698cff",bg:"#223260",tag:"PRIVATE SPACES",desc:"Trusted group conversation with people you actually know or deliberately invite.",items:["Best Friends","Project Organizers","Film Crew"],chips:["Your Circles","Invites","Conversations"]},
   events:{name:"Events",symbol:"✦",color:"#ff668f",bg:"#512238",tag:"BE THERE",desc:"Things happening at a specific time and place: planned, spontaneous, public or private.",items:["Rooftop Concert · Saturday","Art Walk · Sunday","Pickup Basketball · Tuesday"],chips:["Today","This Week","This Month","Near You"]},
   plans:{name:"Plans",symbol:"↗",color:"#ffb157",bg:"#56331c",tag:"ANYBODY WANT TO...?",desc:"Plans begin before events. Start with an idea and find people who want to do it with you.",items:["Try the new ramen place Friday","Museum Saturday afternoon","Watch the game tonight"],chips:["Tonight","Weekend","Friends","Nearby"]},
-  yesno:{name:"Yes or No",symbol:"◐",color:"#63e89b",bg:"#173d35",tag:"QUICK DECISIONS",desc:"One question. Two choices. Vote first, then see the room.",items:[],chips:["Now","Local","Friends","World"]}
+  yesno:{name:"Yes or No",symbol:"◐",color:"#63e89b",bg:"#173d35",tag:"QUICK DECISIONS",desc:"One question. Two choices. Make your position clear.",items:[],chips:["Now","Local","Friends","World"]}
 };
+
+const placePresentation = {
+  commons:{lead:"The conversation starts here.",heading:"Public spaces",note:"An open square for conversations and shared context."},
+  crews:{lead:"Find the people you click with.",heading:"Groups to explore",note:"Smaller spaces built around something you share."},
+  local:{lead:"A little closer to home.",heading:"Local spaces",note:"Nearby discovery is not connected in this preview. These examples do not use your location."},
+  projects:{lead:"Make something that matters.",heading:"Project workspace",note:"Open a project to explore its work, discussion and connected spaces."},
+  ask:{lead:"A good question opens a door.",heading:"Questions to explore",note:"Open a question to read or add to its discussion."},
+  exchange:{lead:"Something to offer. Something to find.",heading:"Exchange spaces",note:"Skills, knowledge and useful help. No checkout or payment is connected here."},
+  circles:{lead:"Keep your people close.",heading:"Your private spaces",note:"Circle conversations use a separate trusted system. Public discussion is disabled inside Circles."},
+  events:{lead:"Be there for something.",heading:"Events to explore",note:"Open an event to see its details and mark your interest. Example listings are not verified live events."},
+  plans:{lead:"Anybody want to…?",heading:"Plans taking shape",note:"Start with an idea. An existing plan can become an event when you are ready."},
+  yesno:{lead:"Where do you stand?",heading:"Make your choice",note:"One question. Two choices."}
+};
+function renderPlaceHero(id){
+  const p=placeData[id],theme=placePresentation[id];
+  const mark=id==="yesno" ? "<span>YES</span><span>NO</span>" : p.symbol;
+  return "<header class='place-hero'><div class='place-intro'><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p class='place-lead'>"+escapeHtml(theme.lead)+"</p><p class='place-description'>"+escapeHtml(p.desc)+"</p></div><div class='place-emblem' aria-hidden='true'>"+mark+"</div></header>";
+}
 
 const state = { depth:[{type:"world",label:"WORLD"}], currentPlace:null, currentEntityId:null, routeOrigin:null };
 const surface = document.getElementById("surfaceApp");
@@ -181,6 +199,8 @@ function openEntity(id,preserveDepth){
   }
 
   mapView.classList.remove("active"); placeView.classList.add("active"); renderDepth();
+  placeView.dataset.placeTheme=state.currentPlace;
+  placeView.dataset.view=state.currentEntityId ? "entity" : "place";
   placeView.style.setProperty("--place-color",p.color);
   placeView.style.setProperty("--place-bg",p.bg);
   placeView.style.setProperty("--place-glow",p.color+"33");
@@ -228,13 +248,15 @@ function openPlace(id,preserveDepth){
   renderCitizen();
   if(!preserveDepth){ state.depth=[{type:"world",label:"WORLD"},{type:"place",id:id,label:p.name.toUpperCase()}]; }
   mapView.classList.remove("active"); placeView.classList.add("active"); renderDepth();
+  placeView.dataset.placeTheme=state.currentPlace;
+  placeView.dataset.view=state.currentEntityId ? "entity" : "place";
   placeView.style.setProperty("--place-color",p.color);
   placeView.style.setProperty("--place-bg",p.bg);
   placeView.style.setProperty("--place-glow",p.color+"33");
 
   var content="";
   if(id==="yesno"){
-    content="<section class='panel yesno-stage'><p class='kicker'>QUESTION NOW</p><h2>Should group chats have an expiration date?</h2><div class='vote-row'><button class='vote yes' data-vote='yes'>YES</button><button class='vote no' data-vote='no'>NO</button></div><div id='voteResult' class='vote-result'>Community results are not available in this local prototype.</div></section>";
+    content="<section class='panel yesno-stage' aria-labelledby='decisionQuestion'><p class='kicker'>EXAMPLE QUESTION</p><h2 id='decisionQuestion'>Should group chats have an expiration date?</h2><p class='decision-intro'>A clear choice. Your own point of view.</p><div class='vote-row' role='group' aria-label='Your choice'><button class='vote yes' data-vote='yes' aria-pressed='false'><span class='vote-sign' aria-hidden='true'>✓</span><strong>YES</strong><small>Let them end.</small></button><button class='vote no' data-vote='no' aria-pressed='false'><span class='vote-sign' aria-hidden='true'>×</span><strong>NO</strong><small>Keep them going.</small></button></div><div id='voteResult' class='vote-result' role='status'>Community results are not available in this local prototype.</div></section>";
   } else {
     var activities=p.items.map(function(x){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>Example content · not live activity</span></div>";}).join("");
     var entities=renderEntityCards(id);
@@ -242,12 +264,13 @@ function openPlace(id,preserveDepth){
     var composer=id==="plans"
       ? "<div class='plan-composer'><label for='planTitle'>START A PLAN</label><div><input id='planTitle' maxlength='100' placeholder='Anybody want to...'><button data-create-plan>CREATE</button></div></div>"
       : "";
-    content="<div class='place-grid'><section class='panel'><h3>ENTERABLE LAYERS</h3>"+collegePilot+entities+composer+"<h3 class='ambient-heading'>ILLUSTRATIVE EXAMPLES</h3>"+activities+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
+    content="<div class='place-grid'><section class='panel place-primary'>"+composer+"<h3>"+escapeHtml(placePresentation[id].heading)+"</h3>"+collegePilot+entities+"<details class='place-examples'><summary>Illustrative examples</summary>"+activities+"</details></section><aside class='panel place-guide'><h3>"+escapeHtml(p.tag)+"</h3><p class='place-guide-note'>"+escapeHtml(placePresentation[id].note)+"</p><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
   }
 
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
-  placeView.innerHTML="<section class='place-hero'><div><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p>"+escapeHtml(p.desc)+"</p></div><div class='place-symbol'>"+p.symbol+"</div></section>"+content+door;
+  placeView.innerHTML=renderPlaceHero(id)+content+door;
   if(window.NetizensWorldSecrets)window.NetizensWorldSecrets.mountPlace(id,placeView);
+
   emit("place_view",{place:id,time_machine_surface:showTimeDoor(id)});
   if(id==="yesno") renderLocalVote();
   if(id==="crews") emit("college_groups_pilot_impression",{pilot:"dmv",seeded_groups:5});
@@ -265,6 +288,10 @@ function openTimeMachine(){
 function renderLocalVote(){
   var result=document.getElementById("voteResult"); if(!result)return;
   var saved=(store.snapshot().world.yesNoVotes||{})["group-chat-expiration"];
+  document.querySelectorAll("[data-vote]").forEach(function(button){
+    const selected=Boolean(saved && saved.choice===button.dataset.vote);
+    button.classList.toggle("is-selected",selected);button.setAttribute("aria-pressed",String(selected));
+  });
   result.textContent=saved ? "Your "+saved.choice.toUpperCase()+" choice is saved on this device. Community results are not available." : "Community results are not available in this local prototype.";
 }
 function vote(choice){

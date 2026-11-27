@@ -1,4 +1,4 @@
-const puppeteer=require("puppeteer");
+const puppeteer=require("puppeteer-core");
 const url=process.env.NETIZENS_WORLD_PREVIEW_URL||"http://127.0.0.1:4198/prototype/netizens-world/index.html";
 const sleep=ms=>new Promise(ok=>setTimeout(ok,ms));
 (async()=>{
