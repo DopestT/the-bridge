@@ -1,0 +1,10 @@
+import {cp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
+import {build} from 'esbuild';
+await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});
+const source='prototype/netizens-world';
+const files=['index.html','styles.css','participation.css','world-layout.css','cinematic-city.css','place-themes.css','world-state.js','data-adapter.js','perception-client.js','swarm.js','city-scene.js','world-presence.js','world-secrets.js','app.js','participation-ui.js'];
+for(const f of files)await cp(`${source}/${f}`,`dist/${f}`);
+await cp('web/community.css','dist/community.css');
+let html=await readFile('dist/index.html','utf8');html=html.replace('NETIZENS World — V4 Prototype','NETIZENS — A World of Connection').replace('</head>','<meta name="description" content="Explore NETIZENS and join conversations across ten connected Places."><link rel="stylesheet" href="./community.css"></head>').replace('<body>','<body class="connected-release"><div class="releaseNotice">Early access · Explore the city and its labeled examples. Choose Join the community for real, account-backed conversations. Moving dots are demonstrations.</div>').replace('</body>','<script src="./community.js" defer></script></body>');await writeFile('dist/index.html',html);
+await build({entryPoints:['web/community.js'],bundle:true,minify:true,outfile:'dist/community.js',target:'es2022'});
+await writeFile('dist/release.json',JSON.stringify({project:'netizens',source:process.env.RELEASE_SHA||'local',builtAt:new Date().toISOString()}));
