@@ -1,0 +1,136 @@
+/* Place identity follows the World → Place → Entity hierarchy. These styles
+   never alter membership, conversation visibility, provenance or persistence. */
+.place-view{--ink:#edf4ef;--quiet:#a9c0c4;--card:#111f29;--edge:#344952;color:var(--ink);padding:28px clamp(16px,4vw,56px) 64px;scroll-margin-top:100px}
+.place-view .place-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 240px;align-items:center;gap:30px;padding:38px;border:1px solid var(--edge);border-radius:22px;background:transparent;min-height:260px}
+.place-view .place-hero .kicker{font-size:.63rem;letter-spacing:.22em;color:var(--place-color)}
+.place-view .place-hero h1{font-size:clamp(2.8rem,6vw,5.7rem);line-height:1;letter-spacing:-.055em;margin:12px 0;color:var(--ink)}
+.place-view .place-hero .place-lead{font-size:clamp(1.2rem,2vw,1.6rem);color:var(--ink);line-height:1.4;margin:12px 0}
+.place-view .place-hero .place-description{font-size:.88rem;line-height:1.7;max-width:650px;color:var(--quiet)}
+.place-emblem{position:relative;display:grid;place-items:center;width:200px;height:180px;color:var(--place-color);font-size:6rem;justify-self:center;filter:drop-shadow(0 8px 26px #0003);user-select:none}
+.place-view .place-grid{gap:18px;grid-template-columns:minmax(0,1fr) 310px;margin-top:20px}
+.place-view .panel{border-color:var(--edge);background:var(--card);color:var(--ink);border-radius:18px}
+.place-view .place-primary>h3{font-size:.75rem;letter-spacing:.13em;text-transform:uppercase;margin-bottom:18px}
+.place-guide-note{font-size:.86rem;color:var(--quiet);line-height:1.7}
+.place-guide .chip{font-size:.68rem;color:var(--quiet);background:transparent;border-color:var(--edge)}
+.place-guide .place-action{font-size:.65rem;line-height:1.5}
+.place-examples{margin-top:24px;border-top:1px solid var(--edge);padding-top:18px;color:var(--quiet)}
+.place-examples summary{cursor:pointer;font-size:.75rem;min-height:32px;font-weight:700;letter-spacing:.04em}
+.place-examples .activity{font-size:.85rem}.place-examples .activity span{font-size:.72rem}
+.place-view .entity-card{border-color:var(--edge);background:transparent;min-height:156px;border-radius:14px;color:var(--ink)}
+.place-view .entity-card p,.place-view .entity-card small{color:var(--quiet)}
+.place-view .entity-empty{color:var(--quiet);border-color:var(--edge);padding:32px 20px;line-height:1.6}
+.place-view .entity-hero,.place-view .entity-layout .panel{border-color:var(--edge)}
+.place-view .entity-hero{background:var(--card);color:var(--ink)}
+.place-view .entity-hero h1{font-size:clamp(2.4rem,5vw,4.7rem);line-height:1.1}
+.place-view .entity-hero p:not(.kicker){color:var(--quiet)}
+/* Commons: an editorial public square, wide conversations with a calm rail. */
+.place-view[data-place-theme="commons"]{--card:#13252a;--edge:#3e5559;--place-color:#bed5bf;background:radial-gradient(ellipse at 30% 0%,#2f4b49,#101e25 60%)}
+[data-place-theme="commons"] .place-hero{border:0;border-bottom:1px solid #63837a;border-radius:0;padding-inline:10px}
+[data-place-theme="commons"] .place-emblem{border:1px solid #749787;border-radius:50%;width:155px;height:155px;font-size:5rem;box-shadow:0 0 0 20px #7b9d8820,0 0 0 40px #7b9d8810}
+[data-place-theme="commons"] .entity-grid{grid-template-columns:1fr}
+[data-place-theme="commons"] .entity-card{text-align:left;border-width:0 0 1px;border-radius:0;min-height:115px;padding-inline:8px}
+/* Crews: a warm clubhouse, badges and invitation-like group cards. */
+.place-view[data-place-theme="crews"]{--card:#2b221f;--edge:#715344;--quiet:#d4beb0;--place-color:#f2b982;background:radial-gradient(ellipse at top right,#604237,#1d1b1c 65%)}
+[data-place-theme="crews"] .place-hero{border-color:#b6845944;background:repeating-linear-gradient(-40deg,transparent 0 22px,#eeb47808 22px 23px)}
+[data-place-theme="crews"] .place-emblem{border:2px solid #d6a171;clip-path:polygon(50% 0,96% 21%,92% 75%,50% 100%,8% 75%,4% 21%);background:#d29c531a}
+[data-place-theme="crews"] .college-grid{gap:14px}.place-view[data-place-theme="crews"] .college-card{border-radius:8px;border-color:#846047;background:#342923}
+[data-place-theme="crews"] .college-card strong{font-size:1.15rem}[data-place-theme="crews"] .college-pilot{border:0;padding:0;background:transparent}
+[data-place-theme="crews"] .entity-card{border-top:4px solid #dba377}
+/* Local: daylight teal and a cartographic texture, never a false live map. */
+.place-view[data-place-theme="local"]{--card:#14343b;--edge:#426f77;--quiet:#b3d2d4;--place-color:#a7e0df;background:#0e262e}
+[data-place-theme="local"] .place-hero{background:repeating-linear-gradient(35deg,transparent 0 60px,#93d0cf13 61px 63px,transparent 64px 120px),repeating-linear-gradient(125deg,transparent 0 90px,#93d0cf10 91px 93px,transparent 94px 180px)}
+[data-place-theme="local"] .place-emblem{border:1px solid #76c3c4;border-radius:50%;width:150px;height:150px;box-shadow:0 0 0 28px #74bcbb10,0 0 0 56px #74bcbb08}
+[data-place-theme="local"] .place-grid{grid-template-columns:minmax(0,1fr) 280px}
+/* Projects: a precise studio/workbench, graph paper and project folios. */
+.place-view[data-place-theme="projects"]{--card:#172926;--edge:#47645a;--quiet:#b4cec1;--place-color:#b7dcb4;background:linear-gradient(90deg,#91b69e08 1px,transparent 1px),linear-gradient(#91b69e08 1px,transparent 1px),#101e1e;background-size:28px 28px}
+[data-place-theme="projects"] .place-hero{border-radius:4px;background:#142724d9}
+[data-place-theme="projects"] .place-emblem{border:1px solid #a4cfb377;transform:rotate(-8deg);background:linear-gradient(135deg,#739c8740,#102b25);border-radius:10px}
+[data-place-theme="projects"] .entity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+[data-place-theme="projects"] .entity-card{border-radius:3px;border-left:5px solid #87b395;background:#89b99b09}
+[data-place-theme="projects"] .entity-type{font-family:ui-monospace,monospace}
+/* Ask: a warm reading room with large serif questions, no fake answers. */
+.place-view[data-place-theme="ask"]{--ink:#2e2b24;--quiet:#645d4d;--card:#f3eddc;--edge:#c5baa3;--place-color:#796131;background:#e7deca}
+[data-place-theme="ask"] .place-hero{border:0;border-bottom:2px solid #aea083;border-radius:0;padding-inline:10px}
+[data-place-theme="ask"] .place-hero h1,[data-place-theme="ask"] .entity-card strong{font-family:Georgia,serif;font-weight:500}
+[data-place-theme="ask"] .place-emblem{font-family:Georgia,serif;font-size:10rem;color:#99834d}
+[data-place-theme="ask"] .entity-grid{grid-template-columns:1fr}
+[data-place-theme="ask"] .entity-card{border:0;border-bottom:1px solid #c2b79c;border-radius:0;padding:24px 8px;min-height:155px}
+[data-place-theme="ask"] .entity-card strong{font-size:1.8rem;line-height:1.25}
+[data-place-theme="ask"] .place-action{background:#ddd0ae;border-color:#a3936d;color:#332e22}
+/* Exchange: paired, open offer-board rhythm with lilac accents. */
+.place-view[data-place-theme="exchange"]{--card:#282338;--edge:#665671;--quiet:#d0bed8;--place-color:#dcbae5;background:radial-gradient(ellipse at 80% 0%,#514064,#1b1c2b 65%)}
+[data-place-theme="exchange"] .place-hero{border-radius:26px 6px 26px 6px;background:linear-gradient(110deg,#b997ca0a 50%,#b997ca15 50%)}
+[data-place-theme="exchange"] .place-emblem{font-size:9rem;font-weight:300;letter-spacing:-.1em}
+[data-place-theme="exchange"] .entity-card{border-style:dashed;border-radius:6px;min-height:170px}
+/* Circles: a quiet, enclosed lounge. Privacy boundaries remain in the data/UI. */
+.place-view[data-place-theme="circles"]{--card:#22243b;--edge:#595b7a;--quiet:#c0bddb;--place-color:#c5bcdf;background:radial-gradient(ellipse at 50% 0%,#3e3b60,#141927 65%)}
+[data-place-theme="circles"] .place-hero{max-width:1000px;margin-inline:auto;border-radius:46px;background:#af9fd209;border-color:#a49ab744}
+[data-place-theme="circles"] .place-emblem{border-radius:50%;border:1px solid #a8a0ce;width:140px;height:140px;box-shadow:0 0 0 22px #a8a0ce12,0 0 0 45px #a8a0ce08}
+[data-place-theme="circles"] .place-grid,[data-place-theme="circles"] .entity-layout,[data-place-theme="circles"] .entity-hero,[data-place-theme="circles"] .entity-participation{max-width:1000px;margin-inline:auto}
+[data-place-theme="circles"] .entity-card{border-radius:24px;min-height:150px}
+[data-place-theme="circles"] .private-boundary{padding:20px;border:1px solid #a8a0ce;border-radius:18px;background:#a8a0ce0a}
+/* Events: the energy of a venue poster, bold type and an agenda-like list. */
+.place-view[data-place-theme="events"]{--card:#241c28;--edge:#75465c;--quiet:#dbc0cd;--place-color:#ffa7c5;background:radial-gradient(ellipse at top right,#673754,#171a26 65%)}
+[data-place-theme="events"] .place-hero{border:1px solid #b66d93;background:linear-gradient(120deg,#8b507328,transparent 65%);border-radius:0;box-shadow:inset 0 0 0 7px #171c27}
+[data-place-theme="events"] .place-hero h1{text-transform:uppercase;font-size:clamp(3.2rem,8vw,7rem);font-weight:950;letter-spacing:-.065em}
+[data-place-theme="events"] .place-emblem{font-size:10rem;transform:rotate(-12deg)}
+[data-place-theme="events"] .entity-grid{grid-template-columns:1fr}
+[data-place-theme="events"] .entity-card{border-radius:0;border-left:8px solid #cb819f;min-height:120px;padding:24px}
+[data-place-theme="events"] .entity-card strong{font-size:1.5rem}
+/* Plans: an inviting notebook. The real composer leads, not sample activity. */
+.place-view[data-place-theme="plans"]{--ink:#352e27;--quiet:#6f6354;--card:#f4ecd9;--edge:#c8b99c;--place-color:#8a612d;background:#e8ddc5}
+[data-place-theme="plans"] .place-hero{border:0;border-radius:0;min-height:220px;padding-block:20px}
+[data-place-theme="plans"] .place-hero h1{font-family:Georgia,serif;font-weight:500}
+[data-place-theme="plans"] .place-emblem{font-size:9rem;color:#af8751;transform:rotate(-10deg)}
+[data-place-theme="plans"] .place-primary{background:repeating-linear-gradient(transparent 0 31px,#9d895c18 31px 32px),#f4ecd9}
+[data-place-theme="plans"] .plan-composer{margin:0 0 28px;padding:24px;background:#fffaf0;border-color:#bda780;border-radius:8px;box-shadow:0 8px 24px #6a502215}
+[data-place-theme="plans"] .plan-composer label{color:#655432;letter-spacing:.16em}
+[data-place-theme="plans"] .plan-composer input{background:#f5eedc;border-color:#b8a782;color:#382f22;min-height:48px}
+[data-place-theme="plans"] .plan-composer button{background:#756040;color:#fff8e7;min-height:48px}
+[data-place-theme="plans"] .entity-card{background:#fff9ec;border-radius:3px;border-top:4px solid #c4aa77;box-shadow:0 7px 14px #70582e0c}
+[data-place-theme="plans"] .place-action{background:#dfd1b0;border-color:#a18a60;color:#3b301e}
+/* Yes or No: a dedicated decision arena, not another list/card page. */
+.place-view[data-place-theme="yesno"]{--ink:#f6f3ea;--quiet:#b5bec9;--card:#0d1522;--edge:#36485d;--place-color:#e1e6df;background:radial-gradient(ellipse at 5% 45%,#246a5940,transparent 45%),radial-gradient(ellipse at 95% 45%,#8d384b40,transparent 45%),#09121f;min-height:calc(100dvh - 74px)}
+[data-place-theme="yesno"] .place-hero{border:0;border-radius:0;min-height:0;padding:12px 0 26px;display:block;text-align:center}
+[data-place-theme="yesno"] .place-hero h1{font-size:1rem;letter-spacing:.26em;text-transform:uppercase;margin:12px 0;color:#c4ced4}
+[data-place-theme="yesno"] .place-hero .kicker,[data-place-theme="yesno"] .place-description,[data-place-theme="yesno"] .place-emblem{display:none}
+[data-place-theme="yesno"] .place-hero .place-lead{font-family:Georgia,serif;font-size:1.4rem;color:#b9c4ce}
+[data-place-theme="yesno"] .yesno-stage{max-width:1000px;margin:auto;border:0;background:transparent;padding:10px 0 28px}
+[data-place-theme="yesno"] .yesno-stage .kicker{color:#94a9b7;font-size:.6rem;letter-spacing:.2em}
+[data-place-theme="yesno"] .yesno-stage h2{max-width:900px;margin:16px auto 18px;font-size:clamp(2.2rem,4.7vw,4.5rem);line-height:1.1;letter-spacing:-.045em;text-wrap:balance}
+.decision-intro{color:#adbdc7;font-size:.87rem;margin:0 0 30px}
+[data-place-theme="yesno"] .vote-row{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:760px;margin:auto}
+[data-place-theme="yesno"] .vote{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:220px;border-radius:24px;padding:22px 18px;position:relative;transition:transform .15s,border-color .15s}
+[data-place-theme="yesno"] .vote.yes{background:linear-gradient(150deg,#164a40,#0d272b);border:1px solid #5faa93;color:#aff3d1}
+[data-place-theme="yesno"] .vote.no{background:linear-gradient(150deg,#512c3b,#271d30);border:1px solid #b66c81;color:#ffbed0}
+[data-place-theme="yesno"] .vote .vote-sign{font-size:3rem;line-height:1;font-weight:400}
+[data-place-theme="yesno"] .vote strong{font-size:2rem;font-weight:900;letter-spacing:.15em}
+[data-place-theme="yesno"] .vote small{font-size:.78rem;font-weight:400;letter-spacing:0;color:inherit}
+[data-place-theme="yesno"] .vote:hover{transform:translateY(-4px);border-color:#f4f1d9}
+[data-place-theme="yesno"] .vote.is-selected{outline:2px solid #f4f1d9;outline-offset:5px}
+[data-place-theme="yesno"] .vote.is-selected::after{content:"YOUR CHOICE";position:absolute;top:12px;right:14px;font-size:.57rem;letter-spacing:.12em;color:#f4f1d9}
+[data-place-theme="yesno"] .vote-result{max-width:700px;margin:30px auto 0;font-size:.78rem;line-height:1.65;color:#b8c6cf;min-height:44px}
+[data-place-theme="yesno"] .time-door{max-width:760px;display:block;margin:24px auto 0;background:#102031;border-color:#445972}
+/* Paper districts retain legible nested entity controls and provenance labels. */
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .muted{color:var(--quiet)}
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .entity-facts span,.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .entity-link{border-color:var(--edge);background:transparent;color:var(--ink)}
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .entity-facts b,.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .entity-link strong{color:var(--ink)}
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .discussion-item{background:#fff9ed;border-color:var(--edge)}
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .discussion-meta,.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .entity-link small{color:var(--quiet)}
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .discussion-composer textarea{background:#fff9ed;border-color:var(--edge);color:var(--ink)}
+.place-view:is([data-place-theme="ask"],[data-place-theme="plans"]) .discussion-provenance{border-color:var(--edge)}
+@media(max-width:1000px){.place-view .place-grid{grid-template-columns:1fr}.place-view .place-guide{display:grid;grid-template-columns:1fr 1fr;column-gap:20px}.place-guide .place-action,.place-guide .nested-state{grid-column:1/-1}.place-guide .chip-row{align-content:start}.place-guide-note{margin-top:0}}
+@media(max-width:600px){
+ .place-view{padding:18px 14px 44px}.place-view .place-hero{padding:24px 20px;display:block;min-height:0}.place-view .place-emblem{display:none}.place-view .place-hero h1{font-size:3.1rem}.place-view .place-hero .place-lead{font-size:1.2rem}.place-view .place-hero .place-description{font-size:.79rem}
+ .place-view .place-grid{margin-top:14px;gap:14px}.place-view .place-guide{display:block}.place-view .panel{padding:18px}.place-view .entity-grid{grid-template-columns:1fr}.place-view .entity-card{min-height:130px}
+ [data-place-theme="events"] .place-hero h1{font-size:3.8rem}.place-view[data-place-theme="circles"] .place-hero{border-radius:28px}
+ [data-place-theme="plans"] .plan-composer{padding:16px}.place-view[data-place-theme="yesno"] .place-hero{padding:8px 0 12px}.place-view[data-place-theme="yesno"] .place-hero h1{font-size:.83rem}.place-view[data-place-theme="yesno"] .place-hero .place-lead{font-size:1.2rem}
+ .place-view[data-place-theme="yesno"] .yesno-stage{padding:10px 0}.place-view[data-place-theme="yesno"] .yesno-stage h2{font-size:2.1rem;line-height:1.12}.place-view[data-place-theme="yesno"] .vote-row{gap:14px;padding:0 6px}.place-view[data-place-theme="yesno"] .vote{min-height:178px;padding:18px 10px;border-radius:18px}.place-view[data-place-theme="yesno"] .vote strong{font-size:1.7rem}.place-view[data-place-theme="yesno"] .vote small{font-size:.68rem}.place-view[data-place-theme="yesno"] .vote-sign{font-size:2.3rem}.place-view[data-place-theme="yesno"] .vote.is-selected::after{font-size:.49rem;right:8px;top:10px}.decision-intro{margin-bottom:22px;font-size:.8rem}
+}
+
+.place-view button:focus-visible,.place-view input:focus-visible,.place-view textarea:focus-visible{outline:3px solid var(--place-color);outline-offset:4px}
+/* The legacy inline palette uses luminous gold. Paper rooms need ink contrast. */
+.place-view[data-place-theme="ask"]{--place-color:#796131!important}
+.place-view[data-place-theme="plans"]{--place-color:#8a612d!important}
+/* A closed drawer must not cast its shadow across a daylight room. */
+.side-panel:not(.open){visibility:hidden;pointer-events:none;box-shadow:none}

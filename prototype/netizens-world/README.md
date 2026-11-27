@@ -168,3 +168,34 @@ node prototype/netizens-world/participation-ui-qa.mjs
 node prototype/netizens-world/backend/contract-qa.mjs
 node prototype/netizens-world/backend/production-contract-qa.mjs
 ```
+
+
+## Rendered World arrival (November 23)
+
+`city-scene.js` constructs the floating city from deterministic vector geometry.
+It does not render the approved composite screenshot as a backdrop. Districts
+have separate terrain, architecture and landscape; bridges connect them through
+Commons. Native HTML buttons own the existing Place routes and provide keyboard
+access. Clicking architecture activates the equivalent button. Dragging pans the
+camera without activating a Place; touch uses the browser's native scrolling.
+City is the first arrival at all sizes. The directory offers a compact alternative.
+
+This is a stylized 2.5D interpretation, not a photoreal renderer, and does not
+establish native Expo or physical-device acceptance. The exact reference images
+remain the comparison targets; no fabricated people/activity are added.
+
+Local geometry check: `node prototype/netizens-world/city-scene-qa.mjs`.
+Optional Chrome acceptance: serve this directory on localhost port 4189, then run
+`node prototype/netizens-world/browser-scene-qa.mjs` with an existing Playwright
+installation. `PLAYWRIGHT_MODULE` may name an absolute Playwright module path;
+`QA_OUTPUT_DIR` may select the local evidence directory. No install or cloud build
+is required. The six-size test checks all Place routes in both modes, keyboard
+and architecture entry, drag behavior, target geometry, nested routes, Citizen,
+notifications and genuine local vote persistence. Source references are not
+requested at runtime, which the browser check verifies.
+
+### Recovered cinematic city + privacy-preserving presence (local review)
+
+See [CINEMATIC_CITY_INTEGRATION_20261123.md](./CINEMATIC_CITY_INTEGRATION_20261123.md). This proof combines the recovered vector faceted city (actual 1600×940 custom SVG, distinct ten-district architecture and pan-enabled City/Directory modes) with an explicitly labeled four-demo-dot movement layer, one private browser dot, ten local hidden-detail stories and user-controlled identity/follow preview settings. The changes remain **local and non-production**.
+
+Core tests: `node city-scene-qa.mjs`, `node world-presence-qa.mjs`, `node world-secrets-qa.mjs`, `node qa.mjs`. Browser tests require locally served prototype and a compatible local Chrome/Puppeteer installation; run `city-integration-browser-qa.cjs`, `world-presence-browser-qa.cjs`, `world-secrets-browser-qa.cjs`, `privacy-entity-browser-qa.cjs`. No server, GPS, account, analytics or real participant is created by this preview.

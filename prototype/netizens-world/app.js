@@ -1,15 +1,33 @@
 const placeData = {
   commons:{name:"Commons",symbol:"◎",color:"#8a68ff",bg:"#271f55",tag:"PUBLIC CONVERSATION",desc:"The open square. Follow conversations, not an outrage treadmill.",items:["What is everyone talking about?","City skylines never get old.","A public square with memory and context."],chips:["For You","Following","Topics","World"]},
-  crews:{name:"Crews",symbol:"⚑",color:"#ff9d5c",bg:"#4b2b21",tag:"YOUR PEOPLE",desc:"Smaller groups built around interests, identity, campuses and doing things together.",items:["Trail Seekers · 1.8K members","Film & Creators · 2.4K members","Game Night Crew · 892 members"],chips:["College Groups","Hobbies","Sports","Art","Tech"]},
+  crews:{name:"Crews",symbol:"⚑",color:"#ff9d5c",bg:"#4b2b21",tag:"YOUR PEOPLE",desc:"Smaller groups built around interests, identity, campuses and doing things together.",items:["Trail Seekers","Film & Creators","Game Night Crew"],chips:["College Groups","Hobbies","Sports","Art","Tech"]},
   local:{name:"Local",symbol:"⌖",color:"#49d7ff",bg:"#123f51",tag:"AROUND YOU",desc:"Nearby people, events, useful local knowledge and spontaneous plans.",items:["Sunset Yoga in the Park · tomorrow","Pickup basketball · tonight","Who knows a good bike shop?"],chips:["People","Events","Businesses","Crews"]},
-  projects:{name:"Projects",symbol:"◇",color:"#59e79b",bg:"#173d31",tag:"BUILD TOGETHER",desc:"Turn conversation into work with collaborators, milestones and visible progress.",items:["Community Garden · 70%","Indie Film Series · 40%","Neighborhood Cleanup · 20%"],chips:["Active","Explore","Your Projects"]},
+  projects:{name:"Projects",symbol:"◇",color:"#59e79b",bg:"#173d31",tag:"BUILD TOGETHER",desc:"Turn conversation into work with collaborators, milestones and visible progress.",items:["Community Garden","Indie Film Series","Neighborhood Cleanup"],chips:["Active","Explore","Your Projects"]},
   ask:{name:"Ask",symbol:"?",color:"#f3d568",bg:"#4b3d19",tag:"REAL ANSWERS",desc:"Questions routed toward people who know, with useful context and follow-up.",items:["Best way to start a local film club?","Affordable video editing setup?","How do I find my first developer?"],chips:["Tech","Health","Money","Life"]},
   exchange:{name:"Exchange",symbol:"⇄",color:"#e879ff",bg:"#4a2251",tag:"SKILLS + HELP",desc:"Trade knowledge, time, favors and collaboration without turning everything into a marketplace.",items:["Portrait photography offered","Looking for website design help","Resume review available"],chips:["Skills","Equipment","Services","Time"]},
-  circles:{name:"Circles",symbol:"◉",color:"#698cff",bg:"#223260",tag:"PRIVATE SPACES",desc:"Trusted group conversation with people you actually know or deliberately invite.",items:["Best Friends · 5 members","Project Organizers · 8 members","Film Crew · 12 members"],chips:["Your Circles","Invites","Active Now"]},
+  circles:{name:"Circles",symbol:"◉",color:"#698cff",bg:"#223260",tag:"PRIVATE SPACES",desc:"Trusted group conversation with people you actually know or deliberately invite.",items:["Best Friends","Project Organizers","Film Crew"],chips:["Your Circles","Invites","Conversations"]},
   events:{name:"Events",symbol:"✦",color:"#ff668f",bg:"#512238",tag:"BE THERE",desc:"Things happening at a specific time and place: planned, spontaneous, public or private.",items:["Rooftop Concert · Saturday","Art Walk · Sunday","Pickup Basketball · Tuesday"],chips:["Today","This Week","This Month","Near You"]},
   plans:{name:"Plans",symbol:"↗",color:"#ffb157",bg:"#56331c",tag:"ANYBODY WANT TO...?",desc:"Plans begin before events. Start with an idea and find people who want to do it with you.",items:["Try the new ramen place Friday","Museum Saturday afternoon","Watch the game tonight"],chips:["Tonight","Weekend","Friends","Nearby"]},
-  yesno:{name:"Yes or No",symbol:"◐",color:"#63e89b",bg:"#173d35",tag:"QUICK DECISIONS",desc:"One question. Two choices. Vote first, then see the room.",items:[],chips:["Now","Local","Friends","World"]}
+  yesno:{name:"Yes or No",symbol:"◐",color:"#63e89b",bg:"#173d35",tag:"QUICK DECISIONS",desc:"One question. Two choices. Make your position clear.",items:[],chips:["Now","Local","Friends","World"]}
 };
+
+const placePresentation = {
+  commons:{lead:"The conversation starts here.",heading:"Public spaces",note:"An open square for conversations and shared context."},
+  crews:{lead:"Find the people you click with.",heading:"Groups to explore",note:"Smaller spaces built around something you share."},
+  local:{lead:"A little closer to home.",heading:"Local spaces",note:"Nearby discovery is not connected in this preview. These examples do not use your location."},
+  projects:{lead:"Make something that matters.",heading:"Project workspace",note:"Open a project to explore its work, discussion and connected spaces."},
+  ask:{lead:"A good question opens a door.",heading:"Questions to explore",note:"Open a question to read or add to its discussion."},
+  exchange:{lead:"Something to offer. Something to find.",heading:"Exchange spaces",note:"Skills, knowledge and useful help. No checkout or payment is connected here."},
+  circles:{lead:"Keep your people close.",heading:"Your private spaces",note:"Circle conversations use a separate trusted system. Public discussion is disabled inside Circles."},
+  events:{lead:"Be there for something.",heading:"Events to explore",note:"Open an event to see its details and mark your interest. Example listings are not verified live events."},
+  plans:{lead:"Anybody want to…?",heading:"Plans taking shape",note:"Start with an idea. An existing plan can become an event when you are ready."},
+  yesno:{lead:"Where do you stand?",heading:"Make your choice",note:"One question. Two choices."}
+};
+function renderPlaceHero(id){
+  const p=placeData[id],theme=placePresentation[id];
+  const mark=id==="yesno" ? "<span>YES</span><span>NO</span>" : p.symbol;
+  return "<header class='place-hero'><div class='place-intro'><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p class='place-lead'>"+escapeHtml(theme.lead)+"</p><p class='place-description'>"+escapeHtml(p.desc)+"</p></div><div class='place-emblem' aria-hidden='true'>"+mark+"</div></header>";
+}
 
 const state = { depth:[{type:"world",label:"WORLD"}], currentPlace:null, currentEntityId:null, routeOrigin:null };
 const surface = document.getElementById("surfaceApp");
@@ -23,19 +41,46 @@ const timeDialog = document.getElementById("timeMachineDialog");
 const store = window.NetizensData || window.NetizensStore;
 const perception = window.NetizensPerception || null;
 let lastRoute = null;
+const worldPresence = window.NetizensWorldPresence || null;
 
-function emit(event,data){ window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})})); }
+function emit(event,data){
+  // Local discussion UI uses a separate event; privacy-gated analytics carry
+  // no route, identity or place data while presence is disconnected/private.
+  if(event==="entity_view"){
+    window.dispatchEvent(new CustomEvent("netizens:entity-view",{detail:{entity_id:data && data.entity_id || null}}));
+  }
+  if(!worldPresence || !worldPresence.previewState().livePresenceConnected || !worldPresence.mayShareMovement()) return;
+  window.dispatchEvent(new CustomEvent("netizens:analytics",{detail:Object.assign({event:event,at:new Date().toISOString()},data||{})}));
+}
+
+// Layout is a display preference only; all Place buttons retain their existing routes.
+
+function setWorldLayout(layout){
+  mapView.dataset.layout = layout;
+  document.querySelectorAll("[data-world-layout]").forEach(function(button){
+    button.setAttribute("aria-pressed",String(button.dataset.worldLayout===layout));
+  });
+  document.getElementById("cityNavigationHint").hidden=layout!=="city";
+  if(layout==="city") requestAnimationFrame(centerWorldCity);
+  if(worldPresence)requestAnimationFrame(function(){worldPresence.relayout();});
+}
+function centerWorldCity(){
+  const viewport=document.querySelector(".world-scene-viewport");
+  viewport.scrollLeft=(viewport.scrollWidth-viewport.clientWidth)/2;
+  viewport.scrollTop=Math.max(0,(viewport.scrollHeight-viewport.clientHeight)*.45);
+}
+setWorldLayout("city");
 
 function showWorld(){
-  surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); emit("world_enter"); showMap();
+  surface.classList.add("hidden"); world.classList.remove("hidden"); renderCitizen(); if(worldPresence)worldPresence.start(); emit("world_enter"); showMap();
 }
 function exitWorld(){
-  world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels(); emit("world_exit");
+  emit("world_exit"); if(worldPresence)worldPresence.stop(); world.classList.add("hidden"); surface.classList.remove("hidden"); closePanels();
 }
 function showMap(){
   state.depth=[{type:"world",label:"WORLD"}]; state.currentPlace=null; state.currentEntityId=null; state.routeOrigin=null;
   mapView.classList.add("active"); placeView.classList.remove("active");
-  renderDepth(); document.getElementById("worldMain").focus({preventScroll:true}); emit("world_map_view");
+  renderDepth(); if(worldPresence)worldPresence.returnToMap(); document.getElementById("worldMain").focus({preventScroll:true}); if(mapView.dataset.layout==="city") requestAnimationFrame(centerWorldCity); emit("world_map_view");
 }
 function renderDepth(){
   depthTrail.innerHTML = "";
@@ -138,6 +183,8 @@ function openEntity(id,preserveDepth){
   var entity=store.getEntity(id); if(!entity)return;
   var p=placeData[entity.placeId]||placeData.commons;
   state.currentPlace=entity.placeId;
+  placeView.dataset.place=entity.placeId;
+  if(worldPresence)worldPresence.atPlace(entity.placeId);
   state.currentEntityId=entity.id;
   state.routeOrigin=entity.placeId;
   store.setMode(entity.placeId);
@@ -152,6 +199,8 @@ function openEntity(id,preserveDepth){
   }
 
   mapView.classList.remove("active"); placeView.classList.add("active"); renderDepth();
+  placeView.dataset.placeTheme=state.currentPlace;
+  placeView.dataset.view=state.currentEntityId ? "entity" : "place";
   placeView.style.setProperty("--place-color",p.color);
   placeView.style.setProperty("--place-bg",p.bg);
   placeView.style.setProperty("--place-glow",p.color+"33");
@@ -191,32 +240,39 @@ function openEntity(id,preserveDepth){
 function openPlace(id,preserveDepth){
   var p=placeData[id]; if(!p)return;
   state.currentPlace=id;
+  placeView.dataset.place=id;
+  if(worldPresence)worldPresence.atPlace(id);
   state.currentEntityId=null;
   store.visitPlace(id);
   store.setMode(id);
   renderCitizen();
   if(!preserveDepth){ state.depth=[{type:"world",label:"WORLD"},{type:"place",id:id,label:p.name.toUpperCase()}]; }
   mapView.classList.remove("active"); placeView.classList.add("active"); renderDepth();
+  placeView.dataset.placeTheme=state.currentPlace;
+  placeView.dataset.view=state.currentEntityId ? "entity" : "place";
   placeView.style.setProperty("--place-color",p.color);
   placeView.style.setProperty("--place-bg",p.bg);
   placeView.style.setProperty("--place-glow",p.color+"33");
 
   var content="";
   if(id==="yesno"){
-    content="<section class='panel yesno-stage'><p class='kicker'>QUESTION NOW</p><h2>Should group chats have an expiration date?</h2><div class='vote-row'><button class='vote yes' data-vote='yes'>YES</button><button class='vote no' data-vote='no'>NO</button></div><div id='voteResult' class='vote-result'>Results stay hidden until you vote.</div></section>";
+    content="<section class='panel yesno-stage' aria-labelledby='decisionQuestion'><p class='kicker'>EXAMPLE QUESTION</p><h2 id='decisionQuestion'>Should group chats have an expiration date?</h2><p class='decision-intro'>A clear choice. Your own point of view.</p><div class='vote-row' role='group' aria-label='Your choice'><button class='vote yes' data-vote='yes' aria-pressed='false'><span class='vote-sign' aria-hidden='true'>✓</span><strong>YES</strong><small>Let them end.</small></button><button class='vote no' data-vote='no' aria-pressed='false'><span class='vote-sign' aria-hidden='true'>×</span><strong>NO</strong><small>Keep them going.</small></button></div><div id='voteResult' class='vote-result' role='status'>Community results are not available in this local prototype.</div></section>";
   } else {
-    var activities=p.items.map(function(x,i){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>"+(i+2)+" people active now · context travels with you</span></div>";}).join("");
+    var activities=p.items.map(function(x){return "<div class='activity'><strong>"+escapeHtml(x)+"</strong><span>Example content · not live activity</span></div>";}).join("");
     var entities=renderEntityCards(id);
     var collegePilot=id==="crews"?renderCollegeGroupsPilot():"";
     var composer=id==="plans"
       ? "<div class='plan-composer'><label for='planTitle'>START A PLAN</label><div><input id='planTitle' maxlength='100' placeholder='Anybody want to...'><button data-create-plan>CREATE</button></div></div>"
       : "";
-    content="<div class='place-grid'><section class='panel'><h3>ENTERABLE LAYERS</h3>"+collegePilot+entities+composer+"<h3 class='ambient-heading'>HAPPENING AROUND HERE</h3>"+activities+"</section><aside class='panel'><h3>"+escapeHtml(p.tag)+"</h3><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
+    content="<div class='place-grid'><section class='panel place-primary'>"+composer+"<h3>"+escapeHtml(placePresentation[id].heading)+"</h3>"+collegePilot+entities+"<details class='place-examples'><summary>Illustrative examples</summary>"+activities+"</details></section><aside class='panel place-guide'><h3>"+escapeHtml(p.tag)+"</h3><p class='place-guide-note'>"+escapeHtml(placePresentation[id].note)+"</p><div class='chip-row'>"+p.chips.map(function(c){return "<span class='chip'>"+escapeHtml(c)+"</span>";}).join("")+"</div><button class='place-action' data-perception-from='"+id+"'>ASK PERCEPTION TO CONNECT THIS PLACE</button><div class='nested-state'></div></aside></div>";
   }
 
   var door=showTimeDoor(id)?"<button class='time-door' id='timeDoor'><small>◌ SIGNAL DETECTED</small><strong>TIME MACHINE</strong><span>It wasn't here yesterday.</span></button>":"";
-  placeView.innerHTML="<section class='place-hero'><div><p class='kicker'>"+escapeHtml(p.tag)+"</p><h1>"+escapeHtml(p.name)+"</h1><p>"+escapeHtml(p.desc)+"</p></div><div class='place-symbol'>"+p.symbol+"</div></section>"+content+door;
+  placeView.innerHTML=renderPlaceHero(id)+content+door;
+  if(window.NetizensWorldSecrets)window.NetizensWorldSecrets.mountPlace(id,placeView);
+
   emit("place_view",{place:id,time_machine_surface:showTimeDoor(id)});
+  if(id==="yesno") renderLocalVote();
   if(id==="crews") emit("college_groups_pilot_impression",{pilot:"dmv",seeded_groups:5});
 }
 
@@ -229,10 +285,18 @@ function openTimeMachine(){
   renderFutureScenario("6m");
   emit("time_machine_open",{from:state.currentPlace});
 }
+function renderLocalVote(){
+  var result=document.getElementById("voteResult"); if(!result)return;
+  var saved=(store.snapshot().world.yesNoVotes||{})["group-chat-expiration"];
+  document.querySelectorAll("[data-vote]").forEach(function(button){
+    const selected=Boolean(saved && saved.choice===button.dataset.vote);
+    button.classList.toggle("is-selected",selected);button.setAttribute("aria-pressed",String(selected));
+  });
+  result.textContent=saved ? "Your "+saved.choice.toUpperCase()+" choice is saved on this device. Community results are not available." : "Community results are not available in this local prototype.";
+}
 function vote(choice){
-  var r=document.getElementById("voteResult"); if(!r)return;
-  r.innerHTML=choice==="yes"?"<strong style='color:#91f3bb'>YES 62%</strong> · NO 38% — now explain why.":"YES 62% · <strong style='color:#ff99a8'>NO 38%</strong> — now explain why.";
   store.vote("group-chat-expiration",choice);
+  renderLocalVote();
   renderCitizen();
   emit("yes_no_vote",{choice:choice});
 }
@@ -278,34 +342,27 @@ function renderWorldRoute(route){
 }
 
 function renderRouteActions(route){
-  return "<div class='route-actions'><button class='place-action' data-open-route='"+route[0]+"'>OPEN FIRST PLACE</button><button class='place-action secondary-action' data-save-route>SAVE ROUTE</button></div>";
+  return "<div class='route-actions'>"+route.map(function(id){
+    return "<button class='place-action' data-open-route='"+escapeHtml(id)+"'>Open "+escapeHtml(placeData[id].name)+"</button>";
+  }).join("")+"<button class='place-action secondary-action' data-save-route>Save these suggestions</button></div>";
 }
 
-function renderSwarmPreview(objective){
-  var swarm=window.NetizensSwarm;
-  if(!swarm || !swarm.propose) return "";
-  try{
-    var proposal=swarm.propose(objective,{placeId:state.routeOrigin||state.currentPlace||"",entityId:state.currentEntityId||""});
-    var jobs=proposal.jobs.map(function(job){
-      return "<div class='perception-node'><div><span>"+escapeHtml(job.taskKey)+"</span><strong>"+escapeHtml(job.worker)+"</strong></div>"
-        +"<p>"+escapeHtml(job.job)+"</p><small>PROPOSED · "+escapeHtml(job.deliverable)+"</small></div>";
-    }).join("");
-    return "<section class='perception-swarm' aria-label='Proposed bot swarm'>"
-      +"<p class='route-mode'>NETIZENS BOT SWARM · "+proposal.jobs.length+" JOBS PROPOSED</p>"
-      +"<p class='permission-note'>Perception owns execution and approval. No job has run or been verified.</p>"
-      +"<div class='perception-nodes'>"+jobs+"</div></section>";
-  }catch(error){
-    return "<p class='perception-warning'>Bot job preview unavailable: "+escapeHtml(error.message||"invalid source")+"</p>";
-  }
+function renderUsefulActions(){
+  return "<section class='route-next-steps' aria-label='Things you can do'>"
+    +"<h3>Take a next step</h3>"
+    +"<button class='place-action' data-start-plan>Start a plan</button>"
+    +"<button class='place-action secondary-action' data-open-route='crews'>Explore groups</button>"
+    +"<button class='place-action secondary-action' data-open-route='ask'>Browse questions</button>"
+    +"<p class='muted small-copy'>This preview saves your changes on this device. Example groups and questions are not evidence of a live community.</p></section>";
 }
 
 function renderLocalRoute(raw,route,error){
   var box=document.getElementById("routeResult");
   box.innerHTML=(error?"<div class='perception-warning'>Live Perception was unavailable: "+escapeHtml(error)+"</div>":"")
-    +"<p class='route-mode'>WORLD ROUTE PREVIEW</p>"
+    +"<p class='route-mode'>PLACES TO EXPLORE</p>"
     +renderWorldRoute(route)
-    +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>This local preview connects likely NETIZENS places. It does not execute anything.</p>"
-    +renderSwarmPreview(raw)
+    +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>These are suggestions. Nothing has been run or shared.</p>"
+    +renderUsefulActions()
     +renderRouteActions(route);
 }
 
@@ -368,7 +425,7 @@ async function routeIntent(){
           +"<p class='route-note'><strong>Objective:</strong> "+escapeHtml(raw)+"<br>"+escapeHtml(result.reason||"Perception produced a bounded route.")+"</p>"
           +(nodes?"<div class='perception-nodes'>"+nodes+"</div>":"")
           +"<p class='permission-note'>This is a proposed route. Any action beyond the runtime's allowed scope remains subject to Perception permissions and verification.</p>"
-          +renderSwarmPreview(raw)
+          +renderUsefulActions()
           +renderRouteActions(worldRoute);
 
         renderCitizen();
@@ -426,11 +483,15 @@ function renderFutureScenario(horizon){
 }
 
 document.addEventListener("click",function(e){
-  var p=e.target.closest("[data-place]"); if(p)return openPlace(p.dataset.place);
+  var layout=e.target.closest("[data-world-layout]");
+  if(layout){setWorldLayout(layout.dataset.worldLayout);return;}
+  if(e.target.closest("[data-start-plan]")){closePanels();openPlace("plans");document.getElementById("planTitle").focus();return;}
+  var p=e.target.closest("button.island[data-place]"); if(p){if(worldPresence && mapView.classList.contains("active"))return worldPresence.travelTo(p.dataset.place,function(){openPlace(p.dataset.place);});return openPlace(p.dataset.place);}
+
   var d=e.target.closest("[data-depth-index]"); if(d)return popDepthTo(Number(d.dataset.depthIndex));
   var nested=e.target.closest("[data-enter-depth]"); if(nested)return pushDepth(nested.dataset.enterDepth);
   if(e.target.closest("[data-pop-depth]")){ if(state.depth.length>2){state.depth.pop();renderDepth();openPlace(state.currentPlace,true);} return; }
-  var openEntityBtn=e.target.closest("[data-open-entity]"); if(openEntityBtn)return openEntity(openEntityBtn.dataset.openEntity);
+  var openEntityBtn=e.target.closest("[data-open-entity]"); if(openEntityBtn){closePanels();return openEntity(openEntityBtn.dataset.openEntity);}
   var membershipBtn=e.target.closest("[data-entity-membership]"); if(membershipBtn){var current=store.getEntityMembership(membershipBtn.dataset.entityMembership);var next=current && !["left","removed"].includes(current.status) ? "left" : (membershipBtn.dataset.activeStatus||"active");var membershipEntity=store.getEntity(membershipBtn.dataset.entityMembership);store.setEntityMembership(membershipBtn.dataset.entityMembership,next,next==="following"?"follower":next==="interested"?"attendee":"member");if(membershipEntity && membershipEntity.metadata && membershipEntity.metadata.kind==="college_group")emit("college_group_membership",{entity_id:membershipEntity.id,campus:membershipEntity.metadata.campus||membershipEntity.title,status:next});renderCitizen();return openEntity(membershipBtn.dataset.entityMembership,true);}
   var promoteBtn=e.target.closest("[data-promote-plan]"); if(promoteBtn){var eventEntity=store.promotePlanToEvent(promoteBtn.dataset.promotePlan);renderCitizen();if(eventEntity&&eventEntity.id)return openEntity(eventEntity.id);return;}
   var transformBtn=e.target.closest("[data-transform-entity]"); if(transformBtn){var transformed=store.transformEntity(transformBtn.dataset.transformEntity,transformBtn.dataset.targetPlace,{linkType:"became_project",entityType:"project"});renderCitizen();if(transformed&&transformed.id)return openEntity(transformed.id);return;}
@@ -439,7 +500,7 @@ document.addEventListener("click",function(e){
   var horizon=e.target.closest("[data-horizon]"); if(horizon)return renderFutureScenario(horizon.dataset.horizon);
   var createPlan=e.target.closest("[data-create-plan]"); if(createPlan){var input=document.getElementById("planTitle");var title=input?input.value.trim():"";if(title){store.createPlan(title,{source:"plans"});store.addArtifact("PLANNER");renderCitizen();openPlace("plans",true);}return;}
   var worldAction=e.target.closest("[data-world-action]"); if(worldAction){store.toggleList(worldAction.dataset.list,worldAction.dataset.value);renderCitizen();openPlace(state.currentPlace,true);return;}
-  if(e.target.closest("[data-save-route]")){if(lastRoute){store.saveRoute(lastRoute.objective,lastRoute.route);store.addArtifact("ROUTE MAKER");renderCitizen();var saveBtn=e.target.closest("[data-save-route]");saveBtn.textContent="ROUTE SAVED";saveBtn.disabled=true;}return;}
+  if(e.target.closest("[data-save-route]")){if(lastRoute){store.saveRoute(lastRoute.objective,lastRoute.route);store.addArtifact("ROUTE MAKER");renderCitizen();var saveBtn=e.target.closest("[data-save-route]");saveBtn.textContent="Suggestions saved on this device";saveBtn.disabled=true;}return;}
   if(e.target.closest("#timeDoor"))return openTimeMachine();
   var close=e.target.closest("[data-close-panel]"); if(close){var panel=document.getElementById(close.dataset.closePanel);panel.classList.remove("open");panel.setAttribute("aria-hidden","true");return;}
   var mode=e.target.closest("[data-preview-mode]"); if(mode)return previewMode(mode.dataset.previewMode);

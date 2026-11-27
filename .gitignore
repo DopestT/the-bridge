@@ -6,3 +6,9 @@ coverage/
 .superpowers/
 .env.*
 !.env.example
+
+dist/
+.vercel/
+.qa/
+.vercel
+.env*

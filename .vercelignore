@@ -1,0 +1,9 @@
+.git
+.qa
+.env*
+node_modules
+apps
+docs
+supabase
+work
+dist
